@@ -1,14 +1,3 @@
-/********************************************************************************
-* 权限:    杭州南江机器人股份有限公司
-* 文件名:    pid.h         
-* 功能描述:    
-           pid结构体定义
-* 版本      作者             时间          状态
-* V1.0      chenshouxian     2015.09.09    创建文件
-*****************************************************************************
-*****************************************************************************/ 
-
-
 #ifndef __PID_H__
 #define __PID_H__
 
@@ -96,7 +85,8 @@ typedef struct
 }net_pid;
 
 
-
+void pid_init(pid_t *pid, float Kp, float Ki, float Kd );
+void gyro_pid_init(GYRO_PID_STRUCT *pid, float Kp, float Ki, float Kd );
 extern GYRO_PID_STRUCT gyro_pid;
 
 

@@ -1,6 +1,12 @@
 #ifndef __TYPEDEF_H__
 #define __TYPEDEF_H__
 
+#include "stdint.h"
+
+#define   __I     volatile const       /*!< Defines 'read only' permissions */
+#define     __O     volatile             /*!< Defines 'write only' permissions */
+#define     __IO    volatile 
+
 typedef unsigned char U8;
 typedef unsigned short U16;
 typedef unsigned long U32;

@@ -1,9 +1,11 @@
 #ifndef __CFG_H__
 #define __CFG_H__
 
+#define PI 3.14159265358979f
+
 
 /* software version*/
-#define  software_verison  0x0103;   // 0x01 = 1 0x02 =2 v1.2
+#define  software_verison  0x0200;   // V2.0
 
 /* SYSTEM CLK */
 #define FREQ_CPU_CLK		SystemCoreClock
@@ -146,6 +148,7 @@
 
 /* NRF24L01 parameter define */
 #define NRF24L01_SPI			SPI3
+#define HAL_NRF24L01_SPI        hspi3
 #define NRF24L01_ADDR_COUNT    AW_5BYTES	//5 byte
 
 #define NRF24L01_ADDR1_4     0x10
