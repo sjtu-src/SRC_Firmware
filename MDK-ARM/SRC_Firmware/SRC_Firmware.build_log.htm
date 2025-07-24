@@ -21,8 +21,8 @@ Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V2.0.14.0_KEIL
 Dialog DLL:      TCM.DLL V1.14.4.0
  
 <h2>Project:</h2>
-E:\myCode\STM32\SRC_Firmware\MDK-ARM\SRC_Firmware.uvprojx
-Project File Date:  07/23/2025
+e:\myCode\STM32\SRC_Firmware\MDK-ARM\SRC_Firmware.uvprojx
+Project File Date:  07/24/2025
 
 <h2>Output:</h2>
   
@@ -31,66 +31,152 @@ Warning: *** SUPPORT EXPIRED, NEW PRODUCT SERIAL NUMBER REQUIRED ***
 *** Using Compiler 'V5.05 update 1 (build 106)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'SRC_Firmware'
 Note: source file '../Core/Src/system_stm32f4xx.c' - object file renamed from 'SRC_Firmware\system_stm32f4xx.o' to 'SRC_Firmware\system_stm32f4xx_1.o'.
-compiling robot.c...
-D:\Keil_v5\ARM\Pack\ARM\CMSIS\4.2.0\CMSIS\Include\arm_math.h(305): error:  #35: #error directive: "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
-    #error "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
-..\Core\Src\robot.c: 0 warnings, 1 error
-compiling action.c...
-D:\Keil_v5\ARM\Pack\ARM\CMSIS\4.2.0\CMSIS\Include\arm_math.h(305): error:  #35: #error directive: "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
-    #error "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
-..\Core\Src\action.c: 0 warnings, 1 error
-assembling startup_stm32f407xx.s...
-compiling misc.c...
-../Core/Inc/misc.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
-  #include "stm32f4xx_conf.h"
-..\Core\Src\misc.c: 0 warnings, 1 error
-compiling comm.c...
-../Core/Inc/packet.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
-  #include "stm32f4xx_conf.h"
-..\Core\Src\comm.c: 0 warnings, 1 error
-compiling motor.c...
-../Core/Inc/motor.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
-  #include "stm32f4xx_conf.h"
-..\Core\Src\motor.c: 0 warnings, 1 error
 compiling packet.c...
-../Core/Inc/packet.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
-  #include "stm32f4xx_conf.h"
-..\Core\Src\packet.c: 0 warnings, 1 error
-compiling main.c...
-../Core/Inc/nrf24l01_drv.h(19): error:  #5: cannot open source input file "typedef.h": No such file or directory
-  #include "typedef.h"
-../Core/Src/main.c: 0 warnings, 1 error
-compiling pid.c...
-D:\Keil_v5\ARM\Pack\ARM\CMSIS\4.2.0\CMSIS\Include\arm_math.h(305): error:  #35: #error directive: "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
-    #error "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
-..\Core\Src\pid.c: 0 warnings, 1 error
-compiling adc.c...
-compiling spi.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+..\Core\Src\packet.c(17): error:  #5: cannot open source input file "timer.h": No such file or directory
+  #include "timer.h"
+..\Core\Src\packet.c: 1 warning, 1 error
+compiling motor.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+..\Core\Src\motor.c(17): warning:  #223-D: function "set_motor_break" declared implicitly
+  	set_motor_break(1, 1, 1, 1);
+..\Core\Src\motor.c(18): warning:  #223-D: function "set_motor_dir" declared implicitly
+  	set_motor_dir(0, 0, 0, 0);
+..\Core\Src\motor.c(19): warning:  #223-D: function "set_motor_pwm" declared implicitly
+  	set_motor_pwm(0, 0, 0, 0);
+..\Core\Src\motor.c(28): error:  #159: declaration is incompatible with previous "set_motor_dir" (declared at line 18)
+  void set_motor_dir(u8 m1, u8 m2, u8 m3, u8 m4)
+..\Core\Src\motor.c(54): error:  #159: declaration is incompatible with previous "set_motor_break" (declared at line 17)
+  void set_motor_break(u8 m1, u8 m2, u8 m3, u8 m4)
+..\Core\Src\motor.c(79): error:  #159: declaration is incompatible with previous "set_motor_pwm" (declared at line 19)
+  void set_motor_pwm(u16 m1, u16 m2, u16 m3, u16 m4)
+..\Core\Src\motor.c: 4 warnings, 3 errors
+compiling misc.c...
+../Core/Inc/misc.h(7): error:  #20: identifier "u8" is undefined
+  void read_dip_sw(u8 *freq, u8 *num, u8 *mode);
+../Core/Inc/misc.h(7): error:  #20: identifier "u8" is undefined
+  void read_dip_sw(u8 *freq, u8 *num, u8 *mode);
+../Core/Inc/misc.h(7): error:  #20: identifier "u8" is undefined
+  void read_dip_sw(u8 *freq, u8 *num, u8 *mode);
+../Core/Inc/misc.h(9): error:  #20: identifier "u8" is undefined
+  u8 nrf_spi_wr_rd(u8 input);
+../Core/Inc/misc.h(9): error:  #20: identifier "u8" is undefined
+  u8 nrf_spi_wr_rd(u8 input);
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+..\Core\Src\misc.c(139): warning:  #1-D: last line of file ends without a newline
+  }
+..\Core\Src\misc.c: 2 warnings, 5 errors
 compiling MPU6050_driver.c...
-..\Core\Src\MPU6050_driver.c(13): error:  #5: cannot open source input file "I2c.h": No such file or directory
-  #include "I2c.h"
-..\Core\Src\MPU6050_driver.c: 0 warnings, 1 error
-compiling stm32f4xx_it.c...
-compiling system_stm32f4xx.c...
-compiling gpio.c...
-compiling stm32f4xx_hal_msp.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+..\Core\Src\MPU6050_driver.c(86): warning:  #223-D: function "GPIO_ReadInputDataBit" declared implicitly
+      if(GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_14)==Bit_RESET)//低电平有�?         ^
+..\Core\Src\MPU6050_driver.c(86): error:  #20: identifier "GPIO_Pin_14" is undefined
+      if(GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_14)==Bit_RESET)//低电平有�?                                     ^
+..\Core\Src\MPU6050_driver.c(86): error:  #20: identifier "Bit_RESET" is undefined
+      if(GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_14)==Bit_RESET)//低电平有�?                                                   ^
+..\Core\Src\MPU6050_driver.c(113): warning:  #223-D: function "I2C_MPU6050_ByteRead" declared implicitly
+  	  data_h = I2C_MPU6050_ByteRead(Reg_Address);
+..\Core\Src\MPU6050_driver.c(117): warning:  #223-D: function "I2C_MPU6050_ByteRead" declared implicitly
+  	  data_l = I2C_MPU6050_ByteRead(Reg_Address+1);
+..\Core\Src\MPU6050_driver.c(198): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  	acc_agro_angel.gyro_x_angel =z_factory.acc_factor*angel_x+z_factory.gyro_factor*(acc_agro_angel.gyro_x_angel + meam.GYRO_x*SAMPLE_T);
+..\Core\Src\MPU6050_driver.c(205): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  	acc_agro_angel.gyro_y_angel =z_factory.acc_factor*angel_y+z_factory.gyro_factor*(acc_agro_angel.gyro_y_angel + meam.GYRO_y*SAMPLE_T);
+..\Core\Src\MPU6050_driver.c(211): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  	if((meam.GYRO_z > 1.0) ||(meam.GYRO_z < -1.0))   //1.0*GYRO_SEN_SCAN_FACTOR = 65.36 跳动浮动大于65.36则认为MPU6050旋转�?  	    ^
+..\Core\Src\MPU6050_driver.c(213): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  	 acc_agro_angel.gyro_z_angel =1*(acc_agro_angel.gyro_z_angel + meam.GYRO_z*SAMPLE_T);
+..\Core\Src\MPU6050_driver.c(215): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  	if(acc_agro_angel.gyro_z_angel > 180.0)
+..\Core\Src\MPU6050_driver.c(217): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  	  acc_agro_angel.gyro_z_angel = acc_agro_angel.gyro_z_angel - 360.0;
+..\Core\Src\MPU6050_driver.c(221): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  		   acc_agro_angel.gyro_z_angel = acc_agro_angel.gyro_z_angel + 360.0;
+..\Core\Src\MPU6050_driver.c: 11 warnings, 2 errors
+compiling pid.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+../Core/Inc/misc.h(7): error:  #20: identifier "u8" is undefined
+  void read_dip_sw(u8 *freq, u8 *num, u8 *mode);
+../Core/Inc/misc.h(7): error:  #20: identifier "u8" is undefined
+  void read_dip_sw(u8 *freq, u8 *num, u8 *mode);
+../Core/Inc/misc.h(7): error:  #20: identifier "u8" is undefined
+  void read_dip_sw(u8 *freq, u8 *num, u8 *mode);
+../Core/Inc/misc.h(9): error:  #20: identifier "u8" is undefined
+  u8 nrf_spi_wr_rd(u8 input);
+../Core/Inc/misc.h(9): error:  #20: identifier "u8" is undefined
+  u8 nrf_spi_wr_rd(u8 input);
+..\Core\Src\pid.c(44): warning:  #223-D: function "pid_reinit" declared implicitly
+  	pid_reinit(pid);
+..\Core\Src\pid.c(78): error:  #159: declaration is incompatible with previous "pid_reinit" (declared at line 44)
+  void pid_reinit(pid_t *pid)
+..\Core\Src\pid.c: 2 warnings, 6 errors
+compiling error.c...
+../Core/Inc/error.h(24): warning:  #1-D: last line of file ends without a newline
+  #endif
+..\Core\Src\error.c(3): warning:  #1-D: last line of file ends without a newline
+  ERROR_EVENT_UNION error_flag = {0};
+..\Core\Src\error.c: 2 warnings, 0 errors
+compiling simulate_i2c.c...
+..\Core\Src\simulate_i2c.c(439): warning:  #223-D: function "wait_ms_with_dis_int" declared implicitly
+  			wait_ms_with_dis_int(10); /* waiting for write cycle to be completed */
+..\Core\Src\simulate_i2c.c(657): warning:  #223-D: function "wait_ms_with_dis_int" declared implicitly
+  			wait_ms_with_dis_int(10); /* waiting for write cycle to be completed */
+..\Core\Src\simulate_i2c.c: 2 warnings, 0 errors
+compiling robot.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+../Core/Inc/error.h(24): warning:  #1-D: last line of file ends without a newline
+  #endif
+..\Core\Src\robot.c(34): warning:  #223-D: function "init_kiker" declared implicitly
+  	init_kiker();
+..\Core\Src\robot.c(30): warning:  #177-D: variable "rtn" was declared but never referenced
+  	int rtn = 0;
+..\Core\Src\robot.c: 4 warnings, 0 errors
 compiling param.c...
-../Core/Inc/param.h(16): error:  #5: cannot open source input file "typedef.h": No such file or directory
-  #include "typedef.h"
-..\Core\Src\param.c: 0 warnings, 1 error
-compiling usart.c...
-compiling freertos.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+..\Core\Src\param.c: 1 warning, 0 errors
+compiling comm.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+..\Core\Src\comm.c: 1 warning, 0 errors
 compiling tim.c...
-compiling nrf24l01.c...
-../Core/Inc/nrf24l01.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
-  #include "stm32f4xx_conf.h"
-..\Core\Src\nrf24l01.c: 0 warnings, 1 error
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+../Core/Src/tim.c(416): warning:  #223-D: function "TIM_CCxCmd" declared implicitly
+  	TIM_CCxCmd(TIM9, TIM_CHANNEL_1, 0);
+../Core/Src/tim.c: 2 warnings, 0 errors
+compiling action.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+..\Core\Src\action.c(23): warning:  #223-D: function "shoot_off" declared implicitly
+  	shoot_off();
+..\Core\Src\action.c(24): warning:  #223-D: function "chip_off" declared implicitly
+  	chip_off();
+..\Core\Src\action.c: 3 warnings, 0 errors
+compiling main.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+../Core/Src/main.c: 1 warning, 0 errors
+compiling NRF24L01.c...
+../Core/Inc/cfg.h(97): warning:  #9-D: nested comment is not allowed
+  #define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角�?�? */
+..\Core\Src\NRF24L01.c(74): warning:  #223-D: function "wait_us" declared implicitly
+  	wait_us(20);
+..\Core\Src\NRF24L01.c(77): warning:  #223-D: function "clr_receive_flag" declared implicitly
+  	clr_receive_flag(); //set wait tx flag, this flag will clean after 3ms
+..\Core\Src\NRF24L01.c(101): warning:  #223-D: function "wait_100us" declared implicitly
+  	wait_100us(50);	
+..\Core\Src\NRF24L01.c(162): warning:  #1-D: last line of file ends without a newline
+  }
+..\Core\Src\NRF24L01.c: 5 warnings, 0 errors
 compiling nrf24l01_drv.c...
-../Core/Inc/nRF24L01.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
-  #include "stm32f4xx_conf.h"
-..\Core\Src\nrf24l01_drv.c: 0 warnings, 1 error
-compiling system_stm32f4xx.c...
-"SRC_Firmware\SRC_Firmware.axf" - 12 Error(s), 1 Warning(s).
+"SRC_Firmware\SRC_Firmware.axf" - 17 Error(s), 42 Warning(s).
 
 <h2>Software Packages used:</h2>
 

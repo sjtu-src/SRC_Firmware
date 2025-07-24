@@ -35,3 +35,8 @@ src_firmware\packet.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h
 src_firmware\packet.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
 src_firmware\packet.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
 src_firmware\packet.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
+src_firmware\packet.o: ../Core/Inc/typedef.h
+src_firmware\packet.o: ../Core/Inc/cfg.h
+src_firmware\packet.o: ../Core/Inc/robot.h
+src_firmware\packet.o: ../Core/Inc/pid.h
+src_firmware\packet.o: ../Core/Inc/misc.h

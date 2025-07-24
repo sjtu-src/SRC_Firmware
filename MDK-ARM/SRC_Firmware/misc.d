@@ -35,3 +35,12 @@ src_firmware\misc.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h
 src_firmware\misc.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
 src_firmware\misc.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
 src_firmware\misc.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
+src_firmware\misc.o: ../Core/Inc/gpio.h
+src_firmware\misc.o: ../Core/Inc/main.h
+src_firmware\misc.o: ../Core/Inc/cfg.h
+src_firmware\misc.o: ../Core/Inc/robot.h
+src_firmware\misc.o: ../Core/Inc/pid.h
+src_firmware\misc.o: ../Core/Inc/typedef.h
+src_firmware\misc.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
+src_firmware\misc.o: ../Core/Inc/tim.h
+src_firmware\misc.o: ../Core/Inc/spi.h

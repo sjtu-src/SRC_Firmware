@@ -19,6 +19,11 @@
         "math.h": "c",
         "error.h": "c",
         "simulate_i2c.h": "c",
-        "cmsis_os.h": "c"
+        "cmsis_os.h": "c",
+        "time.h": "c",
+        "nrf24l01_drv.h": "c",
+        "nrf24l01_reg.h": "c",
+        "adc.h": "c",
+        "core_cm4.h": "c"
     }
 }

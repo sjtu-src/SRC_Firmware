@@ -1,5 +1,10 @@
-src_firmware\nrf24l01.o: ..\Core\Src\nrf24l01.c
-src_firmware\nrf24l01.o: ../Core/Inc/nrf24l01.h
+src_firmware\nrf24l01.o: ..\Core\Src\NRF24L01.c
+src_firmware\nrf24l01.o: ../Core/Inc/NRF24L01.h
+src_firmware\nrf24l01.o: ../Core/Inc/main.h
+src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h
+src_firmware\nrf24l01.o: ../Core/Inc/stm32f4xx_hal_conf.h
+src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h
+src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h
 src_firmware\nrf24l01.o: ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h
 src_firmware\nrf24l01.o: ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h
 src_firmware\nrf24l01.o: ../Drivers/CMSIS/Include/core_cm4.h
@@ -10,10 +15,6 @@ src_firmware\nrf24l01.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
 src_firmware\nrf24l01.o: ../Drivers/CMSIS/Include/mpu_armv7.h
 src_firmware\nrf24l01.o: ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/system_stm32f4xx.h
 src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h
-src_firmware\nrf24l01.o: ../Core/Inc/stm32f4xx_hal_conf.h
-src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h
-src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h
-src_firmware\nrf24l01.o: ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h
 src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h
 src_firmware\nrf24l01.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
 src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc_ex.h
@@ -35,3 +36,12 @@ src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h
 src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
 src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
 src_firmware\nrf24l01.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
+src_firmware\nrf24l01.o: ..\Core\Src\spi.c
+src_firmware\nrf24l01.o: ../Core/Inc/spi.h
+src_firmware\nrf24l01.o: ../Core/Inc/typedef.h
+src_firmware\nrf24l01.o: ../Core/Inc/gpio.h
+src_firmware\nrf24l01.o: ../Core/Inc/nrf24l01_drv.h
+src_firmware\nrf24l01.o: ../Core/Inc/nRF24L01_Reg.h
+src_firmware\nrf24l01.o: ../Core/Inc/cfg.h
+src_firmware\nrf24l01.o: ../Core/Inc/robot.h
+src_firmware\nrf24l01.o: ../Core/Inc/pid.h

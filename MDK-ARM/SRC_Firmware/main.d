@@ -52,8 +52,9 @@ src_firmware\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_gr
 src_firmware\main.o: ../Core/Inc/adc.h
 src_firmware\main.o: ../Core/Inc/spi.h
 src_firmware\main.o: ../Core/Inc/tim.h
+src_firmware\main.o: ../Core/Inc/typedef.h
 src_firmware\main.o: ../Core/Inc/usart.h
 src_firmware\main.o: ../Core/Inc/gpio.h
 src_firmware\main.o: ../Core/Inc/robot.h
 src_firmware\main.o: ../Core/Inc/cfg.h
-src_firmware\main.o: ../Core/Inc/nrf24l01_drv.h
+src_firmware\main.o: ../Core/Inc/pid.h
