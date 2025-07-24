@@ -87,6 +87,7 @@ typedef struct
 
 void pid_init(pid_t *pid, float Kp, float Ki, float Kd );
 void gyro_pid_init(GYRO_PID_STRUCT *pid, float Kp, float Ki, float Kd );
+void pid_reinit(pid_t *pid);
 extern GYRO_PID_STRUCT gyro_pid;
 
 

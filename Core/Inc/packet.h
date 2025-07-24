@@ -1,15 +1,3 @@
-/******************************************************************************
- * packet.h - 
- * 
- * Copyright 2008-2015 Shouxian Chen.
- * 
- * DESCRIPTION: - 
- * 
- * modification history
- * --------------------
- * v1.0   2015/09/11, Shouxian Chen create this file
- * 
- ******************************************************************************/
 #ifndef __PACKET_H__
 #define __PACKET_H__
 
@@ -50,17 +38,6 @@ typedef struct
 	unsigned char   recv_cpuid_start_flag;        //开始接收cpuid数据标志
 	unsigned char   recv_cpuid_ok;               //cpuid认证码全部接收完毕标志
 }idenfity_cpuid_struct;
-
-packet_type_t get_packet_type( unsigned char* data, int len );
-int stop_mode_packet(char *q);
-int packet(char *q);
-int packet_cray(char *q);
-int decode_packet_robot( packet_robot_t *packet, unsigned char *data, int len );
-int decode_packet_robot_new( packet_robot_t *packet, unsigned char *data, int len );
-int decode_packet_robot_cray( packet_robot_t *packet, unsigned char *data, int len );
-int decode_pid_packet_robot( packet_robot_t *packet, unsigned char *data, int len );
-int decode_shoot_power_curve_packet_robot( packet_robot_t *packet, unsigned char *data, int len );
-int decode_identify_packet( idenfity_cpuid_struct *id_code, unsigned char *data );
 
 
 #endif

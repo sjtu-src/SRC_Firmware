@@ -1,7 +1,6 @@
 #include "misc.h"
 #include "gpio.h"
 #include "cfg.h"
-#include "stm32f4xx.h"
 #include "robot.h"
 #include "math.h"
 #include "main.h"
@@ -136,4 +135,24 @@ u8 nrf_spi_wr_rd(uint8_t input)
     
     HAL_SPI_TransmitReceive(&HAL_NRF24L01_SPI, &tx_data, &rx_data, 1, HAL_MAX_DELAY);
     return rx_data;
+}
+
+/*******************************************************************************
+* @brief shoot功能关闭
+* @author Xuanting Liu
+*******************************************************************************/
+void shoot_off(void)
+{
+	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
+	__HAL_TIM_DISABLE(&htim9);
+}
+
+/*******************************************************************************
+* @brief chip功能关闭
+* @author Xuanting Liu
+*******************************************************************************/
+void chip_off(void)
+{
+	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
+	__HAL_TIM_DISABLE(&htim9);
 }

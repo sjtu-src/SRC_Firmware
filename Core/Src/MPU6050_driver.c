@@ -1,6 +1,5 @@
 #include "MPU6050_driver.h"
 #include "math.h"
-#include "stm32f4xx.h"
 #include "action.h"
 #include "main.h"
 #include "tim.h"
@@ -83,7 +82,7 @@ int InitMPU6050(void)
 *******************************************************************************/
 unsigned char MPU6050_is_DRY(void)
 {
-    if(GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_14)==Bit_RESET)//低电平有效
+    if(HAL_GPIO_ReadPin(INT_GPIO_Port,INT_Pin)==GPIO_PIN_RESET)//低电平有效
 	{
 	   return 1;
 	}

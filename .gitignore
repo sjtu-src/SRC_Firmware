@@ -1,3 +1,9 @@
 *.log
 *.o
 *.crf
+*.lenovo
+*.d
+.\MDK-ARM\.vscode
+*.json
+MDK-ARM/SRC_Firmware.uvoptx
+MDK-ARM/.vscode/uv4.log.lock

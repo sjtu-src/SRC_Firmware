@@ -1,6 +1,6 @@
 #include "NRF24L01.h"
 #include "main.h"
-#include "spi.c"
+#include "spi.h"
 #include "typedef.h"
 #include "gpio.h"
 #include "nrf24l01_drv.h"

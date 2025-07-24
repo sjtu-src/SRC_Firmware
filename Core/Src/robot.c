@@ -27,11 +27,9 @@ int max_shot_strength_set;
 *******************************************************************************/
 void SRC_Robot_Init(void)
 {
-	int rtn = 0;
 	int delay;
 
 	init_gpio();
-	init_kiker();
 	init_motor();
 	init_dribbler();
 	init_i2c();

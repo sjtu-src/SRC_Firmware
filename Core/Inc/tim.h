@@ -53,6 +53,8 @@ extern TIM_HandleTypeDef htim10;
 extern TIM_HandleTypeDef htim11;
 
 /* USER CODE BEGIN Private defines */
+typedef u64 timer_t;
+
 void wait_us(u8 time);
 /* USER CODE END Private defines */
 

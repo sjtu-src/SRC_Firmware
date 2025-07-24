@@ -1,6 +1,8 @@
 #ifndef __CFG_H__
 #define __CFG_H__
 
+#include "nrf24l01_drv.h"
+
 #define PI 3.14159265358979f
 
 
