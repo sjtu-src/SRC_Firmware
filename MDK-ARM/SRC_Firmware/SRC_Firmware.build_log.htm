@@ -1,0 +1,121 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: ¦ÌVision V5.38.0.0
+Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: Xuanting Liu, Shanghai Jiao Tong University, LIC=GE7EV-PBI2Y-HRGXN-YDR10-Q86HA-GQFDP
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Professional  Version: 5.14.0.0
+Toolchain Path:  D:\Keil_v5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.05 update 1 (build 106)
+Assembler:       Armasm.exe V5.05 update 1 (build 106)
+Linker/Locator:  ArmLink.exe V5.05 update 1 (build 106)
+Library Manager: ArmAr.exe V5.05 update 1 (build 106)
+Hex Converter:   FromElf.exe V5.05 update 1 (build 106)
+CPU DLL:         SARMCM3.DLL V5.14.0.0
+Dialog DLL:      DCM.DLL V1.13.1.0
+Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V2.0.14.0_KEIL
+Dialog DLL:      TCM.DLL V1.14.4.0
+ 
+<h2>Project:</h2>
+E:\myCode\STM32\SRC_Firmware\MDK-ARM\SRC_Firmware.uvprojx
+Project File Date:  07/23/2025
+
+<h2>Output:</h2>
+  
+Warning: *** SUPPORT EXPIRED, NEW PRODUCT SERIAL NUMBER REQUIRED ***
+         *** Running with Code Size Limit: 32K                   ***
+*** Using Compiler 'V5.05 update 1 (build 106)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
+Build target 'SRC_Firmware'
+Note: source file '../Core/Src/system_stm32f4xx.c' - object file renamed from 'SRC_Firmware\system_stm32f4xx.o' to 'SRC_Firmware\system_stm32f4xx_1.o'.
+compiling robot.c...
+D:\Keil_v5\ARM\Pack\ARM\CMSIS\4.2.0\CMSIS\Include\arm_math.h(305): error:  #35: #error directive: "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
+    #error "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
+..\Core\Src\robot.c: 0 warnings, 1 error
+compiling action.c...
+D:\Keil_v5\ARM\Pack\ARM\CMSIS\4.2.0\CMSIS\Include\arm_math.h(305): error:  #35: #error directive: "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
+    #error "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
+..\Core\Src\action.c: 0 warnings, 1 error
+assembling startup_stm32f407xx.s...
+compiling misc.c...
+../Core/Inc/misc.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
+  #include "stm32f4xx_conf.h"
+..\Core\Src\misc.c: 0 warnings, 1 error
+compiling comm.c...
+../Core/Inc/packet.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
+  #include "stm32f4xx_conf.h"
+..\Core\Src\comm.c: 0 warnings, 1 error
+compiling motor.c...
+../Core/Inc/motor.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
+  #include "stm32f4xx_conf.h"
+..\Core\Src\motor.c: 0 warnings, 1 error
+compiling packet.c...
+../Core/Inc/packet.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
+  #include "stm32f4xx_conf.h"
+..\Core\Src\packet.c: 0 warnings, 1 error
+compiling main.c...
+../Core/Inc/nrf24l01_drv.h(19): error:  #5: cannot open source input file "typedef.h": No such file or directory
+  #include "typedef.h"
+../Core/Src/main.c: 0 warnings, 1 error
+compiling pid.c...
+D:\Keil_v5\ARM\Pack\ARM\CMSIS\4.2.0\CMSIS\Include\arm_math.h(305): error:  #35: #error directive: "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
+    #error "Define according the used Cortex core ARM_MATH_CM7, ARM_MATH_CM4, ARM_MATH_CM3, ARM_MATH_CM0PLUS or ARM_MATH_CM0"
+..\Core\Src\pid.c: 0 warnings, 1 error
+compiling adc.c...
+compiling spi.c...
+compiling MPU6050_driver.c...
+..\Core\Src\MPU6050_driver.c(13): error:  #5: cannot open source input file "I2c.h": No such file or directory
+  #include "I2c.h"
+..\Core\Src\MPU6050_driver.c: 0 warnings, 1 error
+compiling stm32f4xx_it.c...
+compiling system_stm32f4xx.c...
+compiling gpio.c...
+compiling stm32f4xx_hal_msp.c...
+compiling param.c...
+../Core/Inc/param.h(16): error:  #5: cannot open source input file "typedef.h": No such file or directory
+  #include "typedef.h"
+..\Core\Src\param.c: 0 warnings, 1 error
+compiling usart.c...
+compiling freertos.c...
+compiling tim.c...
+compiling nrf24l01.c...
+../Core/Inc/nrf24l01.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
+  #include "stm32f4xx_conf.h"
+..\Core\Src\nrf24l01.c: 0 warnings, 1 error
+compiling nrf24l01_drv.c...
+../Core/Inc/nRF24L01.h(17): error:  #5: cannot open source input file "stm32f4xx_conf.h": No such file or directory
+  #include "stm32f4xx_conf.h"
+..\Core\Src\nrf24l01_drv.c: 0 warnings, 1 error
+compiling system_stm32f4xx.c...
+"SRC_Firmware\SRC_Firmware.axf" - 12 Error(s), 1 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: ARM
+                http://www.keil.com/pack/ARM.CMSIS.4.2.0.pack
+                ARM.CMSIS.4.2.0
+                CMSIS (Cortex Microcontroller Software Interface Standard)
+   * Component: CORE Version: 3.40.0
+
+Package Vendor: Keil
+                http://www.keil.com/pack/Keil.STM32F4xx_DFP.1.0.8.pack
+                Keil.STM32F4xx_DFP.1.0.8
+                STMicroelectronics STM32F4 Series Device Support, Drivers and Examples
+
+<h2>Collection of Component include folders:</h2>
+  ./RTE/_SRC_Firmware
+  D:/Keil_v5/ARM/Pack/ARM/CMSIS/4.2.0/CMSIS/Include
+  D:/Keil_v5/ARM/Pack/Keil/STM32F4xx_DFP/1.0.8/Device/Include
+
+<h2>Collection of Component Files used:</h2>
+
+   * Component: ARM::CMSIS:CORE:3.40.0
+      Source file:   CMSIS/UserCodeTemplates/ARM/ITM_Retarget.c
+Target not created.
+Build Time Elapsed:  00:00:08
+</pre>
+</body>
+</html>

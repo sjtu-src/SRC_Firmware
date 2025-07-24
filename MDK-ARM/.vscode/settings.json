@@ -1,0 +1,24 @@
+{
+    "files.associations": {
+        "misc.h": "c",
+        "robot.h": "c",
+        "typedef.h": "c",
+        "action.h": "c",
+        "cfg.h": "c",
+        "comm.h": "c",
+        "mpu6050_driver.h": "c",
+        "motor.h": "c",
+        "stm32f4xx.h": "c",
+        "gpio.h": "c",
+        "param.h": "c",
+        "pid.h": "c",
+        "packet.h": "c",
+        "main.h": "c",
+        "tim.h": "c",
+        "nrf24l01.h": "c",
+        "math.h": "c",
+        "error.h": "c",
+        "simulate_i2c.h": "c",
+        "cmsis_os.h": "c"
+    }
+}
