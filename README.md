@@ -45,6 +45,7 @@ Main code resides in the `.\Core` directory, with headers in `.\Core\Inc` and so
 - `MPU6050_driver.c`: Driver for MPU6050 gyroscope  
 
 Other files contain basic peripheral configurations and are not detailed here.
+
 ---
 ## 开发计划
 - [x] 完成各硬件资源的初始化配置。
