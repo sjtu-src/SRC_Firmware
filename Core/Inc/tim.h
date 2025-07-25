@@ -56,6 +56,8 @@ extern TIM_HandleTypeDef htim11;
 typedef u64 timer_t;
 
 void wait_us(u8 time);
+void wait_100us(u8 time);
+void wait_ms_with_dis_int(u8 time);
 /* USER CODE END Private defines */
 
 void MX_TIM1_Init(void);

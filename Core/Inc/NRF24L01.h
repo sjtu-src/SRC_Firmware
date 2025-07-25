@@ -27,6 +27,7 @@ int send_nRF24L01_packet(nRF24L01 *dev);
 void nrf24l01_init(void);
 void start_nRF24L01_RX(void);
 void set_receive_flag(void);
+void clr_receive_flag(void);
 
 
 #endif /* NRF24L01_H_ */

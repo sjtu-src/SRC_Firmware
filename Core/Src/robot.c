@@ -9,11 +9,9 @@
 #include "misc.h"
 #include "motor.h"
 #include "comm.h"
-#include "MPU6050_driver.h"
 #include "packet.h"
 #include "NRF24L01.h"
 #include "error.h"
-#include "simulate_i2c.h"
 #include "pid.h"
 
 int wheel_reduction_ratio_x_set; /*减速比*/		
@@ -37,17 +35,6 @@ void SRC_Robot_Init(void)
 
 	for(delay = 0;delay < 50000000 ; delay++);
 	
-	#if MPU6050_GYRO_USED
-		if(InitMPU6050() == 0) //陀螺仪初始化失败
-		{  
-			int i = 0;
-			error_flag.bit.mpu6050_flag = 1;
-			BEEP_ON();
-			for(i = 0;i < 10000000 ; i++);
-			BEEP_OFF();
-			for(i = 0;i < 10000000 ; i++);
-		}
-	#endif
 	EN_INT();
 
 	init_robot();
@@ -109,9 +96,6 @@ void init_robot(void)
 	pid_init(&(g_robot.wheels[2].pid), MOTOR_PID_KP3, MOTOR_PID_KI3, MOTOR_PID_KD3);
 	pid_init(&(g_robot.wheels[3].pid), MOTOR_PID_KP4, MOTOR_PID_KI4, MOTOR_PID_KD4);
 
-	#if MPU6050_GYRO_USED
-	gyro_pid_init(&gyro_pid, GYRO_PID_KP, GYRO_PID_KI, GYRO_PID_KD);
-	#endif
 	g_robot.dribbler = 0;
 	g_robot.kv2n = 74037;
 	

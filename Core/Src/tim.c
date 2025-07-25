@@ -412,9 +412,9 @@ void MX_TIM9_Init(void)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM9_Init 2 */
-	TIM_CCxCmd(TIM9, TIM_CHANNEL_1, 0);
-	TIM_CCxCmd(TIM9, TIM_CHANNEL_2, 0);
+    /* USER CODE BEGIN TIM9_Init 2 */
+  HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
   /* USER CODE END TIM9_Init 2 */
   HAL_TIM_MspPostInit(&htim9);
 
@@ -951,5 +951,34 @@ void wait_us(u8 time)
 	TIM6->CR1 |= 0x1;
 
 	while((TIM6->CR1 & 0x1) == 1) ;
+}
+
+
+/*******************************************************************************
+*@author Xuanting Liu
+*@brief 延时指定time*100微秒
+*******************************************************************************/
+void wait_100us(u8 time)
+{
+	while(time > 0)
+	{
+		wait_us(100);
+		time--;
+	}
+}
+
+/*******************************************************************************
+*@author Xuanting Liu
+*@brief 延时指定毫秒
+*******************************************************************************/
+void wait_ms_with_dis_int(u8 time)
+{
+	u16 cnt;
+
+	cnt = time * 4;
+	while(cnt--)
+	{
+		wait_us(250);
+	}
 }
 /* USER CODE END 1 */

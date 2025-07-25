@@ -176,7 +176,7 @@
 #define BLUETOOTH_MAX_NAME 10   //蓝牙名称最大长度
 #define BLUETOOTH_MAX_CODE 6   //蓝牙密码最大长度
 
-#define MPU6050_GYRO_USED  1
+#define MPU6050_GYRO_USED  0
 
 //射门力度调整曲线参数
 #define SHOOT_POWER_CURVE_A 13

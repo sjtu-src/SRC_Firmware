@@ -435,11 +435,6 @@
               <FilePath>..\Core\Src\pid.c</FilePath>
             </File>
             <File>
-              <FileName>MPU6050_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\MPU6050_driver.c</FilePath>
-            </File>
-            <File>
               <FileName>param.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Src\param.c</FilePath>
@@ -453,11 +448,6 @@
               <FileName>NRF24L01.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Src\NRF24L01.c</FilePath>
-            </File>
-            <File>
-              <FileName>simulate_i2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\simulate_i2c.c</FilePath>
             </File>
             <File>
               <FileName>main.c</FileName>
@@ -768,6 +758,11 @@
               <FileName>nrf24l01_drv.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Src\nrf24l01_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>simulate_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\simulate_i2c.c</FilePath>
             </File>
           </Files>
         </Group>

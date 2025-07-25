@@ -160,3 +160,12 @@ void set_receive_flag()
 {
 	receive_flag = 1;
 }
+
+/******************************************************************************
+ * @brief 将receive_flag置为0
+ * @author Shouxian Chen
+ ******************************************************************************/
+void clr_receive_flag()
+{
+	receive_flag = 0;
+}
