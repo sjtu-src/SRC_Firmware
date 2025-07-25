@@ -14,11 +14,10 @@
 - `packet.c`：通讯解包相关。
 - `comm.c`：通信相关。
 - `action.c`：机器人运动相关。
-- `simulate_i2c.c`：IO口模拟i2c通信，用于控制陀螺仪。
+- `simulate_i2c.c`：IO口模拟i2c通信。
 - `param.c`：机器人相关常数配置。
-- `error.c`：机器人异常状态标志
+- `error.c`：机器人异常状态标志。
 - `NRF24L01.c`：通信主芯片NRF24L01驱动。
-- `MPU6050_driver.c`：陀螺仪MPU6050驱动。
 其他文件为基础的外设配置，此处不赘述。
 ---
 ## Introduction
