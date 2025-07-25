@@ -155,8 +155,10 @@ void Update_Motor(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    Debug_Here();
-    osDelay(1);
+    BEEP_ON();
+    osDelay(100);
+    BEEP_OFF();
+    osDelay(1000);
   }
   /* USER CODE END Update_Motor */
 }
@@ -174,7 +176,10 @@ void Do_Comm(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    COMM_LED_ON();
+    osDelay(100);
+    COMM_LED_OFF();
+    osDelay(200);
   }
   /* USER CODE END Do_Comm */
 }
