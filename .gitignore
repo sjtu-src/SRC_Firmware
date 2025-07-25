@@ -7,3 +7,4 @@
 *.json
 MDK-ARM/SRC_Firmware.uvoptx
 MDK-ARM/.vscode/uv4.log.lock
+MDK-ARM/SRC_Firmware/SRC_Firmware.build_log.htm
