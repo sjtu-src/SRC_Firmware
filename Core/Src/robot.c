@@ -1,5 +1,6 @@
 #include <string.h>
 #include "math.h"
+#include "tim.h"
 #include "gpio.h"
 #include "robot.h"
 #include "cfg.h"
@@ -127,4 +128,20 @@ void init_robot(void)
 
 	/* initial ir pwm */
 	start_ir_pwm();
+}
+
+/*******************************************************************************
+*@author Xuanting Liu
+*@brief 用于Debug的标志，该函数会使蜂鸣器快速鸣叫5次
+*******************************************************************************/
+void Debug_Here(void)
+{
+	int delay;
+	for(delay = 0; delay < 5; delay ++)
+	{
+		BEEP_ON();
+		wait_ms_with_dis_int(100);
+		BEEP_OFF();
+		wait_ms_with_dis_int(100);
+	}
 }

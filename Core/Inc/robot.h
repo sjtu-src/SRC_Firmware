@@ -66,6 +66,7 @@ typedef struct _robot_
 
 void SRC_Robot_Init(void);
 void init_robot(void);
+void Debug_Here(void);
 
 extern robot_t g_robot;
 

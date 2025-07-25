@@ -25,7 +25,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "gpio.h"
+#include "robot.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -154,6 +155,7 @@ void Update_Motor(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+    Debug_Here();
     osDelay(1);
   }
   /* USER CODE END Update_Motor */
