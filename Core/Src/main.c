@@ -54,6 +54,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
+static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -61,6 +62,7 @@ void MX_FREERTOS_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 robot_t g_robot;
+extern SemaphoreHandle_t xMotorTickSem;
 /* USER CODE END 0 */
 
 /**
@@ -105,6 +107,10 @@ int main(void)
   MX_TIM11_Init();
   MX_USART1_UART_Init();
   MX_TIM6_Init();
+  MX_TIM12_Init();
+
+  /* Initialize interrupts */
+  MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
   SRC_Robot_Init();
   /* USER CODE END 2 */
@@ -122,7 +128,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -173,18 +179,29 @@ void SystemClock_Config(void)
   }
 }
 
+/**
+  * @brief NVIC Configuration.
+  * @retval None
+  */
+static void MX_NVIC_Init(void)
+{
+  /* TIM8_BRK_TIM12_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(TIM8_BRK_TIM12_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(TIM8_BRK_TIM12_IRQn);
+}
+
 /* USER CODE BEGIN 4 */
 
 /*******************************************************************************
 *@author Xuanting Liu
-*@brief çº¢å¤–ä¸­æ–­æœåŠ¡å‡½æ•°ï¼Œæ›´æ–° is_ball_detected
+*@brief ºìÍâÖÐ¶Ï·þÎñº¯Êý£¬¸üÐÂ is_ball_detected
 *******************************************************************************/
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     static uint32_t last_time = 0;
     uint32_t current_time = HAL_GetTick();
     
-    /* é˜²æŠ–åŠ¨å¤„ç† */
+    /* ·À¶¶¶¯´¦Àí */
     if ((current_time - last_time) > 20) {
         if (GPIO_Pin == IR_BALL_DECT_Pin) 
         {
@@ -198,6 +215,27 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     }
 }
 
+
+/*******************************************************************************
+*@author Xuanting Liu
+*@brief TIM12ÖÐ¶Ï·þÎñº¯Êý£¬Ã¿1ms²úÉúÒ»´ÎÖÐ¶ÏÒÔÖ´ÐÐµç»úpid
+*******************************************************************************/
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    static uint32_t time_cnt = 0;
+    
+    if(htim->Instance == TIM12)
+    {
+      if(++time_cnt >= 1000)
+      {
+        static BaseType_t xHigherPriorityTaskWoken;
+        xSemaphoreGiveFromISR(xMotorTickSem, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+        time_cnt = 0;
+      }
+    }
+}
+
 /* USER CODE END 4 */
 
 /**
@@ -208,7 +246,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   * @param  htim : TIM handle
   * @retval None
   */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+void ElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
 

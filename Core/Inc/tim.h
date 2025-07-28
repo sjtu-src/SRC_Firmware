@@ -52,6 +52,8 @@ extern TIM_HandleTypeDef htim10;
 
 extern TIM_HandleTypeDef htim11;
 
+extern TIM_HandleTypeDef htim12;
+
 /* USER CODE BEGIN Private defines */
 typedef u64 timer_t;
 
@@ -70,6 +72,7 @@ void MX_TIM7_Init(void);
 void MX_TIM9_Init(void);
 void MX_TIM10_Init(void);
 void MX_TIM11_Init(void);
+void MX_TIM12_Init(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 

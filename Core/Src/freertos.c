@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "gpio.h"
 #include "robot.h"
+#include "tim.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,13 +47,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+SemaphoreHandle_t xMotorTickSem = NULL;
 /* USER CODE END Variables */
 osThreadId MotorUpdateHandle;
 osThreadId CommunicationHandle;
 osThreadId StatesUpdateHandle;
-osThreadId KickHandle;
-osThreadId CommunicationUpHandle;
 osThreadId IdleHandle;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,9 +61,7 @@ osThreadId IdleHandle;
 
 void Update_Motor(void const * argument);
 void Do_Comm(void const * argument);
-void Update_States(void const * argument);
-void Do_Kick(void const * argument);
-void Do_Comm_Up(void const * argument);
+void RobotTask(void const * argument);
 void Do_Default(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -121,16 +118,8 @@ void MX_FREERTOS_Init(void) {
   CommunicationHandle = osThreadCreate(osThread(Communication), NULL);
 
   /* definition and creation of StatesUpdate */
-  osThreadDef(StatesUpdate, Update_States, osPriorityNormal, 0, 128);
+  osThreadDef(StatesUpdate, RobotTask, osPriorityNormal, 0, 128);
   StatesUpdateHandle = osThreadCreate(osThread(StatesUpdate), NULL);
-
-  /* definition and creation of Kick */
-  osThreadDef(Kick, Do_Kick, osPriorityBelowNormal, 0, 128);
-  KickHandle = osThreadCreate(osThread(Kick), NULL);
-
-  /* definition and creation of CommunicationUp */
-  osThreadDef(CommunicationUp, Do_Comm_Up, osPriorityLow, 0, 192);
-  CommunicationUpHandle = osThreadCreate(osThread(CommunicationUp), NULL);
 
   /* definition and creation of Idle */
   osThreadDef(Idle, Do_Default, osPriorityIdle, 0, 128);
@@ -152,11 +141,36 @@ void MX_FREERTOS_Init(void) {
 void Update_Motor(void const * argument)
 {
   /* USER CODE BEGIN Update_Motor */
+  xMotorTickSem = xSemaphoreCreateBinary();
   /* Infinite loop */
   for(;;)
   {
-    Debug_Here();
-    osDelay(1);
+    if(xSemaphoreTake(xMotorTickSem, pdMS_TO_TICKS(2000)) == pdTRUE) 
+    {
+          // uint32_t start_tick = DWT->CYCCNT;  // 性能监测
+
+          // // 1. 获取目标�? (MODE0:通信队列, MODE3:自检生成)
+          // update_motor_targets(wheels); 
+
+          // // 2. 读取编码器�?�（原子操作�?
+          // for(int i=0; i<4; i++) {
+          //   int32_t delta = atomic_exchange(&encoder_delta[i], 0);
+          //   wheels[i].actual_rpm = (delta * 60000) / (PPR * CONTROL_PERIOD_MS);
+          // }
+
+          // // 3. PI计算 & 输出
+          // for(int i=0; i<4; i++) {
+          //   float out = compute_pi(&wheels[i]);
+          //   pwm_set_duty(i, (uint32_t)(out * PWM_SCALE_FACTOR));
+          // }
+
+          // // 4. 实时性监�? (超时警告)
+          // uint32_t exec_time = (DWT->CYCCNT - start_tick) / CPU_FREQ_MHZ;
+          // if(exec_time > 900) {  // 超过900us警告
+          //   log_warning("MotorCTRL Overrun: %dus", exec_time);
+          // }
+          Debug_Here();  // 调试断点
+        }
   }
   /* USER CODE END Update_Motor */
 }
@@ -179,58 +193,23 @@ void Do_Comm(void const * argument)
   /* USER CODE END Do_Comm */
 }
 
-/* USER CODE BEGIN Header_Update_States */
+/* USER CODE BEGIN Header_RobotTask */
 /**
 * @brief Function implementing the StatesUpdate thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_Update_States */
-void Update_States(void const * argument)
+/* USER CODE END Header_RobotTask */
+void RobotTask(void const * argument)
 {
-  /* USER CODE BEGIN Update_States */
+  /* USER CODE BEGIN RobotTask */
+  HAL_TIM_Base_Start_IT(&htim12);  // 启动TIM12中断
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END Update_States */
-}
-
-/* USER CODE BEGIN Header_Do_Kick */
-/**
-* @brief Function implementing the Kick thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_Do_Kick */
-void Do_Kick(void const * argument)
-{
-  /* USER CODE BEGIN Do_Kick */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END Do_Kick */
-}
-
-/* USER CODE BEGIN Header_Do_Comm_Up */
-/**
-* @brief Function implementing the CommunicationUp thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_Do_Comm_Up */
-void Do_Comm_Up(void const * argument)
-{
-  /* USER CODE BEGIN Do_Comm_Up */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END Do_Comm_Up */
+  /* USER CODE END RobotTask */
 }
 
 /* USER CODE BEGIN Header_Do_Default */
