@@ -1,4 +1,5 @@
 /* USER CODE BEGIN Header */
+/* coding: utf-8 */
 /**
   ******************************************************************************
   * File Name          : freertos.c
@@ -28,6 +29,7 @@
 #include "gpio.h"
 #include "robot.h"
 #include "tim.h"
+#include "motor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -147,30 +149,9 @@ void Update_Motor(void const * argument)
   {
     if(xSemaphoreTake(xMotorTickSem, pdMS_TO_TICKS(2000)) == pdTRUE) 
     {
-          // uint32_t start_tick = DWT->CYCCNT;  // 性能监测
-
-          // // 1. 获取目标�? (MODE0:通信队列, MODE3:自检生成)
-          // update_motor_targets(wheels); 
-
-          // // 2. 读取编码器�?�（原子操作�?
-          // for(int i=0; i<4; i++) {
-          //   int32_t delta = atomic_exchange(&encoder_delta[i], 0);
-          //   wheels[i].actual_rpm = (delta * 60000) / (PPR * CONTROL_PERIOD_MS);
-          // }
-
-          // // 3. PI计算 & 输出
-          // for(int i=0; i<4; i++) {
-          //   float out = compute_pi(&wheels[i]);
-          //   pwm_set_duty(i, (uint32_t)(out * PWM_SCALE_FACTOR));
-          // }
-
-          // // 4. 实时性监�? (超时警告)
-          // uint32_t exec_time = (DWT->CYCCNT - start_tick) / CPU_FREQ_MHZ;
-          // if(exec_time > 900) {  // 超过900us警告
-          //   log_warning("MotorCTRL Overrun: %dus", exec_time);
-          // }
-          Debug_Here();  // 调试断点
-        }
+        do_update_motor();     
+        Debug_Here();  // 调试断点
+    }
   }
   /* USER CODE END Update_Motor */
 }

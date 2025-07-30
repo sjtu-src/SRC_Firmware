@@ -1,3 +1,4 @@
+/* coding: utf-8 */
 #include "math.h"
 #include "cfg.h"
 #include "pid.h"
@@ -83,4 +84,45 @@ void pid_reinit(pid_t *pid)
 	pid->set = 0;
 }
 
+/*******************************************************************************
+* @brief pid控制计算 
+* @note 增量式pid u(k)=u(k-1)+deta_u(k)
+* @note deat_u(k)=(kp+ki+kd)*e(k)-(kp+2kd)*e(k-1)+kd*e(k-2)
+*******************************************************************************/
+int pid_step(pid_t *pid, int cur_value, float bat_v )
+{
+	long rpm = 0; 
+	long max_output_for_torque = 0;
+	int d_out;
+  
+	/* standard digital PID algorithm */
+	pid->e3 = pid->e2;
+	pid->e2 = pid->e1;
+	pid->e1 = pid->set - cur_value;
+
+	d_out = pid->A * pid->e1 - pid->B * pid->e2 + pid->C * pid->e3;
+  
+	pid->out = pid->out + d_out;
+	
+	/* output limit */
+	if( pid->out > pid->limit )
+		pid->out = pid->limit;
+	else if( pid->out < -pid->limit )
+		pid->out = -pid->limit;
+  
+	#ifdef ENABLE_TORQUE_LIMIT
+		/* perform torque limit */
+		rpm = N2RPM(cur_value);
+		if( rpm < 0 ) rpm = -rpm;
+		max_output_for_torque = calc_max_output( pid->torque_limit, rpm, bat_v);
+
+		/* torque limit */
+		if( pid->out > max_output_for_torque )
+			pid->out = max_output_for_torque;
+		else if( pid->out < -max_output_for_torque )
+			pid->out = -max_output_for_torque;
+	#endif
+
+	return pid->out;
+}
 

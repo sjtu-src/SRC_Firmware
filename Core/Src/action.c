@@ -1,3 +1,4 @@
+/* coding: utf-8 */
 #include <math.h>
 #include <stdlib.h>
 #include "math.h"

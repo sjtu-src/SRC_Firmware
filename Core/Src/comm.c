@@ -1,3 +1,4 @@
+/* coding: utf-8 */
 #include <string.h>
 #include "packet.h"
 #include "robot.h"

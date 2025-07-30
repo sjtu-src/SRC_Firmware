@@ -9,6 +9,7 @@ void start_ir_pwm(void);
 u8 nrf_spi_wr_rd(u8 input);
 void chip_off(void);
 void shoot_off(void);
+long N2RPM(long speed);
 
 #endif
  

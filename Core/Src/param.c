@@ -1,3 +1,4 @@
+/* coding: utf-8 */
 #include <string.h>
 #include "param.h"
 #include "typedef.h"

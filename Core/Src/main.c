@@ -1,4 +1,5 @@
 /* USER CODE BEGIN Header */
+/* coding: utf-8 */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -194,14 +195,14 @@ static void MX_NVIC_Init(void)
 
 /*******************************************************************************
 *@author Xuanting Liu
-*@brief ºìÍâÖĞ¶Ï·şÎñº¯Êı£¬¸üĞÂ is_ball_detected
+*@brief çº¢å¤–ä¸­æ–­æœåŠ¡å‡½æ•°ï¼Œæ›´æ–° is_ball_detected
 *******************************************************************************/
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     static uint32_t last_time = 0;
     uint32_t current_time = HAL_GetTick();
     
-    /* ·À¶¶¶¯´¦Àí */
+    /* é˜²æŠ–åŠ¨å¤„ç† */
     if ((current_time - last_time) > 20) {
         if (GPIO_Pin == IR_BALL_DECT_Pin) 
         {
@@ -218,7 +219,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 /*******************************************************************************
 *@author Xuanting Liu
-*@brief TIM12ÖĞ¶Ï·şÎñº¯Êı£¬Ã¿1ms²úÉúÒ»´ÎÖĞ¶ÏÒÔÖ´ĞĞµç»úpid
+*@brief TIM12ä¸­æ–­æœåŠ¡å‡½æ•°ï¼Œæ¯1msäº§ç”Ÿä¸€æ¬¡ä¸­æ–­ä»¥æ‰§è¡Œç”µæœºpid
 *******************************************************************************/
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -234,6 +235,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         time_cnt = 0;
       }
     }
+
+    inc_receive_mode_flag();
 }
 
 /* USER CODE END 4 */

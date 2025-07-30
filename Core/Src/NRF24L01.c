@@ -1,3 +1,4 @@
+/* coding: utf-8 */
 #include "NRF24L01.h"
 #include "main.h"
 #include "spi.h"

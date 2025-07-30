@@ -1,3 +1,4 @@
+/* coding: utf-8 */
 #include "misc.h"
 #include "gpio.h"
 #include "cfg.h"
@@ -8,7 +9,7 @@
 #include "spi.h"
 
 /*******************************************************************************
-* @brief 吸球电机初始化
+* @brief 初始化吸球电机
 * @author Xuanting Liu
 *******************************************************************************/
 void init_dribbler(void)
@@ -20,8 +21,8 @@ void init_dribbler(void)
 
 /*******************************************************************************
 * @brief 读取拨码开关
-* @param freq 频率
-* @param num 机器人编号
+* @param freq 通信频率
+* @param num 车号
 * @param mode 模式
 * @author Xuanting Liu
 *******************************************************************************/
@@ -56,7 +57,7 @@ void read_dip_sw(u8 *freq, u8 *num, u8 *mode)
 	/* BECARE: the dip sw bit 4 is num and freq point LSB, and bit 1 is MSB */
 	*mode = (u8)((dat >> 13) & 0x7);
 	*freq = (u8)((dat >> 4) & 0xf);
-	*num = (u8)((dat >> 0) & 0xf) + 1; //机器号为拨码盘加1
+	*num = (u8)((dat >> 0) & 0xf) + 1; //??????????????1
 
 	/* change rf frq channel to 24l01 freq */
 	switch(*freq)
@@ -116,7 +117,7 @@ void read_dip_sw(u8 *freq, u8 *num, u8 *mode)
 }
 
 /*******************************************************************************
-* @brief 启动红外PWM
+* @brief 开启红外PWM
 * @author Xuanting Liu
 *******************************************************************************/
 void start_ir_pwm(void)
@@ -155,4 +156,14 @@ void chip_off(void)
 {
 	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
 	__HAL_TIM_DISABLE(&htim9);
+}
+
+/*******************************************************************************
+* @brief motor encoder speed to RPM 速度单位转换将输入的码盘速度[count/s]转换为国际速度单位[rpm]
+* @param speed 格/s  count/s
+* @return rpm 转/分钟 电机最高3000rpm
+*******************************************************************************/
+long N2RPM(long speed )
+{
+	return (speed * 60) / ( 4 * ENCODER_COUNTS_PER_TURN_SET );
 }

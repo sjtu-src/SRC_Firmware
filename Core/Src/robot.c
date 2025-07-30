@@ -1,3 +1,4 @@
+/* coding: utf-8 */
 #include <string.h>
 #include "math.h"
 #include "tim.h"
@@ -18,6 +19,9 @@
 int wheel_reduction_ratio_x_set; /*减速比*/		
 int wheel_reduction_ratio_yz_set; /*减速比*/  //旧轮子减速比为70/22 为3.1818 外圈转1圈，内圈码盘转3.1818圈
 int max_shot_strength_set;
+
+volatile char g_do_set_receive_mode_flag = 0;
+volatile char g_set_receive_mode_flag = 0;
 
 
 /*******************************************************************************
@@ -145,3 +149,16 @@ void Debug_Here(void)
 		wait_ms_with_dis_int(100);
 	}
 }
+
+/*******************************************************************************
+*@author Xuanting Liu
+*@brief 若receive_mode_flag被置位，则增加g_set_receive_mode_flag
+*******************************************************************************/
+void inc_receive_mode_flag(void)
+{
+	if(g_do_set_receive_mode_flag)
+	{
+		g_set_receive_mode_flag++;
+	}
+}
+
