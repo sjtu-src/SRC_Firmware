@@ -37,11 +37,10 @@ Main code resides in the `.\Core` directory, with headers in `.\Core\Inc` and so
 - `packet.c`: Communication packet parsing  
 - `comm.c`: Communication handling  
 - `action.c`: Robot motion control  
-- `simulate_i2c.c`: Software I²C implementation (used for gyroscope control)  
+- `simulate_i2c.c`: Software I²C implementation  
 - `param.c`: Robot configuration parameters  
 - `error.c`: Robot error status flags  
-- `NRF24L01.c`: Driver for NRF24L01 communication chip  
-- `MPU6050_driver.c`: Driver for MPU6050 gyroscope  
+- `NRF24L01.c`: Driver for NRF24L01 communication chip  e  
 
 Other files contain basic peripheral configurations and are not detailed here.
 
