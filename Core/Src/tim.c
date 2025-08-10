@@ -23,6 +23,9 @@
 
 /* USER CODE BEGIN 0 */
 #include "cfg.h"
+#include "typedef.h"
+
+vu64 sys_tick = 0;
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim1;
@@ -1040,5 +1043,54 @@ void wait_ms_with_dis_int(u8 time)
 	{
 		wait_us(250);
 	}
+}
+
+/*******************************************************************************
+* @brief get one timer from system
+*	@author Xuanting Liu
+*******************************************************************************/
+timer_t get_one_timer(u32 time)
+{ 
+	return get_sys_tick() + time;
+}
+
+/*******************************************************************************
+* @brief 更新计数器变量
+*	@author Xuanting Liu
+*******************************************************************************/
+void update_sys_timer(void)
+{
+	/* not need disable int, because the same int of ARM cortex-M3 cannot
+	   be nested */
+	sys_tick = sys_tick + 1;
+}
+
+/*******************************************************************************
+* @brief Get the current system tick number
+*	@author Xuanting Liu
+*******************************************************************************/
+u64 get_sys_tick(void)
+{
+	u64 tmp;
+
+	DIS_INT();
+	tmp = sys_tick;
+	EN_INT();
+
+	return tmp;
+}
+
+/*******************************************************************************
+* @brief check if the timer is expired
+*	@author Xuanting Liu
+*******************************************************************************/
+u8 check_timer(timer_t timer)
+{
+	u64 cur_time;
+
+	cur_time = get_sys_tick();
+	
+	if(cur_time >= timer) return 1;
+	else return 0;
 }
 /* USER CODE END 1 */

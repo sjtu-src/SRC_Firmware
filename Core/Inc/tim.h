@@ -60,6 +60,11 @@ typedef u64 timer_t;
 void wait_us(u8 time);
 void wait_100us(u8 time);
 void wait_ms_with_dis_int(u8 time);
+timer_t get_one_timer(u32 time);
+void update_sys_timer(void);
+u64 get_sys_tick(void);
+u8 check_timer(timer_t timer);
+
 /* USER CODE END Private defines */
 
 void MX_TIM1_Init(void);

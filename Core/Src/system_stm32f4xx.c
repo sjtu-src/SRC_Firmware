@@ -46,6 +46,7 @@
 
 
 #include "stm32f4xx.h"
+#include "main.h"
 
 #if !defined  (HSE_VALUE) 
   #define HSE_VALUE    ((uint32_t)25000000) /*!< Default value of the External oscillator in Hz */
@@ -164,6 +165,7 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
   * @param  None
   * @retval None
   */
+
 void SystemInit(void)
 {
   /* FPU settings ------------------------------------------------------------*/

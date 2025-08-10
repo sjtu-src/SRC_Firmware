@@ -200,3 +200,25 @@ void start_encoder(void)
 	TIM4->CR1 |= TIM_CR1_CEN;
 	TIM5->CR1 |= TIM_CR1_CEN;
 }
+
+/*******************************************************************************
+* @brief 启动电机开始编码器计数
+* @author Xuanting Liu
+*******************************************************************************/ 
+void start_motor(void)
+{
+	u8 i;
+	
+	for(i = 0; i < CHANNEL_NUM; i++)
+	{
+		pid_reinit(&g_robot.wheels[i].pid);
+	}
+
+	start_encoder();
+
+	DIS_INT();
+	is_motor_run = 1;
+	EN_INT();
+
+	__HAL_TIM_ENABLE(&htim1);
+}

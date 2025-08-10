@@ -84,8 +84,7 @@
 #define BATTERY_V   13.0f /* measured in V, maybe detected while running */
 
 #define MAX_SHOT_STRENGTH 127
-//#define MAX_ACC 20	/* 限定车子的加速度 */
-#define MAX_ACC 50	/* 限定车子的加速度 */
+#define MAX_ACC 20	/* 限定车子的加速度 */
 
 #define WHEEL_CENTER_OFFSET 0.080f  /* 轮子距车中心距离(m) 2024.4.16中心重新测定结果*/
 
@@ -167,8 +166,8 @@
 #define IR_BALL_PWM_DUTY	20		//20%
 
 /* Low power limit define */
-#define WARNING_POWER_A 13.2f       //电池电压阈值1 单位v 蜂鸣器响
-#define FORCESTOP_POWER_A 13.8f     //电池电压阈值2  停止机器人
+#define WARNING_POWER_A 13.8f       //电池电压阈值1 单位v 蜂鸣器响
+#define FORCESTOP_POWER_A 13.2f     //电池电压阈值2  停止机器人
 
 #define WARNING_POWER_D 	(WARNING_POWER_A * 3.3f / (22 + 3.3f) / 3.3f * 256)
 #define FORCESTOP_POWER_D 	(FORCESTOP_POWER_A * 3.3f / (22 + 3.3f) / 3.3f * 256)

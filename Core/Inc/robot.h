@@ -11,7 +11,8 @@ typedef enum _mode
 {
 	NORMAL_MODE = 0,     //正常比赛模式 与通讯机通讯
     SELFTEST_MODE = 3,   //自检模式
-	TEST_DRIBBLING_MODE = 2 //自主吸球模式
+	TEST_DRIBBLING_MODE = 2, //自主吸球模式
+	CRAY_MODE = 7 //CRAY模式
 }mode_t;
 
 
@@ -67,7 +68,11 @@ typedef struct _robot_
 void SRC_Robot_Init(void);
 void init_robot(void);
 void Debug_Here(void);
+void Beep_Show_8bit(u8 val);
+void Beep_Show_32bit(u32 val);
 void inc_receive_mode_flag(void);
+void do_robot_run(void);
+int do_power_monitor(void);
 
 extern robot_t g_robot;
 #endif

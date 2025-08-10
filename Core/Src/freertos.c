@@ -50,6 +50,13 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 SemaphoreHandle_t xMotorTickSem = NULL;
+
+timer_t power_mon_timer;
+timer_t heart_led_timer;
+timer_t rf_comm_tim;           //发射机通信超时时间
+timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置为10S
+timer_t shoot_interval_timer;
+
 /* USER CODE END Variables */
 osThreadId MotorUpdateHandle;
 osThreadId CommunicationHandle;
@@ -150,7 +157,7 @@ void Update_Motor(void const * argument)
     if(xSemaphoreTake(xMotorTickSem, pdMS_TO_TICKS(2000)) == pdTRUE) 
     {
         do_update_motor();     
-        Debug_Here();  // 调试断点
+        //Debug_Here();  // 调试断点
     }
   }
   /* USER CODE END Update_Motor */
@@ -184,10 +191,36 @@ void Do_Comm(void const * argument)
 void RobotTask(void const * argument)
 {
   /* USER CODE BEGIN RobotTask */
+	static int mode_count = 0;
+	int i;
+	
+	i = g_robot.mode + 1;		
+
+	while(i != 0)
+	{
+			BEEP_ON();
+			osDelay(100);
+			BEEP_OFF();
+			osDelay(100);
+			i--;
+	}
+
+	/* initial timer */
+	power_mon_timer = get_one_timer(POWER_MON_TIME);
+	heart_led_timer = get_one_timer(HEARTBEAT_TIME);
+	rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME); //无线通信模式超时时间
+	shoot_interval_timer = get_one_timer(1);
+	identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME); //cpuid认证超时时间设置为10s 10s认证不成功则停止机器人
+
+  //Beep_Show_32bit(power_mon_timer);
+
+	/* start motor */
+	start_motor();
   HAL_TIM_Base_Start_IT(&htim12);  // 启动TIM12中断
   /* Infinite loop */
   for(;;)
   {
+    do_robot_run();
     osDelay(1);
   }
   /* USER CODE END RobotTask */

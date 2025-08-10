@@ -237,6 +237,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 
     inc_receive_mode_flag();
+    update_sys_timer();
 }
 
 /* USER CODE END 4 */

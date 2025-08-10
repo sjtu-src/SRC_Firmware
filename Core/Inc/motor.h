@@ -11,6 +11,7 @@ void set_motor_pwm(u16 m1, u16 m2, u16 m3, u16 m4);
 void do_update_motor(void);
 void update_encoder(int *speed);
 void start_encoder(void);
+void start_motor(void);
 
 
 #endif
