@@ -4,6 +4,7 @@
 #include "cfg.h"
 #include "pid.h"
 #include "typedef.h"
+#include "tim.h"
 
 
 /***控制器几种工作模式选择***/
@@ -75,5 +76,6 @@ void do_robot_run(void);
 int do_power_monitor(void);
 
 extern robot_t g_robot;
+
 #endif
 

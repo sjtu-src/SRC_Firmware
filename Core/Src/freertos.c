@@ -30,6 +30,7 @@
 #include "robot.h"
 #include "tim.h"
 #include "motor.h"
+#include "comm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -176,6 +177,7 @@ void Do_Comm(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+    do_communication();
     osDelay(1);
   }
   /* USER CODE END Do_Comm */
@@ -191,7 +193,6 @@ void Do_Comm(void const * argument)
 void RobotTask(void const * argument)
 {
   /* USER CODE BEGIN RobotTask */
-	static int mode_count = 0;
 	int i;
 	
 	i = g_robot.mode + 1;		

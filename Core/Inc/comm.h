@@ -6,6 +6,7 @@
 #include "typedef.h"
 #include "cfg.h"
 #include "nrf24l01.h"
+#include "packet.h"
 
 #define MAX_BUFFER_LEN 25
 #define nRF2401_BUFFER_LEN 256
@@ -22,10 +23,12 @@ typedef struct _comm_
 
 }rf_comm_t;
 
-int init_comm(void);
-int do_comm(void);
-int do_comm_up(void);
+void init_comm(void);
+void do_communication(void);
+int do_packet_process( unsigned char *data, int len);
+void do_comm_up(void);
 
 extern rf_comm_t g_rf_comm;
+
 
 #endif
