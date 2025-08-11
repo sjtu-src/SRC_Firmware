@@ -107,8 +107,7 @@ void MX_TIM1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM1_Init 2 */
-  __HAL_TIM_DISABLE(&htim1);
-  __HAL_TIM_MOE_ENABLE(&htim1);
+
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
 
@@ -502,7 +501,8 @@ void MX_TIM11_Init(void)
   }
   __HAL_TIM_DISABLE_OCxPRELOAD(&htim11, TIM_CHANNEL_1);
   /* USER CODE BEGIN TIM11_Init 2 */
-  
+    HAL_TIM_Base_Start_IT(&htim11);
+    HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
   /* USER CODE END TIM11_Init 2 */
   HAL_TIM_MspPostInit(&htim11);
 

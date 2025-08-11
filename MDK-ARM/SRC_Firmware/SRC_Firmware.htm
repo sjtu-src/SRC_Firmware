@@ -3,7 +3,7 @@
 <title>Static Call Graph - [SRC_Firmware\SRC_Firmware.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image SRC_Firmware\SRC_Firmware.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Sat Aug 09 20:59:18 2025
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Mon Aug 11 14:36:30 2025
 <BR><P>
 <H3>Maximum Stack Usage =        320 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1042,7 +1042,9 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[99]"></a>HAL_TIM_Base_Start_IT</STRONG> (Thumb, 100 bytes, Stack size 0 bytes, stm32f4xx_hal_tim.o(i.HAL_TIM_Base_Start_IT))
-<BR><BR>[Called By]<UL><LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
+<BR><BR>[Called By]<UL><LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_motor
+<LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
+<LI><a href="#[e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_TIM11_Init
 <LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_InitTick
 </UL>
 
@@ -1170,8 +1172,10 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TIM_CCxChannelCmd
 </UL>
-<BR>[Called By]<UL><LI><a href="#[171]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;shoot_on
+<BR>[Called By]<UL><LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_motor
+<LI><a href="#[171]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;shoot_on
 <LI><a href="#[11c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;chip_on
+<LI><a href="#[e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_TIM11_Init
 </UL>
 
 <P><STRONG><a name="[c6]"></a>HAL_TIM_PWM_Stop</STRONG> (Thumb, 114 bytes, Stack size 12 bytes, stm32f4xx_hal_tim.o(i.HAL_TIM_PWM_Stop))
@@ -1398,10 +1402,12 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[e4]"></a>MX_TIM11_Init</STRONG> (Thumb, 106 bytes, Stack size 40 bytes, tim.o(i.MX_TIM11_Init))
+<P><STRONG><a name="[e4]"></a>MX_TIM11_Init</STRONG> (Thumb, 120 bytes, Stack size 40 bytes, tim.o(i.MX_TIM11_Init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = MX_TIM11_Init &rArr; HAL_TIM_MspPostInit &rArr; HAL_GPIO_Init
 </UL>
-<BR>[Calls]<UL><LI><a href="#[dc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Error_Handler
+<BR>[Calls]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
+<LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_PWM_Start
+<LI><a href="#[dc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Error_Handler
 <LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 <LI><a href="#[c2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_PWM_Init
 <LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_PWM_ConfigChannel
@@ -1421,7 +1427,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[e6]"></a>MX_TIM1_Init</STRONG> (Thumb, 242 bytes, Stack size 80 bytes, tim.o(i.MX_TIM1_Init))
+<P><STRONG><a name="[e6]"></a>MX_TIM1_Init</STRONG> (Thumb, 202 bytes, Stack size 80 bytes, tim.o(i.MX_TIM1_Init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = MX_TIM1_Init &rArr; HAL_TIM_MspPostInit &rArr; HAL_GPIO_Init
 </UL>
 <BR>[Calls]<UL><LI><a href="#[dc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Error_Handler
@@ -1547,12 +1553,12 @@ Global Symbols
 <P><STRONG><a name="[68]"></a>RobotTask</STRONG> (Thumb, 128 bytes, Stack size 0 bytes, freertos.o(i.RobotTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = RobotTask &rArr; do_robot_run &rArr; do_power_monitor &rArr; Debug_Here &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_motor
+<BR>[Calls]<UL><LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
+<LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_motor
 <LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_one_timer
 <LI><a href="#[f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 <LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
-<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.constdata)
 </UL>
@@ -2432,11 +2438,13 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_robot
 </UL>
 
-<P><STRONG><a name="[f2]"></a>start_motor</STRONG> (Thumb, 54 bytes, Stack size 16 bytes, motor.o(i.start_motor))
-<BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = start_motor &rArr; start_encoder
+<P><STRONG><a name="[f2]"></a>start_motor</STRONG> (Thumb, 82 bytes, Stack size 16 bytes, motor.o(i.start_motor))
+<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = start_motor &rArr; HAL_TIM_PWM_Start &rArr; TIM_CCxChannelCmd
 </UL>
 <BR>[Calls]<UL><LI><a href="#[155]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pid_reinit
+<LI><a href="#[99]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
 <LI><a href="#[172]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_encoder
+<LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_PWM_Start
 </UL>
 <BR>[Called By]<UL><LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
 </UL>
