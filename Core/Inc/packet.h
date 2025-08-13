@@ -9,6 +9,8 @@
 #define DEBUG_FUNCTION_Set_9557_error       7
 #define MAX_IDENTIFY_LEN                    256
 #define IDENTIFY_START_ADDR                 21   //packet中第22个字节表示认证识别地址开始
+
+
 typedef enum _packet_type_
 {
 	PACKET_NONE = -1,
@@ -39,5 +41,9 @@ typedef struct
 	unsigned char   recv_cpuid_ok;               //cpuid认证码全部接收完毕标志
 }idenfity_cpuid_struct;
 
+packet_type_t get_packet_type( unsigned char* data, int len );
+void stop_mode_packet(char *q);
+void packet(char *q);
+int decode_packet( packet_robot_t *packet, unsigned char *data, int len );
 
 #endif

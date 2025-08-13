@@ -170,3 +170,12 @@ void clr_receive_flag()
 {
 	receive_flag = 0;
 }
+
+/******************************************************************************
+ * @brief 获取receive_flag的值
+ * @author Shouxian Chen
+ ******************************************************************************/
+u8 get_receive_flag(void)
+{
+	return receive_flag;
+}
