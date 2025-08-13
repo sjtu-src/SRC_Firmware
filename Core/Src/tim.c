@@ -152,7 +152,8 @@ void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_2);
   /* USER CODE END TIM2_Init 2 */
 
 }
@@ -196,7 +197,8 @@ void MX_TIM3_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM3_Init 2 */
-
+  HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_1);
+  HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_2);
   /* USER CODE END TIM3_Init 2 */
 
 }
@@ -240,7 +242,8 @@ void MX_TIM4_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM4_Init 2 */
-
+  HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_1);
+  HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_2);
   /* USER CODE END TIM4_Init 2 */
 
 }
@@ -284,7 +287,8 @@ void MX_TIM5_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM5_Init 2 */
-
+  HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_1);
+  HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_2);
   /* USER CODE END TIM5_Init 2 */
 
 }
@@ -360,6 +364,7 @@ void MX_TIM7_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM7_Init 2 */
+  TIM7->DIER = 0x0;
   TIM7->EGR = 0x1;
   TIM7->CNT = 0X0;
   TIM7->SR = 0X0;

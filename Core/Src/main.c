@@ -227,7 +227,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     
     if(htim->Instance == TIM12)
     {
-      if(++time_cnt >= 1000)
+      if(++time_cnt >= 2)
       {
         static BaseType_t xHigherPriorityTaskWoken;
         xSemaphoreGiveFromISR(xMotorTickSem, &xHigherPriorityTaskWoken);
