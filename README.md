@@ -49,6 +49,6 @@ Other files contain basic peripheral configurations and are not detailed here.
 - [x] 完成各硬件资源的初始化配置。
 - [x] 完成机器人初始化部分代码编写。
 - [x] 确定操作系统线程分配及优先级配置。
-- [ ] 完成自检模式
-- [ ] 完成正常比赛模式
-
+- [x] 完成自检模式
+- [x] 完成正常比赛模式
+- [ ] 实车测试
