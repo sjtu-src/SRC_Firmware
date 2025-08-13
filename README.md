@@ -2,7 +2,7 @@
 - 该仓库为搭载了 FreeRTOS 实时操作系统的SSL机器人嵌入式代码，适配上海交通大学SRC赛队自主开发的机器人 Version 1.5，主控芯片型号为STM32F407VET6。
 - 该工程使用 STM32CubeMX 进行硬件资源配置与管理，使用 Keil uVision5 进行开发。
 - 该工程使用 HAL 库进行开发，相较以往版本进行了较大改动，但其可移植性和可扩展性将得到极大改善。
-- 目前代码仍在开发中，因此代码是**不完善的**，有 bug 为正常现象。
+- 目前代码基本内容已经完成，实车测试正在进行，因此代码可能是**不完善的**，有 bug 为正常现象。
 
 ## 代码说明
 主要代码存放在 .\Core 文件夹中，其中 .\Core\Inc 为头文件， .\Core\Src 为源代码。以下是各部分代码的功能说明：
@@ -24,7 +24,7 @@
 - This repository contains embedded code for an SSL robot running on the FreeRTOS real-time operating system, compatible with Version 1.5 of the autonomous robot independently developed by Shanghai Jiao Tong University's SRC Team. The main control chip model is STM32F407VET6.
 - The project uses STM32CubeMX for hardware resource configuration and management, and Keil uVision5 for development.
 - The project is developed using the HAL library. Compared to previous versions, significant modifications have been made to greatly improve portability and extensibility.
-- **The code is currently under development**, therefore it is **incomplete**. The presence of bugs is normal.
+- The basic code is finished recently, and the testing is in progress, therefore it is probably **incomplete**. The presence of bugs is normal.
 
 ## Code Structure
 Main code resides in the `.\Core` directory, with headers in `.\Core\Inc` and source files in `.\Core\Src`. Functional descriptions of key components:
