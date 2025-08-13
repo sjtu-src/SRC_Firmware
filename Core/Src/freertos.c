@@ -26,11 +26,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
 #include "gpio.h"
 #include "robot.h"
 #include "tim.h"
 #include "motor.h"
 #include "comm.h"
+#include "action.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,6 +65,10 @@ osThreadId MotorUpdateHandle;
 osThreadId CommunicationHandle;
 osThreadId StatesUpdateHandle;
 osThreadId IdleHandle;
+
+extern char g_do_set_receive_mode_flag;
+
+extern packet_robot_t src_robot_packet;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -178,7 +184,23 @@ void Do_Comm(void const * argument)
   for(;;)
   {
     do_communication();
-    osDelay(1);
+
+		if(check_timer(rf_comm_tim)) 
+			{
+				/* 防止通讯中断，置位设置通讯为接收模块标志位 */
+				g_do_set_receive_mode_flag = 1; 
+					
+				do_dribbler(0);
+				do_move(0,0,0);
+				do_shoot(0,0);
+				do_chip(0,0);
+
+				start_nRF24L01_RX();	
+				rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);
+				identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
+			}
+
+    osDelay(5);
   }
   /* USER CODE END Do_Comm */
 }
@@ -218,6 +240,7 @@ void RobotTask(void const * argument)
 	/* start motor */
 	start_motor();
   HAL_TIM_Base_Start_IT(&htim12);  // 启动TIM12中断
+  memset( &src_robot_packet, 0, sizeof( src_robot_packet ) ); //初始包清空
   /* Infinite loop */
   for(;;)
   {

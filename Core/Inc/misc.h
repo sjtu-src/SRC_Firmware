@@ -20,6 +20,7 @@ int is_power_low(void);
 u8 get_bat_v(void);
 long V2N(float vel);
 float N2V(long n);
+void Communication_Success(void);
 
 #endif
  

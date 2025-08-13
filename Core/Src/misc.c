@@ -453,3 +453,21 @@ float N2V(long n)
 {
 	return (float)n / g_robot.kv2n;
 }
+
+/*******************************************************************************
+* @brief 通信成功使灯闪烁
+* @author Xuanting Liu
+*******************************************************************************/
+void Communication_Success(void)
+{
+	static int comm_count = 0;
+
+	comm_count++;
+
+	if(comm_count < 15)
+		COMM_LED_ON();
+	else 
+		COMM_LED_OFF();
+
+	if(comm_count > 30)	comm_count=0;
+}

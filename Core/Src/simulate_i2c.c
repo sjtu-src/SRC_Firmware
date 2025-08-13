@@ -24,7 +24,7 @@ void i2c_ack(u8 val);
  *    2011/12/14, Shouxian Chen create this function
  * 
  ******************************************************************************/
-void init_i2c()
+void init_i2c(void)
 {
 	i2c_stop();
 }

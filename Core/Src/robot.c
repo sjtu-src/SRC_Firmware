@@ -16,6 +16,7 @@
 #include "error.h"
 #include "pid.h"
 #include "cmsis_os.h"
+#include "simulate_i2c.h"
 
 int wheel_reduction_ratio_x_set; /*减速比*/		
 int wheel_reduction_ratio_yz_set; /*减速比*/  //旧轮子减速比为70/22 为3.1818 外圈转1圈，内圈码盘转3.1818圈
@@ -30,6 +31,8 @@ extern timer_t heart_led_timer;
 extern timer_t rf_comm_tim;           //发射机通信超时时间
 extern timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置为10S
 extern timer_t shoot_interval_timer;
+
+extern packet_robot_t src_robot_packet;
 
 int forcestopcounter=0;
 
@@ -292,37 +295,14 @@ void do_robot_run(void)
 			case NORMAL_MODE :
       		case CRAY_MODE :
 			{
-				// /* process message from comm device( rs232, wireless, etc. ) */
-				// do_comm();
+				do_dribbler( src_robot_packet.dribbler );//设置控制档位
 
-			    // /*通讯超时设置为500ms 上位机8ms下发一个数据包 (共2包一包(25Byte)给一队车，另外一包给另一队车)*/
-				// if(check_timer(rf_comm_tim)) 
-				// {
-				// 	/* 防止通讯中断，置位设置通讯为接收模块标志位 */
-				// 	g_do_set_receive_mode_flag = 1; 
-					
-				// 	do_dribbler(0);
-				// 	do_move(0,0,0);
-				// 	do_shoot(0,0);
-				// 	do_chip(0,0);
+				#ifdef ENABLE_SHOOTER
+						do_shoot(src_robot_packet.shoot, src_robot_packet.chip);//平射
+						do_chip(src_robot_packet.shoot, src_robot_packet.chip);//挑射
+				#endif
 
-				// 	start_nRF24L01_RX();	
-				// 	rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);
-				// 	identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
-				// }
-
-				
-				// if(g_do_set_receive_mode_flag)	//发送数据包后置1等待数据发送出去后将模式修改为接收模式				
-				// {
-				// 	/* 将通讯设置为接收模式，并置位可接受标志位 */
-				// 	if(g_set_receive_mode_flag >= 3)
-				// 	{				
-				// 		start_nRF24L01_RX();
-					
-				// 		g_set_receive_mode_flag = 0;
-				// 		g_do_set_receive_mode_flag = 0; 	//置位可接收标志位
-				// 	}
-				// }
+				do_acc_handle_move(src_robot_packet.speed_x, src_robot_packet.speed_y, src_robot_packet.speed_rot);
 
 				break;
 			} 

@@ -324,3 +324,4 @@ void do_move( int speed_x, int speed_y, int speed_rot )
 	EN_INT();
 
 }
+

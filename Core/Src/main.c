@@ -206,10 +206,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     if ((current_time - last_time) > 20) {
         if (GPIO_Pin == IR_BALL_DECT_Pin) 
         {
-            if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
-                g_robot.is_ball_detected = 1;
-            else 
-                g_robot.is_ball_detected = 0;    
+            #if INFRA_TYPE == NEW_INFRA
+                if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
+                    g_robot.is_ball_detected = 1;
+                else 
+                    g_robot.is_ball_detected = 0;  
+            #elif INFRA_TYPE == OLD_INFRA  
+                if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
+                    g_robot.is_ball_detected = 0;
+                else 
+                    g_robot.is_ball_detected = 1; 
+            #endif
         }
         last_time = current_time;
     }

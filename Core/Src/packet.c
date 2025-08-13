@@ -86,12 +86,11 @@ void stop_mode_packet(char *q)
 }
 
 /******************************************************************************
- * @brief 打包函数，将所需返回上位机的信息打包，并检测是否有状态变化(平射、挑射、红外有一种变化)，当发生状态变化时，置位上传标志 packet_flag.
+ * @brief 打包函数，将所需返回上位机的信息打包，并检测是否有状态变化(平射、挑射有一种变化)，当发生状态变化时，置位上传标志 packet_flag.
  * @author Xuanting Liu
  ******************************************************************************/
 void packet(char *q)
 {
-	static int last_infra = 0;
 	static int now_infra = 0;
 
 	static int to_shoot = 0;
@@ -158,7 +157,6 @@ void packet(char *q)
 		if(finish_shoot == 1) finish_shoot = 0;
 		if(finish_chip == 1) finish_chip = 0;
 		
-		//if((last_infra != now_infra))
 		if((now_infra == 1 ))	// 原逻辑：红外变化则发包，现在逻辑：红外有则发包
 		{
 			n = 1;
@@ -201,7 +199,6 @@ void packet(char *q)
 	q[13] = speed % 255;
 	q[14] = speed / 255;
 
-	last_infra = now_infra;
 }
 
 /*******************************************************************************

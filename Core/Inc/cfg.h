@@ -5,6 +5,10 @@
 
 #define PI 3.14159265358979f
 
+// 红外类型
+#define NEW_INFRA 1
+#define OLD_INFRA 0
+#define INFRA_TYPE OLD_INFRA
 
 /* software version*/
 #define  software_verison  0x0200;   // V2.0
@@ -92,10 +96,8 @@
 
 #define D_WHEEL_ANGLE_FRONT   47    /*55		 前轮与轴线角度(度) 前轮轮子轴线与小车前后轴线角度*/
 
-/**
-* @brief 王奕轩新底板54°
-* /
-#define D_WHEEL_ANGLE_BACK_2014 128	 /* 后轮与轴线角度(度) */
+
+//王奕轩新底板54°
 #define D_WHEEL_ANGLE_BACK_2013 135
 
 #define FRONT_MODIFY_2024 2.33 // 后轮偏转角
