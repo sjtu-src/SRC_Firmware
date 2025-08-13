@@ -206,11 +206,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     if ((current_time - last_time) > 20) {
         if (GPIO_Pin == IR_BALL_DECT_Pin) 
         {
-            if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) {
-                g_robot.is_ball_detected = 0;
-            } else {
+            if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
                 g_robot.is_ball_detected = 1;
-            }
+            else 
+                g_robot.is_ball_detected = 0;    
         }
         last_time = current_time;
     }
