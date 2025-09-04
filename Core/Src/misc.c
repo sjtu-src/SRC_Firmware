@@ -467,10 +467,10 @@ void Communication_Success(void)
 
 	comm_count++;
 
-	if(comm_count < 15)
+	if(comm_count < 5)
 		COMM_LED_ON();
 	else 
 		COMM_LED_OFF();
 
-	if(comm_count > 30)	comm_count=0;
+	if(comm_count > 10)	comm_count=0;
 }

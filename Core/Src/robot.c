@@ -290,43 +290,70 @@ void do_robot_run(void)
         }
     #endif
     
-	if(g_robot.mode == SELFTEST_MODE) //自检模式
-	{ 
-		static int test_time = 0;	
-		test_time++;
-		COMM_LED_ON();
-		osDelay(2000);
-	    COMM_LED_OFF();	
-
-		set_test_shooter();
-        do_dribbler(1);//设置控制档位
-        osDelay(2000);
-		do_dribbler(0);
-		do_shoot(20, 0);//平射
-		osDelay(2000);
-		do_chip(0, 20); //挑射
-        osDelay(2000);		
-
-        if(test_time == 1)
-        {
-			do_acc_handle_move(0, 0, 100);
-			osDelay(2000);
-			do_acc_handle_move(0, 0, 0);		
-			do_acc_handle_move(0, 0, -100);
-			osDelay(2000);
-			do_acc_handle_move(0, 0, 0);				
-		}
-		else if(test_time == 2)
+	
+		/* do robot job */
+		switch(g_robot.mode)
 		{
-			do_acc_handle_move(0, 0,-100);
-			osDelay(2000);
-			do_acc_handle_move(0, 0, 0);
-			do_acc_handle_move(0, 0, 100);
-			osDelay(2000);
-			do_acc_handle_move(0, 0,0);
-			test_time = 0;
-		}							
-	}				
+			case NORMAL_MODE :
+      		case CRAY_MODE :
+			{
+        		do_communication();
+
+        		if(check_timer(rf_comm_tim)) 
+          			{
+            			g_do_set_receive_mode_flag = 1; 
+
+            			do_dribbler(0);
+            			do_move(0,0,0);
+            			do_shoot(0,0);
+            			do_chip(0,0);
+
+           				start_nRF24L01_RX();	
+            			rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);
+            			identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
+          			}
+				break;
+			} 
+
+			case SELFTEST_MODE: //自检模式
+			{ 
+				static int test_time = 0;	
+				test_time++;
+				COMM_LED_ON();
+				osDelay(2000);
+			    COMM_LED_OFF();	
+
+				set_test_shooter();
+                do_dribbler(1);//设置控制档位
+                osDelay(2000);
+				do_dribbler(0);
+				do_shoot(20, 0);//平射
+		        osDelay(2000);
+				do_chip(0, 20); //挑射
+                osDelay(2000);		
+
+                if(test_time == 1)
+                {
+					do_acc_handle_move(0, 0, 100);
+					osDelay(2000);
+					do_acc_handle_move(0, 0, 0);		
+					do_acc_handle_move(0, 0, -100);
+					osDelay(2000);
+					do_acc_handle_move(0, 0, 0);				
+			    }
+				else if(test_time == 2)
+				{
+					do_acc_handle_move(0, 0,-100);
+					osDelay(2000);
+					do_acc_handle_move(0, 0, 0);
+					do_acc_handle_move(0, 0, 100);
+					osDelay(2000);
+					do_acc_handle_move(0, 0,0);
+					test_time = 0;
+				}
+				break;								
+		   }				
+	  }
 
 		/* 对射门完成之后的延时进行计时 */
     #ifdef ENABLE_SHOOTER
