@@ -174,10 +174,11 @@ void shoot_on(u32 value)
 
 	if(value == 0) value = 1;
 	
-	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
+	
 	__HAL_TIM_SET_COMPARE(&htim9, TIM_CHANNEL_1, value);
 	__HAL_TIM_ENABLE(&htim9);
+	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
 }
 
 
@@ -193,10 +194,10 @@ void chip_on(u32 value)
 
 	if(value == 0) value = 1;
 
-	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
 	__HAL_TIM_SET_COMPARE(&htim9, TIM_CHANNEL_2, value);
 	__HAL_TIM_ENABLE(&htim9);
+	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
 }
 
 /*******************************************************************************
@@ -310,7 +311,7 @@ u8 get_cap_v(void)
     HAL_ADC_Start(&hadc1);
 
     // 等待ADC转换完成
-    HAL_ADC_PollForConversion(&hadc1, 100);
+    HAL_ADC_PollForConversion(&hadc1, 10);
 
     // 获取ADC值
     val = HAL_ADC_GetValue(&hadc1);
@@ -417,13 +418,15 @@ u8 get_bat_v(void)
     HAL_ADC_Start(&hadc1);
 
     // 等待ADC转换完成
-    HAL_ADC_PollForConversion(&hadc1, 100);
+    HAL_ADC_PollForConversion(&hadc1, 10);
 
     // 获取ADC值
     val = HAL_ADC_GetValue(&hadc1);
 
 	// 停止ADC1
 	HAL_ADC_Stop(&hadc1);
+
+	//Beep_Show_32bit(val);
 
     // 将16位ADC值右移4位，取高8位
     val = val >> 4;

@@ -131,7 +131,7 @@ void set_dribbler(u16 value, u8 dir)
 
 /*******************************************************************************
 * @brief 执行平射挑射动作力度
-* @param channel 为1时平射,为0时挑射
+* @param channel 为1时挑射,为0时平射
 * @param value 射门力度范围
 * @note 执行射门前检查电容电压和力度大小,只有电容电压足够且射门力度不为0时才能射门.
 * @author Xuanting Liu

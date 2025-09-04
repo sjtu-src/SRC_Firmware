@@ -75,7 +75,6 @@ void Error_Handler(void);
 #define FSYNC_GPIO_Port GPIOC
 #define IR_BALL_DECT_Pin GPIO_PIN_0
 #define IR_BALL_DECT_GPIO_Port GPIOC
-#define IR_BALL_DECT_EXTI_IRQn EXTI0_IRQn
 #define BUZZER_Pin GPIO_PIN_1
 #define BUZZER_GPIO_Port GPIOC
 #define ENCODER_A1_Pin GPIO_PIN_0

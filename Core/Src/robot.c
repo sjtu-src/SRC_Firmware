@@ -109,10 +109,10 @@ void init_robot(void)
 	g_robot.mode = (mode_t)(mode & 0x7);
     mode = mode & 0x7;
 
-	pid_init(&(g_robot.wheels[0].pid), MOTOR_PID_KP1, MOTOR_PID_KI1, MOTOR_PID_KD1);
-	pid_init(&(g_robot.wheels[1].pid), MOTOR_PID_KP2, MOTOR_PID_KI2, MOTOR_PID_KD2);
-	pid_init(&(g_robot.wheels[2].pid), MOTOR_PID_KP3, MOTOR_PID_KI3, MOTOR_PID_KD3);
-	pid_init(&(g_robot.wheels[3].pid), MOTOR_PID_KP4, MOTOR_PID_KI4, MOTOR_PID_KD4);
+	pid_init(&(g_robot.wheels[0].pid), MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD);
+	pid_init(&(g_robot.wheels[1].pid), MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD);
+	pid_init(&(g_robot.wheels[2].pid), MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD);
+	pid_init(&(g_robot.wheels[3].pid), MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD);
 
 	g_robot.dribbler = 0;
 	g_robot.kv2n = 74037;
@@ -175,6 +175,7 @@ void Beep_Show_8bit(u8 val)
 	BEEP_ON();
 	osDelay(1000);
 	BEEP_OFF();
+	osDelay(1000);
 	for(i = 0; i < 8; i++)
 	{
 		int tmp = (val >> i) & 0x01;
@@ -205,6 +206,7 @@ void Beep_Show_32bit(u32 val)
 	BEEP_ON();
 	osDelay(1000);
 	BEEP_OFF();
+	osDelay(1000);
 	for(i = 0; i < 32; i++)
 	{
 		int tmp = (val >> i) & 0x01;
@@ -288,64 +290,43 @@ void do_robot_run(void)
         }
     #endif
     
-	
-		/* do robot job */
-		switch(g_robot.mode)
+	if(g_robot.mode == SELFTEST_MODE) //自检模式
+	{ 
+		static int test_time = 0;	
+		test_time++;
+		COMM_LED_ON();
+		osDelay(2000);
+	    COMM_LED_OFF();	
+
+		set_test_shooter();
+        do_dribbler(1);//设置控制档位
+        osDelay(2000);
+		do_dribbler(0);
+		do_shoot(20, 0);//平射
+		osDelay(2000);
+		do_chip(0, 20); //挑射
+        osDelay(2000);		
+
+        if(test_time == 1)
+        {
+			do_acc_handle_move(0, 0, 100);
+			osDelay(2000);
+			do_acc_handle_move(0, 0, 0);		
+			do_acc_handle_move(0, 0, -100);
+			osDelay(2000);
+			do_acc_handle_move(0, 0, 0);				
+		}
+		else if(test_time == 2)
 		{
-			case NORMAL_MODE :
-      		case CRAY_MODE :
-			{
-				do_dribbler( src_robot_packet.dribbler );//设置控制档位
-
-				#ifdef ENABLE_SHOOTER
-						do_shoot(src_robot_packet.shoot, src_robot_packet.chip);//平射
-						do_chip(src_robot_packet.shoot, src_robot_packet.chip);//挑射
-				#endif
-
-				do_acc_handle_move(src_robot_packet.speed_x, src_robot_packet.speed_y, src_robot_packet.speed_rot);
-
-				break;
-			} 
-
-			case SELFTEST_MODE: //自检模式
-			{ 
-				static int test_time = 0;	
-				test_time++;
-				COMM_LED_ON();
-				osDelay(2000);
-			    COMM_LED_OFF();	
-
-				set_test_shooter();
-                do_dribbler(1);//设置控制档位
-                osDelay(2000);
-				do_dribbler(0);
-				do_shoot(20, 0);//平射
-		        osDelay(2000);
-				do_chip(0, 20); //挑射
-                osDelay(2000);		
-
-                if(test_time == 1)
-                {
-					do_acc_handle_move(0, 0, 100);
-					osDelay(2000);
-					do_acc_handle_move(0, 0, 0);		
-					do_acc_handle_move(0, 0, -100);
-					osDelay(2000);
-					do_acc_handle_move(0, 0, 0);				
-			    }
-				else if(test_time == 2)
-				{
-					do_acc_handle_move(0, 0,-100);
-					osDelay(2000);
-					do_acc_handle_move(0, 0, 0);
-					do_acc_handle_move(0, 0, 100);
-					osDelay(2000);
-					do_acc_handle_move(0, 0,0);
-					test_time = 0;
-				}
-				break;								
-		   }				
-	  }
+			do_acc_handle_move(0, 0,-100);
+			osDelay(2000);
+			do_acc_handle_move(0, 0, 0);
+			do_acc_handle_move(0, 0, 100);
+			osDelay(2000);
+			do_acc_handle_move(0, 0,0);
+			test_time = 0;
+		}							
+	}				
 
 		/* 对射门完成之后的延时进行计时 */
     #ifdef ENABLE_SHOOTER
@@ -359,6 +340,24 @@ void do_robot_run(void)
             }
     #endif
 }
+
+/*******************************************************************************
+* @brief 执行下发参数
+* @author Xuanting Liu
+*******************************************************************************/
+void on_robot_command(void)
+{
+	do_dribbler( src_robot_packet.dribbler );//设置控制档位
+
+	#ifdef ENABLE_SHOOTER
+			do_shoot(src_robot_packet.shoot, src_robot_packet.chip);//平射
+			do_chip(src_robot_packet.shoot, src_robot_packet.chip);//挑射
+	#endif
+
+	do_acc_handle_move(src_robot_packet.speed_x, src_robot_packet.speed_y, src_robot_packet.speed_rot);
+}
+
+
 
 /*******************************************************************************
 * @brief 电池电压监控

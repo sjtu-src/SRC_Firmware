@@ -193,59 +193,6 @@ static void MX_NVIC_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-/*******************************************************************************
-*@author Xuanting Liu
-*@brief 红外中断服务函数，更新 is_ball_detected
-*******************************************************************************/
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-    static uint32_t last_time = 0;
-    uint32_t current_time = HAL_GetTick();
-    
-    /* 防抖动处理 */
-    if ((current_time - last_time) > 20) {
-        if (GPIO_Pin == IR_BALL_DECT_Pin) 
-        {
-            #if INFRA_TYPE == NEW_INFRA
-                if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
-                    g_robot.is_ball_detected = 1;
-                else 
-                    g_robot.is_ball_detected = 0;  
-            #elif INFRA_TYPE == OLD_INFRA  
-                if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
-                    g_robot.is_ball_detected = 0;
-                else 
-                    g_robot.is_ball_detected = 1; 
-            #endif
-        }
-        last_time = current_time;
-    }
-}
-
-
-/*******************************************************************************
-*@author Xuanting Liu
-*@brief TIM12中断服务函数，每1ms产生一次中断以执行电机pid
-*******************************************************************************/
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-    static uint32_t time_cnt = 0;
-    
-    if(htim->Instance == TIM12)
-    {
-      if(++time_cnt >= 2)
-      {
-        static BaseType_t xHigherPriorityTaskWoken;
-        xSemaphoreGiveFromISR(xMotorTickSem, &xHigherPriorityTaskWoken);
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-        time_cnt = 0;
-      }
-    }
-
-    inc_receive_mode_flag();
-    update_sys_timer();
-}
-
 /* USER CODE END 4 */
 
 /**
@@ -256,15 +203,42 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   * @param  htim : TIM handle
   * @retval None
   */
-void ElapsedCallback(TIM_HandleTypeDef *htim)
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-
+	static uint32_t time_cnt = 0;
+	
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM14) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
+	
+  if(htim->Instance == TIM12)
+    { 
+      //更新持球状濿
+      #if INFRA_TYPE == OLD_INFRA
+            if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
+                g_robot.is_ball_detected = 1;
+            else 
+                g_robot.is_ball_detected = 0;  
+      #elif INFRA_TYPE == NEW_INFRA  
+            if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
+                g_robot.is_ball_detected = 0;
+            else  
+                g_robot.is_ball_detected = 1; 
+      #endif
+
+      if(++time_cnt >= 2)
+      {
+        static BaseType_t xHigherPriorityTaskWoken;
+        xSemaphoreGiveFromISR(xMotorTickSem, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+        time_cnt = 0;
+      }
+			inc_receive_mode_flag();
+			update_sys_timer();
+    }
 
   /* USER CODE END Callback 1 */
 }

@@ -74,6 +74,7 @@ void Beep_Show_32bit(u32 val);
 void inc_receive_mode_flag(void);
 void do_robot_run(void);
 int do_power_monitor(void);
+void on_robot_command(void);
 
 extern robot_t g_robot;
 

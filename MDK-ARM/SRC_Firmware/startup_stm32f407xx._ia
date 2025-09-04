@@ -1,6 +1,0 @@
---cpu Cortex-M4.fp.sp -g --apcs=interwork -I ../Core/Inc
--I.\RTE\_SRC_Firmware
--ID:\Keil_v5\ARM\Pack\ARM\CMSIS\4.2.0\CMSIS\Include
--ID:\Keil_v5\ARM\Pack\Keil\STM32F4xx_DFP\1.0.8\Device\Include
---pd "__UVISION_VERSION SETA 538" --pd "_RTE_ SETA 1" --pd "STM32F40_41xxx SETA 1" --pd "_RTE_ SETA 1"
---list startup_stm32f407xx.lst --xref -o src_firmware\startup_stm32f407xx.o --depend src_firmware\startup_stm32f407xx.d "startup_stm32f407xx.s"

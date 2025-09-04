@@ -56,19 +56,19 @@ SemaphoreHandle_t xMotorTickSem = NULL;
 
 timer_t power_mon_timer;
 timer_t heart_led_timer;
-timer_t rf_comm_tim;           //发射机通信超时时间
-timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置为10S
+timer_t rf_comm_tim;           //发射机�?�信超时时间
+timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�???10S
 timer_t shoot_interval_timer;
+
+extern char g_do_set_receive_mode_flag;
+
+extern packet_robot_t src_robot_packet;
 
 /* USER CODE END Variables */
 osThreadId MotorUpdateHandle;
 osThreadId CommunicationHandle;
 osThreadId StatesUpdateHandle;
 osThreadId IdleHandle;
-
-extern char g_do_set_receive_mode_flag;
-
-extern packet_robot_t src_robot_packet;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -130,11 +130,11 @@ void MX_FREERTOS_Init(void) {
   MotorUpdateHandle = osThreadCreate(osThread(MotorUpdate), NULL);
 
   /* definition and creation of Communication */
-  osThreadDef(Communication, Do_Comm, osPriorityAboveNormal, 0, 256);
+  osThreadDef(Communication, Do_Comm, osPriorityAboveNormal, 0, 512);
   CommunicationHandle = osThreadCreate(osThread(Communication), NULL);
 
   /* definition and creation of StatesUpdate */
-  osThreadDef(StatesUpdate, RobotTask, osPriorityNormal, 0, 128);
+  osThreadDef(StatesUpdate, RobotTask, osPriorityNormal, 0, 1024);
   StatesUpdateHandle = osThreadCreate(osThread(StatesUpdate), NULL);
 
   /* definition and creation of Idle */
@@ -183,24 +183,25 @@ void Do_Comm(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    do_communication();
+    if(g_robot.mode == NORMAL_MODE || g_robot.mode == CRAY_MODE)
+    {
+        do_communication();
 
-		if(check_timer(rf_comm_tim)) 
-			{
-				/* 防止通讯中断，置位设置通讯为接收模块标志位 */
-				g_do_set_receive_mode_flag = 1; 
-					
-				do_dribbler(0);
-				do_move(0,0,0);
-				do_shoot(0,0);
-				do_chip(0,0);
+        if(check_timer(rf_comm_tim)) 
+          {
+            g_do_set_receive_mode_flag = 1; 
+              
+            do_dribbler(0);
+            do_move(0,0,0);
+            do_shoot(0,0);
+            do_chip(0,0);
 
-				start_nRF24L01_RX();	
-				rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);
-				identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
-			}
-
-    osDelay(5);
+            start_nRF24L01_RX();	
+            rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);
+            identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
+          }
+    }
+    osDelay(1);
   }
   /* USER CODE END Do_Comm */
 }
@@ -233,19 +234,19 @@ void RobotTask(void const * argument)
 	heart_led_timer = get_one_timer(HEARTBEAT_TIME);
 	rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME); //无线通信模式超时时间
 	shoot_interval_timer = get_one_timer(1);
-	identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME); //cpuid认证超时时间设置为10s 10s认证不成功则停止机器人
+	identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME); //cpuid认证超时时间设置�???10s 10s认证不成功则停止机器�???
 
   //Beep_Show_32bit(power_mon_timer);
 
 	/* start motor */
 	start_motor();
   HAL_TIM_Base_Start_IT(&htim12);  // 启动TIM12中断
-  memset( &src_robot_packet, 0, sizeof( src_robot_packet ) ); //初始包清空
+  memset( &src_robot_packet, 0, sizeof( src_robot_packet ) ); //初始包清�???
   /* Infinite loop */
   for(;;)
   {
     do_robot_run();
-    osDelay(1);
+    //osDelay(1);
   }
   /* USER CODE END RobotTask */
 }

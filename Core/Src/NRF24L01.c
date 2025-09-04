@@ -39,6 +39,7 @@ int get_nRF24L01_packet(nRF24L01 *dev)
 	/* check if IRQ pin is low, I enabled only the RX IRQ, so if pin is low, there is a packet */
 	if(GET_NRF_IRQ_IO())
 	{
+		//Debug_Here();
 		/* IRQ pin is high, no packet */
 		return 0;
 	}

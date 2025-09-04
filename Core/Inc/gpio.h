@@ -43,7 +43,7 @@ extern "C" {
 #define BEEP_ON()			HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_SET)
 #define BEEP_OFF()		HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET)
 
-#define GET_NRF_IRQ_IO()	((GPIOD->IDR & GPIO_PIN_0) == GPIO_PIN_0)
+#define GET_NRF_IRQ_IO()	(HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin) == GPIO_PIN_SET)
 
 #define NRF_CE_LOW()		HAL_GPIO_WritePin(CE_GPIO_Port, CE_Pin, GPIO_PIN_RESET)
 #define NRF_CE_HIGH()		HAL_GPIO_WritePin(CE_GPIO_Port, CE_Pin, GPIO_PIN_SET)
