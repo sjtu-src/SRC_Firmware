@@ -61,6 +61,7 @@ timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�???10S
 timer_t shoot_interval_timer;
 
 extern char g_do_set_receive_mode_flag;
+extern char g_set_receive_mode_flag;
 
 /* USER CODE END Variables */
 osThreadId MotorUpdateHandle;
@@ -197,6 +198,18 @@ void Do_Comm(void const * argument)
             start_nRF24L01_RX();	
             rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);
             identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
+          }
+
+				if(g_do_set_receive_mode_flag)	//发送数据包后置1等待数据发送出去后将模式修改为接收模式				
+          {
+            /* 将通讯设置为接收模式，并置位可接受标志位 */
+            if(g_set_receive_mode_flag >= 3)
+            {				
+              start_nRF24L01_RX();
+            
+              g_set_receive_mode_flag = 0;
+              g_do_set_receive_mode_flag = 0; 	//置位可接收标志位
+            }
           }
     }
     osDelay(1);

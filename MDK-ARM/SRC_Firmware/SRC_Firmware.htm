@@ -3,7 +3,7 @@
 <title>Static Call Graph - [SRC_Firmware\SRC_Firmware.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image SRC_Firmware\SRC_Firmware.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Fri Sep 05 10:49:08 2025
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Fri Sep 05 15:57:42 2025
 <BR><P>
 <H3>Maximum Stack Usage =        320 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -687,10 +687,10 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
-<BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
+<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
 </UL>
 
-<P><STRONG><a name="[66]"></a>Do_Comm</STRONG> (Thumb, 104 bytes, Stack size 0 bytes, freertos.o(i.Do_Comm))
+<P><STRONG><a name="[66]"></a>Do_Comm</STRONG> (Thumb, 122 bytes, Stack size 0 bytes, freertos.o(i.Do_Comm))
 <BR><BR>[Stack]<UL><LI>Max Depth = 176<LI>Call Chain = Do_Comm &rArr; start_nRF24L01_RX &rArr; L01_ClearIRQ &rArr; L01_ReadStatusReg &rArr; nrf_spi_wr_rd &rArr; HAL_SPI_TransmitReceive &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
 <BR>[Calls]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
@@ -736,13 +736,13 @@ Global Symbols
 <P><STRONG><a name="[e0]"></a>HAL_ADC_ConfigChannel</STRONG> (Thumb, 316 bytes, Stack size 20 bytes, stm32f4xx_hal_adc.o(i.HAL_ADC_ConfigChannel))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = HAL_ADC_ConfigChannel
 </UL>
-<BR>[Called By]<UL><LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
+<BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_bat_v
 <LI><a href="#[dd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_ADC1_Init
 </UL>
 
 <P><STRONG><a name="[13c]"></a>HAL_ADC_GetValue</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, stm32f4xx_hal_adc.o(i.HAL_ADC_GetValue))
-<BR><BR>[Called By]<UL><LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
+<BR><BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_bat_v
 </UL>
 
@@ -769,19 +769,19 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GetTick
 </UL>
-<BR>[Called By]<UL><LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
+<BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_bat_v
 </UL>
 
 <P><STRONG><a name="[13b]"></a>HAL_ADC_Start</STRONG> (Thumb, 228 bytes, Stack size 12 bytes, stm32f4xx_hal_adc.o(i.HAL_ADC_Start))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = HAL_ADC_Start
 </UL>
-<BR>[Called By]<UL><LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
+<BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_bat_v
 </UL>
 
 <P><STRONG><a name="[de]"></a>HAL_ADC_Stop</STRONG> (Thumb, 60 bytes, Stack size 0 bytes, stm32f4xx_hal_adc.o(i.HAL_ADC_Stop))
-<BR><BR>[Called By]<UL><LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
+<BR><BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_bat_v
 <LI><a href="#[dd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_ADC1_Init
 </UL>
@@ -806,13 +806,13 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[fc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_nrf24l01
 <LI><a href="#[f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_gpio
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
-<LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
+<LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
 <LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Debug_Here
 <LI><a href="#[12a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_dribbler
 <LI><a href="#[14d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;read_dip_sw
 <LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_dribbler
 <LI><a href="#[13d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_led_spi_wr
-<LI><a href="#[132]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_beat
+<LI><a href="#[131]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_beat
 <LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Communication_Success
 <LI><a href="#[e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_GPIO_Init
 <LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_i2c_ack
@@ -1539,7 +1539,7 @@ Global Symbols
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f407xx.o(RESET)
 </UL>
 <P><STRONG><a name="[67]"></a>RobotTask</STRONG> (Thumb, 122 bytes, Stack size 0 bytes, freertos.o(i.RobotTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = RobotTask &rArr; do_robot_run &rArr; do_power_monitor &rArr; Debug_Here &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
+<BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = RobotTask &rArr; do_robot_run &rArr; on_robot_command &rArr; do_acc_handle_move &rArr; __hardfp_ceil &rArr; __aeabi_cdrcmple
 </UL>
 <BR>[Calls]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
@@ -1832,7 +1832,7 @@ Global Symbols
 <LI><a href="#[121]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
 <LI><a href="#[115]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2iz
 </UL>
-<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
+<BR>[Called By]<UL><LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 </UL>
 
@@ -1841,7 +1841,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[122]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_shooter
 </UL>
-<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
+<BR>[Called By]<UL><LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Do_Comm
 </UL>
@@ -1857,7 +1857,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[87]"></a>do_communication</STRONG> (Thumb, 66 bytes, Stack size 8 bytes, comm.o(i.do_communication))
-<BR><BR>[Stack]<UL><LI>Max Depth = 168<LI>Call Chain = do_communication &rArr; do_packet_process &rArr; do_comm_up &rArr; stop_mode_packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
+<BR><BR>[Stack]<UL><LI>Max Depth = 136<LI>Call Chain = do_communication &rArr; do_packet_process &rArr; do_comm_up &rArr; stop_mode_packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
 </UL>
 <BR>[Calls]<UL><LI><a href="#[e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
 <LI><a href="#[127]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_receive_flag
@@ -1875,7 +1875,7 @@ Global Symbols
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2d
 <LI><a href="#[12b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2uiz
 </UL>
-<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
+<BR>[Called By]<UL><LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Do_Comm
 </UL>
@@ -1890,11 +1890,10 @@ Global Symbols
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Do_Comm
 </UL>
 
-<P><STRONG><a name="[129]"></a>do_packet_process</STRONG> (Thumb, 100 bytes, Stack size 48 bytes, comm.o(i.do_packet_process))
-<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = do_packet_process &rArr; do_comm_up &rArr; stop_mode_packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
+<P><STRONG><a name="[129]"></a>do_packet_process</STRONG> (Thumb, 92 bytes, Stack size 16 bytes, comm.o(i.do_packet_process))
+<BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = do_packet_process &rArr; do_comm_up &rArr; stop_mode_packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
 </UL>
-<BR>[Calls]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
-<LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_packet_type
+<BR>[Calls]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_packet_type
 <LI><a href="#[11f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;decode_packet
 <LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Communication_Success
 <LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
@@ -1903,23 +1902,24 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[87]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_communication
 </UL>
 
-<P><STRONG><a name="[12f]"></a>do_power_monitor</STRONG> (Thumb, 90 bytes, Stack size 8 bytes, robot.o(i.do_power_monitor))
+<P><STRONG><a name="[12e]"></a>do_power_monitor</STRONG> (Thumb, 90 bytes, Stack size 8 bytes, robot.o(i.do_power_monitor))
 <BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = do_power_monitor &rArr; Debug_Here &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Debug_Here
 <LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
-<LI><a href="#[131]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_power_low
-<LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
+<LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_power_low
+<LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 </UL>
 
-<P><STRONG><a name="[f5]"></a>do_robot_run</STRONG> (Thumb, 482 bytes, Stack size 24 bytes, robot.o(i.do_robot_run))
-<BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = do_robot_run &rArr; do_power_monitor &rArr; Debug_Here &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
+<P><STRONG><a name="[f5]"></a>do_robot_run</STRONG> (Thumb, 502 bytes, Stack size 24 bytes, robot.o(i.do_robot_run))
+<BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = do_robot_run &rArr; on_robot_command &rArr; do_acc_handle_move &rArr; __hardfp_ceil &rArr; __aeabi_cdrcmple
 </UL>
 <BR>[Calls]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[88]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_timer
-<LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
+<LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
+<LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
 <LI><a href="#[135]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;update_shooter
 <LI><a href="#[134]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_test_shooter
 <LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot
@@ -1929,8 +1929,8 @@ Global Symbols
 <LI><a href="#[120]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_acc_handle_move
 <LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_one_timer
 <LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
-<LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_heart_led
-<LI><a href="#[132]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_beat
+<LI><a href="#[132]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_heart_led
+<LI><a href="#[131]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_beat
 </UL>
 <BR>[Called By]<UL><LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
 </UL>
@@ -1940,7 +1940,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[122]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_shooter
 </UL>
-<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
+<BR>[Called By]<UL><LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Do_Comm
 </UL>
@@ -1972,10 +1972,10 @@ Global Symbols
 <LI><a href="#[e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_ADC_ConfigChannel
 </UL>
 <BR>[Called By]<UL><LI><a href="#[124]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stop_mode_packet
-<LI><a href="#[131]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_power_low
+<LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_power_low
 </UL>
 
-<P><STRONG><a name="[130]"></a>get_cap_v</STRONG> (Thumb, 62 bytes, Stack size 24 bytes, misc.o(i.get_cap_v))
+<P><STRONG><a name="[12f]"></a>get_cap_v</STRONG> (Thumb, 62 bytes, Stack size 24 bytes, misc.o(i.get_cap_v))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = get_cap_v &rArr; HAL_ADC_PollForConversion
 </UL>
 <BR>[Calls]<UL><LI><a href="#[de]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_ADC_Stop
@@ -1984,7 +1984,7 @@ Global Symbols
 <LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_ADC_GetValue
 <LI><a href="#[e0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_ADC_ConfigChannel
 </UL>
-<BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
+<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
 <LI><a href="#[124]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stop_mode_packet
 </UL>
 
@@ -2027,11 +2027,11 @@ Global Symbols
 <LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_one_timer
 </UL>
 
-<P><STRONG><a name="[132]"></a>heart_beat</STRONG> (Thumb, 78 bytes, Stack size 16 bytes, misc.o(i.heart_beat))
+<P><STRONG><a name="[131]"></a>heart_beat</STRONG> (Thumb, 78 bytes, Stack size 16 bytes, misc.o(i.heart_beat))
 <BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = heart_beat &rArr; set_heart_led &rArr; heart_led_spi_wr
 </UL>
 <BR>[Calls]<UL><LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
-<LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_heart_led
+<LI><a href="#[132]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_heart_led
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 </UL>
@@ -2042,7 +2042,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;wait_us
 <LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 </UL>
-<BR>[Called By]<UL><LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_heart_led
+<BR>[Called By]<UL><LI><a href="#[132]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_heart_led
 </UL>
 
 <P><STRONG><a name="[13f]"></a>high_size_eeprom_rd</STRONG> (Thumb, 94 bytes, Stack size 24 bytes, simulate_i2c.o(i.high_size_eeprom_rd))
@@ -2219,12 +2219,12 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[141]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_send_byte
 </UL>
 
-<P><STRONG><a name="[131]"></a>is_power_low</STRONG> (Thumb, 218 bytes, Stack size 24 bytes, misc.o(i.is_power_low))
+<P><STRONG><a name="[130]"></a>is_power_low</STRONG> (Thumb, 218 bytes, Stack size 24 bytes, misc.o(i.is_power_low))
 <BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = is_power_low &rArr; get_bat_v &rArr; HAL_ADC_PollForConversion
 </UL>
 <BR>[Calls]<UL><LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_bat_v
 </UL>
-<BR>[Called By]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
+<BR>[Called By]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
 </UL>
 
 <P><STRONG><a name="[14c]"></a>load_param</STRONG> (Thumb, 62 bytes, Stack size 8 bytes, param.o(i.load_param))
@@ -2299,7 +2299,7 @@ Global Symbols
 <LI><a href="#[d0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;L01_ClearIRQ
 </UL>
 
-<P><STRONG><a name="[12e]"></a>on_robot_command</STRONG> (Thumb, 52 bytes, Stack size 8 bytes, robot.o(i.on_robot_command))
+<P><STRONG><a name="[133]"></a>on_robot_command</STRONG> (Thumb, 52 bytes, Stack size 8 bytes, robot.o(i.on_robot_command))
 <BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = on_robot_command &rArr; do_acc_handle_move &rArr; __hardfp_ceil &rArr; __aeabi_cdrcmple
 </UL>
 <BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot
@@ -2307,7 +2307,7 @@ Global Symbols
 <LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_chip
 <LI><a href="#[120]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_acc_handle_move
 </UL>
-<BR>[Called By]<UL><LI><a href="#[129]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_packet_process
+<BR>[Called By]<UL><LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 </UL>
 
 <P><STRONG><a name="[86]"></a>osDelay</STRONG> (Thumb, 14 bytes, Stack size 8 bytes, cmsis_os.o(i.osDelay))
@@ -2416,13 +2416,13 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[89]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_dribbler
 </UL>
 
-<P><STRONG><a name="[133]"></a>set_heart_led</STRONG> (Thumb, 90 bytes, Stack size 24 bytes, misc.o(i.set_heart_led))
+<P><STRONG><a name="[132]"></a>set_heart_led</STRONG> (Thumb, 90 bytes, Stack size 24 bytes, misc.o(i.set_heart_led))
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = set_heart_led &rArr; heart_led_spi_wr
 </UL>
 <BR>[Calls]<UL><LI><a href="#[13d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_led_spi_wr
 </UL>
 <BR>[Called By]<UL><LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
-<LI><a href="#[132]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_beat
+<LI><a href="#[131]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_beat
 </UL>
 
 <P><STRONG><a name="[14b]"></a>set_motor_break</STRONG> (Thumb, 76 bytes, Stack size 16 bytes, motor.o(i.set_motor_break))
@@ -2534,7 +2534,7 @@ Global Symbols
 <P><STRONG><a name="[124]"></a>stop_mode_packet</STRONG> (Thumb, 148 bytes, Stack size 24 bytes, packet.o(i.stop_mode_packet))
 <BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = stop_mode_packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
 </UL>
-<BR>[Calls]<UL><LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
+<BR>[Calls]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_bat_v
 </UL>
 <BR>[Called By]<UL><LI><a href="#[123]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_comm_up

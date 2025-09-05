@@ -30,6 +30,7 @@ extern timer_t heart_led_timer;
 extern timer_t rf_comm_tim;           //发射机通信超时时间
 extern timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置为10S
 extern timer_t shoot_interval_timer;
+extern packet_robot_t src_robot_packet;
 
 int forcestopcounter=0;
 
@@ -287,41 +288,51 @@ void do_robot_run(void)
         }
     #endif
     
-	if(g_robot.mode == SELFTEST_MODE) //自检模式
+	switch(g_robot.mode) //自检模式
 	{ 
-		static int test_time = 0;	
-		test_time++;
-		COMM_LED_ON();
-		osDelay(2000);
-	    COMM_LED_OFF();	
-
-		set_test_shooter();
-        do_dribbler(1);//设置控制档位
-        osDelay(2000);
-		do_dribbler(0);
-		do_shoot(20, 0);//平射
-		osDelay(2000);
-		do_chip(0, 20); //挑射
-        osDelay(2000);		
-
-        if(test_time == 1)
-        {
-			do_acc_handle_move(0, 0, 100);
-			osDelay(2000);
-			do_acc_handle_move(0, 0, 0);		
-			do_acc_handle_move(0, 0, -100);
-			osDelay(2000);
-			do_acc_handle_move(0, 0, 0);				
-		}
-		else if(test_time == 2)
+		case NORMAL_MODE:
+		case CRAY_MODE:
 		{
-			do_acc_handle_move(0, 0,-100);
+			on_robot_command(&src_robot_packet);
+			break;
+		}
+		case SELFTEST_MODE:
+		{
+			static int test_time = 0;	
+			test_time++;
+			COMM_LED_ON();
 			osDelay(2000);
-			do_acc_handle_move(0, 0, 0);
-			do_acc_handle_move(0, 0, 100);
+			COMM_LED_OFF();	
+
+			set_test_shooter();
+			do_dribbler(1);//设置控制档位
 			osDelay(2000);
-			do_acc_handle_move(0, 0,0);
-			test_time = 0;
+			do_dribbler(0);
+			do_shoot(20, 0);//平射
+			osDelay(2000);
+			do_chip(0, 20); //挑射
+			osDelay(2000);		
+
+			if(test_time == 1)
+			{
+				do_acc_handle_move(0, 0, 100);
+				osDelay(2000);
+				do_acc_handle_move(0, 0, 0);		
+				do_acc_handle_move(0, 0, -100);
+				osDelay(2000);
+				do_acc_handle_move(0, 0, 0);				
+			}
+			else if(test_time == 2)
+			{
+				do_acc_handle_move(0, 0,-100);
+				osDelay(2000);
+				do_acc_handle_move(0, 0, 0);
+				do_acc_handle_move(0, 0, 100);
+				osDelay(2000);
+				do_acc_handle_move(0, 0,0);
+				test_time = 0;
+			}
+			break;
 		}							
 	}				
 

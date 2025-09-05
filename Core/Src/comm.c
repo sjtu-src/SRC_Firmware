@@ -18,6 +18,8 @@ extern nRF24L01 nRF24L01_dev;
 extern char g_do_set_receive_mode_flag;
 extern char packet_flag;
 
+packet_robot_t src_robot_packet;
+
 /*******************************************************************************
 * @brief 无线通信部分初始化
 * @note 通信模块初始化函数,初始化中首先将通信模块初始化为接受模式.				
@@ -88,7 +90,6 @@ int do_packet_process( unsigned char *data, int len )
 	if(((type == PACKET_Normal) && ((g_robot.mode == NORMAL_MODE)) || (g_robot.mode == CRAY_MODE)))
 	{
 		/* parse robot command */
-		packet_robot_t src_robot_packet;
 
 		memset( &src_robot_packet, 0, sizeof( src_robot_packet ) ); //每个周期 下发速度值等清0
 
@@ -100,7 +101,6 @@ int do_packet_process( unsigned char *data, int len )
 		}
 		
 		Communication_Success();
-		on_robot_command(&src_robot_packet);
 	}
 	
 	return 0;
