@@ -57,12 +57,10 @@ SemaphoreHandle_t xMotorTickSem = NULL;
 timer_t power_mon_timer;
 timer_t heart_led_timer;
 timer_t rf_comm_tim;           //发射机�?�信超时时间
-timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�????10S
+timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�?????10S
 timer_t shoot_interval_timer;
 
 extern char g_do_set_receive_mode_flag;
-
-extern packet_robot_t src_robot_packet;
 
 /* USER CODE END Variables */
 osThreadId MotorUpdateHandle;
@@ -192,14 +190,13 @@ void RobotTask(void const * argument)
 	heart_led_timer = get_one_timer(HEARTBEAT_TIME);
 	rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME); //无线通信模式超时时间
 	shoot_interval_timer = get_one_timer(1);
-	identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME); //cpuid认证超时时间设置�????10s 10s认证不成功则停止机器�????
+	identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME); //cpuid认证超时时间设置10s 10s认证不成功则停止机器
 
   //Beep_Show_32bit(power_mon_timer);
 
 	/* start motor */
 	start_motor();
   HAL_TIM_Base_Start_IT(&htim12);  // 启动TIM12中断
-  memset( &src_robot_packet, 0, sizeof( src_robot_packet ) ); //初始包清�????
   /* Infinite loop */
   for(;;)
   {

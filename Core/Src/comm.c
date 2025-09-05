@@ -18,7 +18,7 @@ extern nRF24L01 nRF24L01_dev;
 extern char g_do_set_receive_mode_flag;
 extern char packet_flag;
 
-packet_robot_t src_robot_packet;
+idenfity_cpuid_struct identify_data = {0};
 
 /*******************************************************************************
 * @brief 无线通信部分初始化
@@ -47,15 +47,13 @@ void init_comm(void)
 void do_communication(void)
 {
 	if(get_receive_flag())//接收模式
-	{     
+	{
 		if( ( nRF24L01_dev.get_packet( &nRF24L01_dev ) ) > 0 ) //接收到一个数据包
 		{
 			clr_receive_flag();
 			memcpy( g_rf_comm.buffer, nRF24L01_dev.buf.buf, nRF24L01_dev.buf.pos );
-			g_rf_comm.buffer_pos = (unsigned char)nRF24L01_dev.buf.pos;
-	                             
+			g_rf_comm.buffer_pos = (unsigned char)nRF24L01_dev.buf.pos;                  
 			do_packet_process( g_rf_comm.buffer, g_rf_comm.buffer_pos ); 
-
 			if(packet_cnt > 254) packet_cnt = 0;
 			else packet_cnt++;
 		}
@@ -84,12 +82,16 @@ int do_packet_process( unsigned char *data, int len )
     }
 
 	do_comm_up();
+
+	decode_identify_packet( &identify_data, data );//处理每包收到的cpuid认证码 无线接收到的任何包都要进行数据获取进行cpuid认证
 	
     /*----------------------------通常模式下的数据解包--------------------------------*/
 	/*-----------------------参见协议0.1比赛时通讯包格式-----------------------------*/
-	if(((type == PACKET_Normal) && ((g_robot.mode == NORMAL_MODE)) || (g_robot.mode == CRAY_MODE)))
+	if((type == PACKET_Normal) && ((g_robot.mode == NORMAL_MODE)) || (g_robot.mode == CRAY_MODE))
 	{
 		/* parse robot command */
+		packet_robot_t src_robot_packet;
+
 		memset( &src_robot_packet, 0, sizeof( src_robot_packet ) ); //每个周期 下发速度值等清0
 
 		if( decode_packet( &src_robot_packet, data, len ) < 0 )
@@ -98,9 +100,9 @@ int do_packet_process( unsigned char *data, int len )
 			g_rf_comm.packet_error++;
 			return -1;
 		}
-		
+
 		Communication_Success();
-		on_robot_command();
+		on_robot_command(&src_robot_packet);
 	}
 	
 	return 0;

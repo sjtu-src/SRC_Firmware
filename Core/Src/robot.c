@@ -11,7 +11,6 @@
 #include "misc.h"
 #include "motor.h"
 #include "comm.h"
-#include "packet.h"
 #include "NRF24L01.h"
 #include "error.h"
 #include "pid.h"
@@ -23,6 +22,10 @@ int wheel_reduction_ratio_yz_set; /*减速比*/  //旧轮子减速比为70/22 �
 int max_shot_strength_set;
 u8 is_low_power_cnt = 0;
 
+u32 cpuID[3];  //32bit cpuid
+u8  cpuid_data[12]; //12Byte couid
+u8  encrpty_cpuid[8];//加密后的cpuid
+
 volatile char g_do_set_receive_mode_flag = 0;
 volatile char g_set_receive_mode_flag = 0;
 
@@ -31,8 +34,7 @@ extern timer_t heart_led_timer;
 extern timer_t rf_comm_tim;           //发射机通信超时时间
 extern timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置为10S
 extern timer_t shoot_interval_timer;
-
-extern packet_robot_t src_robot_packet;
+extern unsigned char identify_success;
 
 int forcestopcounter=0;
 
@@ -244,7 +246,7 @@ void inc_receive_mode_flag(void)
 *******************************************************************************/
 void do_robot_run(void)
 {
-		/* check battery voltage */
+	/* check battery voltage */
     #ifdef ENABLE_POWERMON 
         if(check_timer(power_mon_timer))
         {
@@ -280,7 +282,7 @@ void do_robot_run(void)
 			}
         }
     #endif
-		
+
     #ifdef ENABLE_HEARTBEAT
         /* heart led */
         if(check_timer(heart_led_timer))
@@ -289,8 +291,7 @@ void do_robot_run(void)
           heart_led_timer = get_one_timer(HEARTBEAT_TIME);
         }
     #endif
-    
-	
+
 		/* do robot job */
 		switch(g_robot.mode)
 		{
@@ -312,6 +313,19 @@ void do_robot_run(void)
             			rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);
             			identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
           			}
+
+				if(g_do_set_receive_mode_flag)	//发送数据包后置1等待数据发送出去后将模式修改为接收模式				
+					{
+						/* 将通讯设置为接收模式，并置位可接受标志位 */
+						if(g_set_receive_mode_flag >= 3)
+						{				
+							start_nRF24L01_RX();
+						
+							g_set_receive_mode_flag = 0;
+							g_do_set_receive_mode_flag = 0; 	//置位可接收标志位
+						}
+					}
+
 				break;
 			} 
 
@@ -372,16 +386,19 @@ void do_robot_run(void)
 * @brief 执行下发参数
 * @author Xuanting Liu
 *******************************************************************************/
-void on_robot_command(void)
+void on_robot_command(packet_robot_t *packet)
 {
-	do_dribbler( src_robot_packet.dribbler );//设置控制档位
+	if((( (g_robot.mode == NORMAL_MODE) || (g_robot.mode == CRAY_MODE) ) && (identify_success == 1))) //认证成功才能运行
+	{
+		do_dribbler( packet->dribbler );//设置控制档位
 
-	#ifdef ENABLE_SHOOTER
-			do_shoot(src_robot_packet.shoot, src_robot_packet.chip);//平射
-			do_chip(src_robot_packet.shoot, src_robot_packet.chip);//挑射
-	#endif
+		#ifdef ENABLE_SHOOTER
+				do_shoot(packet->shoot, packet->chip);//平射
+				do_chip(packet->shoot, packet->chip);//挑射
+		#endif
 
-	do_acc_handle_move(src_robot_packet.speed_x, src_robot_packet.speed_y, src_robot_packet.speed_rot);
+		do_acc_handle_move(packet->speed_x, packet->speed_y, packet->speed_rot);
+	}
 }
 
 

@@ -16,6 +16,11 @@ extern timer_t rf_comm_tim;
 char packet_flag;
 extern char shooter;
 
+unsigned int identify_buf_ptr;
+extern timer_t identify_cpuid_tim;
+extern u8  encrpty_cpuid[8];
+unsigned char identify_success = 1;   //认证成功标志位 1 认证成功 0 认证失败 初始值为1 可以先运行10S再进行认证
+
 
 /*******************************************************************************
 * @brief 通过包头(data[1])获取包类型
@@ -253,7 +258,7 @@ int decode_packet( packet_robot_t *packet, unsigned char *data, int len )
                 if( ((data[2] & 0xff) & (0x01 << (g_robot.num - 1)) ) == 0 )  
                     return  -1;  	
 
-            // 收到自己的数据，通讯溢出清零。
+            // 收到自己的数据，通讯溢出清零。		
             rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);
 
             // 查找packet中，一共包含多少个车的数据，并找到自己车数据的位置 
@@ -339,4 +344,112 @@ int decode_packet( packet_robot_t *packet, unsigned char *data, int len )
 
 	return 0;
 	
+}
+
+
+/*******************************************************************************
+* @brief 解压cpuid认证包
+* @author Xuanting Liu
+*******************************************************************************/
+int decode_identify_packet( idenfity_cpuid_struct *id_code, unsigned char *data )
+{
+	
+	char i;
+    static short identify_packet_cnt = 0;
+  
+	if(id_code == NULL || data == NULL)
+		return -1; 
+
+	/*data[21]表示cpuid认证数据*/
+    if(data[IDENTIFY_START_ADDR] & 0x80) //最高位为1则表示身份认证数据包开始
+    {  
+       identify_buf_ptr = 0;
+       identify_packet_cnt = 0;
+       id_code->recv_packet_cnt = (data[IDENTIFY_START_ADDR] & 0x7f) + 1;  //认证包需要传的packet个数
+       id_code->recv_cpuid_start_flag = 1;
+	   
+    }
+	if(id_code->recv_cpuid_start_flag)
+	{   
+	    identify_packet_cnt++;  //
+	    for(i = 0; i < 2; i ++)
+	    {
+	        id_code->recv_cpuid[identify_buf_ptr++] = data[IDENTIFY_START_ADDR+1+i];
+	    }
+		if(identify_packet_cnt == id_code->recv_packet_cnt)//接收完认证数据包则进行认证
+		{
+		  id_code->recv_cpuid_ok = 1;//认证数据包接收完成
+		  id_code->recv_cpuid_start_flag = 0;
+		  identify_packet_cnt = 0;
+		}
+		
+	      
+	}
+	if( id_code->recv_cpuid_ok == 1)
+	{
+	    if(cpuid_identify(id_code) == 1)//认证成功
+	    {
+	          /* 身份识别成功，延迟时间清掉重新计时10s*/
+	         identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);//10s
+	         identify_success = 1;
+			 
+	    }
+		else  //认证失败 CPUID未注册过
+		{
+		     identify_success = 0;
+			
+		}
+	     memset(id_code , 0, sizeof(idenfity_cpuid_struct));
+	}
+	if(identify_buf_ptr >= (MAX_IDENTIFY_LEN - 1))
+	{
+	    identify_buf_ptr = 0;
+	}
+
+	return 0;
+}
+
+/*******************************************************************************
+* @brief cpuid认证包识别
+* @return 返回1表示CPUID认证正确 返回0表示认证失败
+* @author Xuanting Liu
+*******************************************************************************/
+int cpuid_identify( idenfity_cpuid_struct *id_code )
+{
+    int i;
+	u8 *cpuid_p;
+	u8 rtn = 0;
+	cpuid_p = &id_code->recv_cpuid[0];
+
+	for(i = 0; i < (MAX_IDENTIFY_LEN/8) ; i ++) //最多支持32个robot的id认证
+	{
+	 
+	   rtn = compare_data(&encrpty_cpuid[0],cpuid_p,8);
+	   if(rtn == 0) //该8个Byte与加密cpuid不相同
+	   {
+	      cpuid_p += 8; 
+	   }
+	   else if(rtn == 1)//找到相同的ID则认证成功
+	   {
+	       return rtn;
+	   }
+	}
+	
+	return rtn; //ID 数组表未找到符合的ID
+}
+
+/*******************************************************************************
+* @brief 数据比较
+* @return 返回1表示输入的2个数组元素值相同 0表示不同
+*******************************************************************************/
+int compare_data(u8 data[],u8 data1[],int len )
+{
+     int i;
+
+	 if(data == NULL || data1 == NULL)  return -1; 
+
+	 for( i = 0; i < len ; i ++)	
+	 	if(data[i] != data1[i])		return 0; 
+
+	 return 1;
 }

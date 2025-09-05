@@ -138,7 +138,7 @@ u8 nrf_spi_wr_rd(uint8_t input)
     uint8_t rx_data;
     
     HAL_SPI_TransmitReceive(&HAL_NRF24L01_SPI, &tx_data, &rx_data, 1, HAL_MAX_DELAY);
-    return rx_data;
+    return (rx_data & 0xff);
 }
 
 /*******************************************************************************
