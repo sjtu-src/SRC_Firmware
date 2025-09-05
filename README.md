@@ -19,6 +19,7 @@
 - `error.c`：机器人异常状态标志。
 - `NRF24L01.c`：通信主芯片NRF24L01驱动。
 其他文件为基础的外设配置，此处不赘述。
+
 ---
 ## Introduction
 - This repository contains embedded code for an SSL robot running on the FreeRTOS real-time operating system, compatible with Version 1.5 of the autonomous robot independently developed by Shanghai Jiao Tong University's SRC Team. The main control chip model is STM32F407VET6.
@@ -51,4 +52,5 @@ Other files contain basic peripheral configurations and are not detailed here.
 - [x] 确定操作系统线程分配及优先级配置。
 - [x] 完成自检模式
 - [x] 完成正常比赛模式
-- [ ] 实车测试
+- [x] 实车测试
+- [ ] 在已有硬件基础上增加LCD显示屏，并编写相应线程
