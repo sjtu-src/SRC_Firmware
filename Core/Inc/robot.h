@@ -5,6 +5,7 @@
 #include "pid.h"
 #include "typedef.h"
 #include "tim.h"
+#include "packet.h"
 
 
 /***控制器几种工作模式选择***/
@@ -74,7 +75,7 @@ void Beep_Show_32bit(u32 val);
 void inc_receive_mode_flag(void);
 void do_robot_run(void);
 int do_power_monitor(void);
-void on_robot_command(void);
+void on_robot_command(packet_robot_t *packet);
 
 extern robot_t g_robot;
 

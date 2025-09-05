@@ -3,7 +3,7 @@
 <title>Static Call Graph - [SRC_Firmware\SRC_Firmware.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image SRC_Firmware\SRC_Firmware.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Thu Sep 04 18:43:43 2025
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Fri Sep 05 10:49:08 2025
 <BR><P>
 <H3>Maximum Stack Usage =        320 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -574,7 +574,6 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = __aeabi_memclr4
 </UL>
 <BR>[Called By]<UL><LI><a href="#[fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_robot
-<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
 <LI><a href="#[f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_TIM9_Init
 <LI><a href="#[ef]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_TIM5_Init
 <LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_TIM4_Init
@@ -815,7 +814,6 @@ Global Symbols
 <LI><a href="#[13d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_led_spi_wr
 <LI><a href="#[132]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_beat
 <LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Communication_Success
-<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
 <LI><a href="#[e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_GPIO_Init
 <LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_i2c_ack
 <LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_stop
@@ -838,6 +836,7 @@ Global Symbols
 <LI><a href="#[62]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf24l01_init
 <LI><a href="#[138]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_motor_dir
 <LI><a href="#[14b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_motor_break
+<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
 </UL>
 
 <P><STRONG><a name="[95]"></a>HAL_GetTick</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, stm32f4xx_hal.o(i.HAL_GetTick))
@@ -1016,10 +1015,10 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[9d]"></a>HAL_TIM_Base_Start_IT</STRONG> (Thumb, 100 bytes, Stack size 0 bytes, stm32f4xx_hal_tim.o(i.HAL_TIM_Base_Start_IT))
-<BR><BR>[Called By]<UL><LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
-<LI><a href="#[e7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_TIM11_Init
+<BR><BR>[Called By]<UL><LI><a href="#[e7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_TIM11_Init
 <LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_motor
 <LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_InitTick
+<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
 </UL>
 
 <P><STRONG><a name="[ab]"></a>HAL_TIM_ConfigClockSource</STRONG> (Thumb, 220 bytes, Stack size 16 bytes, stm32f4xx_hal_tim.o(i.HAL_TIM_ConfigClockSource))
@@ -1539,14 +1538,13 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f407xx.o(RESET)
 </UL>
-<P><STRONG><a name="[67]"></a>RobotTask</STRONG> (Thumb, 130 bytes, Stack size 0 bytes, freertos.o(i.RobotTask))
+<P><STRONG><a name="[67]"></a>RobotTask</STRONG> (Thumb, 122 bytes, Stack size 0 bytes, freertos.o(i.RobotTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = RobotTask &rArr; do_robot_run &rArr; do_power_monitor &rArr; Debug_Here &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 <LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_one_timer
 <LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
-<LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 <LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_Base_Start_IT
 <LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_motor
 </UL>
@@ -1632,9 +1630,9 @@ Global Symbols
 <P><STRONG><a name="[65]"></a>Update_Motor</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, freertos.o(i.Update_Motor))
 <BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = Update_Motor &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[103]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<BR>[Calls]<UL><LI><a href="#[104]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_update_motor
+<LI><a href="#[103]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
 <LI><a href="#[102]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericCreate
-<LI><a href="#[104]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_update_motor
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.constdata)
 </UL>
@@ -1859,7 +1857,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[87]"></a>do_communication</STRONG> (Thumb, 66 bytes, Stack size 8 bytes, comm.o(i.do_communication))
-<BR><BR>[Stack]<UL><LI>Max Depth = 136<LI>Call Chain = do_communication &rArr; do_packet_process &rArr; do_comm_up &rArr; stop_mode_packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
+<BR><BR>[Stack]<UL><LI>Max Depth = 168<LI>Call Chain = do_communication &rArr; do_packet_process &rArr; do_comm_up &rArr; stop_mode_packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
 </UL>
 <BR>[Calls]<UL><LI><a href="#[e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
 <LI><a href="#[127]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_receive_flag
@@ -1892,8 +1890,8 @@ Global Symbols
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Do_Comm
 </UL>
 
-<P><STRONG><a name="[129]"></a>do_packet_process</STRONG> (Thumb, 96 bytes, Stack size 16 bytes, comm.o(i.do_packet_process))
-<BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = do_packet_process &rArr; do_comm_up &rArr; stop_mode_packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
+<P><STRONG><a name="[129]"></a>do_packet_process</STRONG> (Thumb, 100 bytes, Stack size 48 bytes, comm.o(i.do_packet_process))
+<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = do_packet_process &rArr; do_comm_up &rArr; stop_mode_packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
 </UL>
 <BR>[Calls]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
 <LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_packet_type
@@ -2301,7 +2299,7 @@ Global Symbols
 <LI><a href="#[d0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;L01_ClearIRQ
 </UL>
 
-<P><STRONG><a name="[12e]"></a>on_robot_command</STRONG> (Thumb, 40 bytes, Stack size 8 bytes, robot.o(i.on_robot_command))
+<P><STRONG><a name="[12e]"></a>on_robot_command</STRONG> (Thumb, 52 bytes, Stack size 8 bytes, robot.o(i.on_robot_command))
 <BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = on_robot_command &rArr; do_acc_handle_move &rArr; __hardfp_ceil &rArr; __aeabi_cdrcmple
 </UL>
 <BR>[Calls]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot
@@ -2736,9 +2734,9 @@ Global Symbols
 <P><STRONG><a name="[17e]"></a>xPortStartScheduler</STRONG> (Thumb, 222 bytes, Stack size 16 bytes, port.o(i.xPortStartScheduler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = xPortStartScheduler
 </UL>
-<BR>[Calls]<UL><LI><a href="#[17f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortSetupTimerInterrupt
-<LI><a href="#[180]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__asm___6_port_c_39a90d8d__prvEnableVFP
+<BR>[Calls]<UL><LI><a href="#[180]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__asm___6_port_c_39a90d8d__prvEnableVFP
 <LI><a href="#[181]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__asm___6_port_c_39a90d8d__prvStartFirstTask
+<LI><a href="#[17f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortSetupTimerInterrupt
 </UL>
 <BR>[Called By]<UL><LI><a href="#[157]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskStartScheduler
 </UL>
@@ -2854,8 +2852,8 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[160]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vListInsertEnd
 <LI><a href="#[15f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uxListRemove
 </UL>
-<BR>[Called By]<UL><LI><a href="#[103]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
-<LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGiveFromISR
+<BR>[Called By]<UL><LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGiveFromISR
+<LI><a href="#[103]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
 <LI><a href="#[169]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericReset
 <LI><a href="#[16e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvUnlockQueue
 </UL>

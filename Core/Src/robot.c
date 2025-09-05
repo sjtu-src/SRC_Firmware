@@ -11,7 +11,6 @@
 #include "misc.h"
 #include "motor.h"
 #include "comm.h"
-#include "packet.h"
 #include "NRF24L01.h"
 #include "error.h"
 #include "pid.h"
@@ -31,8 +30,6 @@ extern timer_t heart_led_timer;
 extern timer_t rf_comm_tim;           //发射机通信超时时间
 extern timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置为10S
 extern timer_t shoot_interval_timer;
-
-extern packet_robot_t src_robot_packet;
 
 int forcestopcounter=0;
 
@@ -345,18 +342,18 @@ void do_robot_run(void)
 * @brief 执行下发参数
 * @author Xuanting Liu
 *******************************************************************************/
-void on_robot_command(void)
+void on_robot_command(packet_robot_t *packet)
 {
-	do_dribbler( src_robot_packet.dribbler );//设置控制档位
-
-	#ifdef ENABLE_SHOOTER
-			do_shoot(src_robot_packet.shoot, src_robot_packet.chip);//平射
-			do_chip(src_robot_packet.shoot, src_robot_packet.chip);//挑射
-	#endif
-
-	do_acc_handle_move(src_robot_packet.speed_x, src_robot_packet.speed_y, src_robot_packet.speed_rot);
+    if((g_robot.mode == NORMAL_MODE) || (g_robot.mode == CRAY_MODE))
+    {
+		do_dribbler( packet->dribbler ); 
+		#ifdef ENABLE_SHOOTER
+				do_shoot(packet->shoot, packet->chip);
+				do_chip(packet->shoot, packet->chip);
+		#endif
+		do_acc_handle_move(packet->speed_x, packet->speed_y, packet->speed_rot);
+    }
 }
-
 
 
 /*******************************************************************************
