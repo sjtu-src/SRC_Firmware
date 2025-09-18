@@ -37,6 +37,7 @@ typedef struct _robot_
 	int num; 	/* g_robot num load from circuit configuration switch 机器号为拨码盘+1*/
 	mode_t mode;	/* g_robot mode */
 	u8 frq;	/* 2.4G rf freq */
+	u8 dip_frq; /* dip sw setting freq */
 	
 	wheel_t wheels[ CHANNEL_NUM ]; //各个轮子的pid参数
 	u16 dribbler;

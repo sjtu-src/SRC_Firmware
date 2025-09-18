@@ -47,21 +47,14 @@ void SRC_Robot_Init(void)
 	init_gpio();
 	init_motor();
 	init_dribbler();
-	//init_i2c();
 	init_nrf24l01();
-	OLED_Init();
-	OLED_Clear();
-	OLED_ShowImage(0, 0, 128, 43, SRC_LOGO);
-	OLED_ShowString(0, 55, "Freq:",  OLED_6X8);
-    OLED_ShowNum(30, 55, g_robot.frq, 2, OLED_6X8);
-    //OLED_Update();
-	OLED_Update();
 
 	for(delay = 0;delay < 50000000 ; delay++);
 	
 	EN_INT();
 
 	init_robot();
+	OLED_Display_Init();
 	init_comm();
 }
 
@@ -73,7 +66,7 @@ void init_robot(void)
 {
 	param_t param;
 	u8 mode;
-	u8 freq;
+	u8 freq, dip_freq;
 	u8 num;
 	u8 i;
 	float angle;
@@ -107,11 +100,12 @@ void init_robot(void)
     }
 
 	/* initial g_robot */
-	read_dip_sw(&freq, &num, &mode);
+	read_dip_sw(&dip_freq, &freq, &num, &mode);
 	
 	memset(&g_robot, 0, sizeof(g_robot));
 	g_robot.num = num;
 	g_robot.frq = freq;
+	g_robot.dip_frq = dip_freq;;
 	g_robot.mode = (mode_t)(mode & 0x7);
     mode = mode & 0x7;
 

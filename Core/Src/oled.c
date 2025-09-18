@@ -32,6 +32,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "tim.h"
 
 // 如果用到中文，编译器附加选项需要加 --no-multibyte-chars  (用AC6编译器的不用加)
 
@@ -61,7 +62,7 @@ extern  I2C_HandleTypeDef   hi2c2;	//HAL库使用，指定硬件IIC接口
 #define OLED_ADDRESS 0x3C << 1	// 0x3C是OLED的7位地址，左移1位最后位做读写位变成0x78
 
 /*I2C超时时间*/
-#define OLED_I2C_TIMEOUT 10
+#define OLED_I2C_TIMEOUT 100
 /*软件I2C用的延时时间，下面数值为170MHz主频要延时的值，如果你的主频不一样可以修改一下，100MHz以内的主频改成0就行*/
 #define Delay_time 3
 
@@ -168,8 +169,8 @@ void OLED_GPIO_Init(void)
 
     /*在初始化前，加入适量延时，待OLED供电稳定*/
     for (i = 0; i < 1000; i++) {
-        for (j = 0; j < 1000; j++)
-            ;
+        for (j = 0; j < 100; j++)
+            wait_us(1);
     }
 #ifdef OLED_USE_SW_I2C
     __HAL_RCC_GPIOC_CLK_ENABLE();		// 使能GPIOC时钟
@@ -323,9 +324,9 @@ void OLED_Init(void)
 
     OLED_WriteCommand(0x40); // 设置显示开始行，0x40~0x7F
 
-    OLED_WriteCommand(0xA1); // 设置左右方向，0xA1正常，0xA0左右反置
+    OLED_WriteCommand(0xA0); // 设置左右方向，0xA1正常，0xA0左右反置
 
-    OLED_WriteCommand(0xC8); // 设置上下方向，0xC8正常，0xC0上下反置
+    OLED_WriteCommand(0xC0); // 设置上下方向，0xC8正常，0xC0上下反置
 
     OLED_WriteCommand(0xDA); // 设置COM引脚硬件配置
     OLED_WriteCommand(0x12);

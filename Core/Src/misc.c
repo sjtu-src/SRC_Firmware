@@ -9,6 +9,52 @@
 #include "spi.h"
 #include "adc.h"
 #include "cmsis_os.h"
+#include "oled.h"
+
+
+/*******************************************************************************
+* @brief OLED显示初始画面
+* @author Xuanting Liu
+*******************************************************************************/
+void OLED_Display_Init(void)
+{
+	OLED_Init();
+
+	// 显示SRC Logo
+	OLED_ShowImage(0, 0, 128, 43, SRC_LOGO);
+
+	OLED_DrawLine(0, 49, 127, 49);
+
+	// 显示频率
+	OLED_ShowString(0, 55, "Frq.",  OLED_6X8);
+    OLED_ShowNum(24, 55, g_robot.dip_frq, 1, OLED_6X8);
+
+	// 显示车号
+	OLED_ShowString(36, 55, "No.",  OLED_6X8);
+    OLED_ShowNum(54, 55, g_robot.num-1, 2, OLED_6X8);
+
+	// 显示MODE
+	switch(g_robot.mode)
+	{
+		case NORMAL_MODE:
+			OLED_ShowString(72, 55, "Normal",  OLED_6X8);
+			break;
+		case SELFTEST_MODE:
+			OLED_ShowString(72, 55, "SelfTest",  OLED_6X8);
+			break;
+		case TEST_DRIBBLING_MODE:
+			OLED_ShowString(72, 55, "TestDrib",  OLED_6X8);
+			break;
+		case CRAY_MODE:
+			OLED_ShowString(72, 55, "Cray",  OLED_6X8);
+			break;
+		default:
+			OLED_ShowString(72, 55, "Invalid",  OLED_6X8);
+			break;
+	}
+
+	OLED_Update();
+}
  
 
 /*******************************************************************************
@@ -29,7 +75,7 @@ void init_dribbler(void)
 * @param mode 模式
 * @author Xuanting Liu
 *******************************************************************************/
-void read_dip_sw(u8 *freq, u8 *num, u8 *mode)
+void read_dip_sw(u8 *dip_freq, u8 *freq, u8 *num, u8 *mode)
 {
 	u16 dat = 0;
 	u8 i;
@@ -61,6 +107,8 @@ void read_dip_sw(u8 *freq, u8 *num, u8 *mode)
 	*mode = (u8)((dat >> 13) & 0x7);
 	*freq = (u8)((dat >> 4) & 0xf);
 	*num = (u8)((dat >> 0) & 0xf) + 1; //??????????????1
+
+	*dip_freq = *freq;
 
 	/* change rf frq channel to 24l01 freq */
 	switch(*freq)
