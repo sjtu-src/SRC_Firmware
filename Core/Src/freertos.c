@@ -33,6 +33,7 @@
 #include "motor.h"
 #include "comm.h"
 #include "action.h"
+#include "oled.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,7 +58,7 @@ SemaphoreHandle_t xMotorTickSem = NULL;
 timer_t power_mon_timer;
 timer_t heart_led_timer;
 timer_t rf_comm_tim;           //发射机�?�信超时时间
-timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�???10S
+timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�??????10S
 timer_t shoot_interval_timer;
 
 extern char g_do_set_receive_mode_flag;
@@ -67,6 +68,7 @@ extern char g_set_receive_mode_flag;
 osThreadId MotorUpdateHandle;
 osThreadId CommunicationHandle;
 osThreadId StatesUpdateHandle;
+osThreadId DisplayStateHandle;
 osThreadId IdleHandle;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,6 +79,7 @@ osThreadId IdleHandle;
 void Update_Motor(void const * argument);
 void Do_Comm(void const * argument);
 void RobotTask(void const * argument);
+void Do_Display(void const * argument);
 void Do_Default(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -135,6 +138,10 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of StatesUpdate */
   osThreadDef(StatesUpdate, RobotTask, osPriorityNormal, 0, 1024);
   StatesUpdateHandle = osThreadCreate(osThread(StatesUpdate), NULL);
+
+  /* definition and creation of DisplayState */
+  osThreadDef(DisplayState, Do_Display, osPriorityLow, 0, 512);
+  DisplayStateHandle = osThreadCreate(osThread(DisplayState), NULL);
 
   /* definition and creation of Idle */
   osThreadDef(Idle, Do_Default, osPriorityIdle, 0, 128);
@@ -200,9 +207,9 @@ void Do_Comm(void const * argument)
             identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
           }
 
-				if(g_do_set_receive_mode_flag)	//发送数据包后置1等待数据发送出去后将模式修改为接收模式				
+				if(g_do_set_receive_mode_flag)	//发�?�数据包后置1等待数据发�?�出去后将模式修改为接收模式				
           {
-            /* 将通讯设置为接收模式，并置位可接受标志位 */
+            /* 将�?�讯设置为接收模式，并置位可接受标志�??? */
             if(g_set_receive_mode_flag >= 3)
             {				
               start_nRF24L01_RX();
@@ -212,7 +219,7 @@ void Do_Comm(void const * argument)
             }
           }
     }
-    osDelay(1);
+    osDelay(5);
   }
   /* USER CODE END Do_Comm */
 }
@@ -256,9 +263,29 @@ void RobotTask(void const * argument)
   for(;;)
   {
     do_robot_run();
-    //osDelay(1);
+    osDelay(1);
   }
   /* USER CODE END RobotTask */
+}
+
+/* USER CODE BEGIN Header_Do_Display */
+/**
+* @brief Function implementing the DisplayState thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Do_Display */
+void Do_Display(void const * argument)
+{
+  /* USER CODE BEGIN Do_Display */
+
+  /* Infinite loop */
+  for(;;)
+  {
+
+    //osDelay(1);
+  }
+  /* USER CODE END Do_Display */
 }
 
 /* USER CODE BEGIN Header_Do_Default */

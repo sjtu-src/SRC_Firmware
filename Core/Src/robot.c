@@ -16,6 +16,7 @@
 #include "pid.h"
 #include "cmsis_os.h"
 #include "simulate_i2c.h"
+#include "oled.h"
 
 int wheel_reduction_ratio_x_set; /*减速比*/		
 int wheel_reduction_ratio_yz_set; /*减速比*/  //旧轮子减速比为70/22 为3.1818 外圈转1圈，内圈码盘转3.1818圈
@@ -46,8 +47,15 @@ void SRC_Robot_Init(void)
 	init_gpio();
 	init_motor();
 	init_dribbler();
-	init_i2c();
+	//init_i2c();
 	init_nrf24l01();
+	OLED_Init();
+	OLED_Clear();
+	OLED_ShowImage(0, 0, 128, 43, SRC_LOGO);
+	OLED_ShowString(0, 55, "Freq:",  OLED_6X8);
+    OLED_ShowNum(30, 55, g_robot.frq, 2, OLED_6X8);
+    //OLED_Update();
+	OLED_Update();
 
 	for(delay = 0;delay < 50000000 ; delay++);
 	
