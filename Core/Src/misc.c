@@ -21,36 +21,62 @@ void OLED_Display_Init(void)
 	OLED_Init();
 
 	// 显示SRC Logo
-	OLED_ShowImage(0, 0, 128, 43, SRC_LOGO);
+	OLED_ShowImage(0, 4, 128, 43, SRC_LOGO);
 
-	OLED_DrawLine(0, 49, 127, 49);
+	OLED_DrawLine(0, 51, 127, 51);
 
 	// 显示频率
 	OLED_ShowString(0, 55, "Frq.",  OLED_6X8);
     OLED_ShowNum(24, 55, g_robot.dip_frq, 1, OLED_6X8);
 
 	// 显示车号
-	OLED_ShowString(36, 55, "No.",  OLED_6X8);
-    OLED_ShowNum(54, 55, g_robot.num-1, 2, OLED_6X8);
+	OLED_ShowString(39, 55, "No.",  OLED_6X8);
+    OLED_ShowNum(57, 55, g_robot.num-1, 2, OLED_6X8);
 
 	// 显示MODE
 	switch(g_robot.mode)
 	{
 		case NORMAL_MODE:
-			OLED_ShowString(72, 55, "Normal",  OLED_6X8);
+			OLED_ShowString(78, 55, "Normal",  OLED_6X8);
 			break;
 		case SELFTEST_MODE:
-			OLED_ShowString(72, 55, "SelfTest",  OLED_6X8);
+			OLED_ShowString(78, 55, "SelfTest",  OLED_6X8);
 			break;
 		case TEST_DRIBBLING_MODE:
-			OLED_ShowString(72, 55, "TestDrib",  OLED_6X8);
+			OLED_ShowString(78, 55, "TestDrib",  OLED_6X8);
 			break;
 		case CRAY_MODE:
-			OLED_ShowString(72, 55, "Cray",  OLED_6X8);
+			OLED_ShowString(78, 55, "Cray",  OLED_6X8);
 			break;
 		default:
-			OLED_ShowString(72, 55, "Invalid",  OLED_6X8);
+			OLED_ShowString(78, 55, "Invalid",  OLED_6X8);
 			break;
+	}
+
+	OLED_Update();
+}
+
+
+/*******************************************************************************
+* @brief 机器人状态显示
+* @author Xuanting Liu
+*******************************************************************************/
+void Robot_State_Display(void)
+{
+	float speed[4];
+	int i;
+	OLED_ClearArea(0, 0, 128, 51);
+
+	// 显示电池电压和容电压
+	OLED_Printf(0, 0, OLED_6X8, "BAT:%.1fV", g_robot.bat_v_f);
+	OLED_Printf(66, 0, OLED_6X8, "CAP:%.1fV", g_robot.cap_v_f);
+
+	// 显示各轮轮速
+	
+	for(i=0; i<4; i++)
+	{
+		speed[i] = N2V(g_robot.wheels[i].cur_speed)*100;
+		OLED_Printf(0, 11+i*10, OLED_6X8, "LeftFront:%d", g_robot.wheels[i].cur_speed);
 	}
 
 	OLED_Update();

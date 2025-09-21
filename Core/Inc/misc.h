@@ -4,6 +4,7 @@
 #include "typedef.h"
 
 void OLED_Display_Init(void);
+void Robot_State_Display(void);
 void init_dribbler(void);
 void read_dip_sw(u8 *dip_freq, u8 *freq, u8 *num, u8 *mode);
 void start_ir_pwm(void);

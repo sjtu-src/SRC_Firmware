@@ -58,7 +58,7 @@ SemaphoreHandle_t xMotorTickSem = NULL;
 timer_t power_mon_timer;
 timer_t heart_led_timer;
 timer_t rf_comm_tim;           //发射机�?�信超时时间
-timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�??????10S
+timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�???????10S
 timer_t shoot_interval_timer;
 
 extern char g_do_set_receive_mode_flag;
@@ -207,9 +207,8 @@ void Do_Comm(void const * argument)
             identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
           }
 
-				if(g_do_set_receive_mode_flag)	//发�?�数据包后置1等待数据发�?�出去后将模式修改为接收模式				
+				if(g_do_set_receive_mode_flag)	//发出数据包后�?1，等待数据发出去后将模式修改为接收模�?				
           {
-            /* 将�?�讯设置为接收模式，并置位可接受标志�??? */
             if(g_set_receive_mode_flag >= 3)
             {				
               start_nRF24L01_RX();
@@ -253,8 +252,7 @@ void RobotTask(void const * argument)
 	rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME); //无线通信模式超时时间
 	shoot_interval_timer = get_one_timer(1);
 	identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME); //cpuid认证超时时间设置10s 10s认证不成功则停止机器
-
-  //Beep_Show_32bit(power_mon_timer);
+  do_power_monitor();
 
 	/* start motor */
 	start_motor();
@@ -278,12 +276,12 @@ void RobotTask(void const * argument)
 void Do_Display(void const * argument)
 {
   /* USER CODE BEGIN Do_Display */
-
+  osDelay(2000);
   /* Infinite loop */
   for(;;)
   {
-
-    //osDelay(1);
+    Robot_State_Display();
+    osDelay(1);
   }
   /* USER CODE END Do_Display */
 }

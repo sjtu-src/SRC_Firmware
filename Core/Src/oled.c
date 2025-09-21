@@ -25,7 +25,7 @@
  * 博客：		https://blog.zeruns.tech
  * B站主页：	https://space.bilibili.com/8320520
 */
-
+#include "robot.h"
 #include "main.h"
 #include "oled.h"
 #include <string.h>
@@ -62,7 +62,7 @@ extern  I2C_HandleTypeDef   hi2c2;	//HAL库使用，指定硬件IIC接口
 #define OLED_ADDRESS 0x3C << 1	// 0x3C是OLED的7位地址，左移1位最后位做读写位变成0x78
 
 /*I2C超时时间*/
-#define OLED_I2C_TIMEOUT 100
+#define OLED_I2C_TIMEOUT 500
 /*软件I2C用的延时时间，下面数值为170MHz主频要延时的值，如果你的主频不一样可以修改一下，100MHz以内的主频改成0就行*/
 #define Delay_time 3
 
@@ -275,6 +275,7 @@ void OLED_WriteCommand(uint8_t Command)
 void OLED_WriteData(uint8_t *Data, uint8_t Count)
 {
     uint8_t i;
+    HAL_StatusTypeDef status;
 #ifdef OLED_USE_SW_I2C
     OLED_I2C_Start();        // I2C起始
 	OLED_I2C_SendByte(0x78);		//发送OLED的I2C从机地址
@@ -292,7 +293,7 @@ void OLED_WriteData(uint8_t *Data, uint8_t Count)
     for (i = 0; i < Count; i++) {
         TxData[i + 1] = Data[i];
     }
-    HAL_I2C_Master_Transmit(&OLED_I2C, OLED_ADDRESS, (uint8_t*)TxData, Count + 1, OLED_I2C_TIMEOUT);
+    status = HAL_I2C_Master_Transmit(&OLED_I2C, OLED_ADDRESS, (uint8_t*)TxData, Count + 1, OLED_I2C_TIMEOUT);
 #endif    
 }
 
