@@ -263,7 +263,6 @@ void do_robot_run(void)
 				
 					while(1) /* stop robot */
 					{
-						BEEP_ON();
 						set_heart_led(100, 0, 0, 0x1f);
 						set_heart_led(100, 0, 0, 0x1f);						
 						osDelay(100);

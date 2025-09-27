@@ -200,6 +200,7 @@ void read_dip_sw(u8 *dip_freq, u8 *freq, u8 *num, u8 *mode)
 void start_ir_pwm(void)
 {
 	__HAL_TIM_ENABLE(&htim10);
+	HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
 }
 
 /*******************************************************************************

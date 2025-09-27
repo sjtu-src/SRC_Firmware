@@ -58,11 +58,12 @@ SemaphoreHandle_t xMotorTickSem = NULL;
 timer_t power_mon_timer;
 timer_t heart_led_timer;
 timer_t rf_comm_tim;           //发射机�?�信超时时间
-timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�???????10S
+timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置�???????10S
 timer_t shoot_interval_timer;
 
 extern char g_do_set_receive_mode_flag;
 extern char g_set_receive_mode_flag;
+extern packet_robot_t src_robot_packet;
 
 /* USER CODE END Variables */
 osThreadId MotorUpdateHandle;
@@ -201,13 +202,20 @@ void Do_Comm(void const * argument)
             do_move(0,0,0);
             do_shoot(0,0);
             do_chip(0,0);
+            //Very important: clear the packet when communication timeout.
+            src_robot_packet.shoot = 0;
+            src_robot_packet.chip = 0;
+            src_robot_packet.dribbler = 0;
+            src_robot_packet.speed_x = 0;
+            src_robot_packet.speed_y = 0;
+            src_robot_packet.speed_rot = 0;
 
             start_nRF24L01_RX();	
             rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);
             identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
           }
 
-				if(g_do_set_receive_mode_flag)	//发出数据包后�?1，等待数据发出去后将模式修改为接收模�?				
+				if(g_do_set_receive_mode_flag)	//发出数据包后置为1，等待数据发出去后将模式修改为接收模式			
           {
             if(g_set_receive_mode_flag >= 3)
             {				
