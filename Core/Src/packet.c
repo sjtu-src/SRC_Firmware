@@ -91,6 +91,8 @@ void stop_mode_packet(char *q)
  ******************************************************************************/
 void packet(char *q)
 {
+	u8 bat_v;
+	u8 cap_v;
 	static int now_infra = 0;
 
 	static int to_shoot = 0;
@@ -151,7 +153,7 @@ void packet(char *q)
 		#endif
 	}
 
-	/* n记录每个packet发送时的次数, 每个新发的包执行5次 */
+	/* n记录每个packet发送时的次数, 每个新发的包执行50次 */
 	if(n >= 5)
 	{
 		if(finish_shoot == 1) finish_shoot = 0;
@@ -179,12 +181,31 @@ void packet(char *q)
 		m = 0;
 	}
 
+	bat_v = get_bat_v();
+	cap_v = get_cap_v();
+
+	DIS_INT();
+	g_robot.bat_v = bat_v;
+	g_robot.cap_v = cap_v;
+	
+	if(g_robot.bat_v == 0xFF)
+	{
+		g_robot.bat_v = 0xFE;
+	}
+	
+	
+	if(g_robot.cap_v == 0xFF)
+	{
+		g_robot.cap_v  = 0xFE;
+	}
+	
+
 	q[0] = 0xff;
     q[1] = 0x02;
     q[2] = (g_robot.mode == NORMAL_MODE) ? ((g_robot.num-1) & 0x0F) : (g_robot.num & 0x0F);
 	q[3] = (now_infra << 6) + (finish_shoot << 5) + (finish_chip << 4);
-	q[4] = m;
-	q[5] = n;
+	q[4] = g_robot.bat_v;
+	q[5] = g_robot.cap_v ;
 	q[6] = 0xf0;
 	speed = abs(g_robot.wheels[0].cur_speed) / 10;   
 	q[7] = speed % 255;
