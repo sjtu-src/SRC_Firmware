@@ -259,6 +259,13 @@ void do_robot_run(void)
 					do_move(0,0,0);
 					do_shoot(0,0);
 					do_chip(0,0);
+					//Very important: clear the packet when communication timeout.
+					src_robot_packet.shoot = 0;
+					src_robot_packet.chip = 0;
+					src_robot_packet.dribbler = 0;
+					src_robot_packet.speed_x = 0;
+					src_robot_packet.speed_y = 0;
+					src_robot_packet.speed_rot = 0;
 					BEEP_OFF();
 				
 					while(1) /* stop robot */
@@ -288,6 +295,13 @@ void do_robot_run(void)
           heart_led_timer = get_one_timer(HEARTBEAT_TIME);
         }
     #endif
+
+	#ifdef ENABLE_INFRA_BEEP
+		if(g_robot.is_ball_detected)
+			BEEP_ON();
+		else
+			BEEP_OFF();
+	#endif
     
 	switch(g_robot.mode) //自检模式
 	{ 
