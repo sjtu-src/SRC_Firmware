@@ -1098,4 +1098,21 @@ u8 check_timer(timer_t timer)
 	if(cur_time >= timer) return 1;
 	else return 0;
 }
+
+/*******************************************************************************
+* @brief 开启射门信号输出
+* @author Xuanting Liu
+*******************************************************************************/
+void TIM_CCxCmd(TIM_TypeDef* TIMx, uint16_t TIM_Channel, uint16_t TIM_CCx)
+{
+  uint16_t tmp = 0;
+
+  tmp = CCER_CCE_SET << TIM_Channel;
+
+  /* Reset the CCxE Bit */
+  TIMx->CCER &= (uint16_t)~ tmp;
+
+  /* Set or reset the CCxE Bit */ 
+  TIMx->CCER |=  (uint16_t)(TIM_CCx << TIM_Channel);
+}
 /* USER CODE END 1 */

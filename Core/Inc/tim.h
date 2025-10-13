@@ -57,6 +57,31 @@ extern TIM_HandleTypeDef htim12;
 /* USER CODE BEGIN Private defines */
 typedef u64 timer_t;
 
+#define TIM_CCx_Enable                      ((uint16_t)0x0001)
+#define TIM_CCx_Disable                     ((uint16_t)0x0000)
+#define CCER_CCE_SET                        ((uint16_t)0x0001)
+
+#define TIM_Channel_1                      ((uint16_t)0x0000)
+#define TIM_Channel_2                      ((uint16_t)0x0004)
+#define TIM_Channel_3                      ((uint16_t)0x0008)
+#define TIM_Channel_4                      ((uint16_t)0x000C)
+                                 
+#define IS_TIM_CHANNEL(CHANNEL) (((CHANNEL) == TIM_Channel_1) || \
+                                 ((CHANNEL) == TIM_Channel_2) || \
+                                 ((CHANNEL) == TIM_Channel_3) || \
+                                 ((CHANNEL) == TIM_Channel_4))
+                                 
+#define IS_TIM_PWMI_CHANNEL(CHANNEL) (((CHANNEL) == TIM_Channel_1) || \
+                                      ((CHANNEL) == TIM_Channel_2))
+#define IS_TIM_COMPLEMENTARY_CHANNEL(CHANNEL) (((CHANNEL) == TIM_Channel_1) || \
+                                               ((CHANNEL) == TIM_Channel_2) || \
+                                               ((CHANNEL) == TIM_Channel_3))
+
+#define TIM_CCx_Enable                      ((uint16_t)0x0001)
+#define TIM_CCx_Disable                     ((uint16_t)0x0000)
+#define IS_TIM_CCX(CCX) (((CCX) == TIM_CCx_Enable) || \
+                         ((CCX) == TIM_CCx_Disable))
+
 void wait_us(u8 time);
 void wait_100us(u8 time);
 void wait_ms_with_dis_int(u8 time);
@@ -64,6 +89,7 @@ timer_t get_one_timer(u32 time);
 void update_sys_timer(void);
 u64 get_sys_tick(void);
 u8 check_timer(timer_t timer);
+void TIM_CCxCmd(TIM_TypeDef* TIMx, uint16_t TIM_Channel, uint16_t TIM_CCx);
 
 /* USER CODE END Private defines */
 

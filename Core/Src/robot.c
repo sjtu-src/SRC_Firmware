@@ -35,6 +35,9 @@ extern packet_robot_t src_robot_packet;
 
 int forcestopcounter=0;
 
+int test_drib_speed = 0;
+int test_drib_stage = 0;
+
 
 /*******************************************************************************
 *@author Xuanting Liu
@@ -348,6 +351,39 @@ void do_robot_run(void)
 				test_time = 0;
 			}
 			break;
+		}	
+		case TEST_DRIBBLING_MODE:
+		{
+			do_dribbler(1);
+			osDelay(3000);
+			if(g_robot.is_ball_detected == 0)
+			{
+				do_dribbler(0);	
+				while(1);
+			}
+
+			test_drib_stage++;
+
+			for(test_drib_speed = 0; test_drib_speed <= 511; test_drib_speed += 15)
+			{
+				if(g_robot.is_ball_detected == 0) break;
+				do_acc_handle_move(0, 0, test_drib_speed);
+				osDelay(200);
+			}
+			do_dribbler(0);
+			do_acc_handle_move(0, 0, 0);
+			osDelay(500);
+
+			int tmp = test_drib_speed / 100;
+			for(int i = 0; i < tmp; i++)
+			{
+				BEEP_ON();
+				osDelay(100);
+				BEEP_OFF();
+				osDelay(300);
+			}
+
+			while(1);
 		}							
 	}				
 

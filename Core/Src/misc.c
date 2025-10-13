@@ -11,6 +11,8 @@
 #include "cmsis_os.h"
 #include "oled.h"
 
+extern int test_drib_speed;
+extern int test_drib_stage;
 
 /*******************************************************************************
 * @brief OLED显示初始画面
@@ -63,20 +65,34 @@ void OLED_Display_Init(void)
 *******************************************************************************/
 void Robot_State_Display(void)
 {
-	float speed[4];
 	int i;
 	OLED_ClearArea(0, 0, 128, 51);
 
-	// 显示电池电压和容电压
-	OLED_Printf(0, 0, OLED_6X8, "BAT:%.1fV", g_robot.bat_v_f);
-	OLED_Printf(66, 0, OLED_6X8, "CAP:%.1fV", g_robot.cap_v_f);
-
-	// 显示各轮轮速
-	
-	for(i=0; i<4; i++)
+	switch(g_robot.mode)
 	{
-		speed[i] = N2V(g_robot.wheels[i].cur_speed)*100;
-		OLED_Printf(0, 11+i*10, OLED_6X8, "LeftFront:%d", g_robot.wheels[i].cur_speed);
+		case NORMAL_MODE:
+		case SELFTEST_MODE:
+		case CRAY_MODE:
+		{
+			// 显示电池电压和容电压
+			OLED_Printf(0, 0, OLED_6X8, "BAT:%.1fV", g_robot.bat_v_f);
+			OLED_Printf(66, 0, OLED_6X8, "CAP:%.1fV", g_robot.cap_v_f);
+
+			// 显示各轮轮速
+			for(i=0; i<4; i++)
+			{
+				OLED_Printf(0, 11+i*10, OLED_6X8, "LeftFront:%d", g_robot.wheels[i].cur_speed);
+			}
+			break;
+		}
+		case TEST_DRIBBLING_MODE:
+		{
+			if(test_drib_stage == 0)
+				OLED_Printf(19, 28, OLED_6X8, "Get me a ball!");
+			else if(test_drib_stage == 1)
+				OLED_Printf(13, 28, OLED_6X8, "Rotate speed:%d", test_drib_speed);
+			break;
+		}
 	}
 
 	OLED_Update();
@@ -245,17 +261,19 @@ void shoot_on(u32 value)
 
 	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
 
-	value= 5.5* pow(value, 2) / 10000 +7* value / 100 +7;
+	value= 2.627* pow(value, 2) / 10000 +13.6449* value / 100 +7.042;
 
-	value = MAX_SHOT_STRENGTH + 3 - value;
+	value = (int)(value * 5 + 0.5);
+	
+	value = 5 * MAX_SHOT_STRENGTH - value; // 越小踢得越快
 
 	if(value == 0) value = 1;
 	
 	
-	__HAL_TIM_SET_COMPARE(&htim9, TIM_CHANNEL_1, value);
+	TIM_CCxCmd(TIM9, TIM_Channel_1, TIM_CCx_Enable);
+	TIM_CCxCmd(TIM9, TIM_Channel_2, TIM_CCx_Disable);
+	TIM9->CCR1 = value;
 	__HAL_TIM_ENABLE(&htim9);
-	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
 }
 
 
@@ -271,10 +289,10 @@ void chip_on(u32 value)
 
 	if(value == 0) value = 1;
 
-	__HAL_TIM_SET_COMPARE(&htim9, TIM_CHANNEL_2, value);
+	TIM_CCxCmd(TIM9, TIM_Channel_2, TIM_CCx_Enable);
+	TIM_CCxCmd(TIM9, TIM_Channel_1, TIM_CCx_Disable);
+	TIM9->CCR2 = value;
 	__HAL_TIM_ENABLE(&htim9);
-	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
 }
 
 /*******************************************************************************
@@ -551,3 +569,5 @@ void Communication_Success(void)
 
 	if(comm_count > 30)	comm_count=0;
 }
+
+

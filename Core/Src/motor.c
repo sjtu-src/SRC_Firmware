@@ -6,6 +6,7 @@
 #include "stm32f4xx_hal.h"
 #include "typedef.h"
 #include "tim.h"
+#include "cfg.h"
 
 u8 is_motor_run = 0;
 
@@ -165,7 +166,19 @@ void update_encoder(int *speed)
 		encoder_cnt = (s16)(TIMx->CNT & 0xffff);  //TF1 TF2双向双边沿计数 计数值为编码器脉冲的4倍
 		tmp_f = (float)encoder_cnt * ((float)ENCODER_TIM_CLK_FREQ *2 / (float)time);  //count/s tim7 计数时钟2M 需要乘以2
 		
-		*(speed + i) = (int)tmp_f;
+		#if (ENCODER_TYPE == OPTICAL_ENCODER)
+			#if (MOTOR_TYPE == OLD_MOTOR)
+				*(speed + i) = (int)tmp_f;
+			#elif (MOTOR_TYPE == NEW_MOTOR)
+				*(speed + i) = -(int)tmp_f;
+			#endif
+		#elif (ENCODER_TYPE == MAGNETIC_ENCODER)
+			#if (MOTOR_TYPE == OLD_MOTOR)
+				*(speed + i) = -(int)tmp_f;
+			#elif (MOTOR_TYPE == NEW_MOTOR)
+				*(speed + i) = (int)tmp_f;
+			#endif
+		#endif
 	}
 	
 	start_encoder();//计数器清0 重新计数 

@@ -112,9 +112,6 @@ int do_packet_process( unsigned char *data, int len )
 *******************************************************************************/
 void do_comm_up(void)
 {
-	unsigned char num1, num2, num3;
-	short temp;
-	int i;
 	static char data[15]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; 
 
 	nRF24L01_dev.buf.pos = PACKET_LEN_UP;

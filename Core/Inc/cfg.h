@@ -8,7 +8,36 @@
 // 红外类型
 #define NEW_INFRA 1
 #define OLD_INFRA 0
-#define INFRA_TYPE OLD_INFRA
+
+#define NEW_MOTOR 1
+#define OLD_MOTOR 0
+
+#define OPTICAL_ENCODER 1
+#define MAGNETIC_ENCODER 0
+
+#define LEBO_ROBOT 0
+#define NEUMANN_S01 1
+#define NEUMANN_S02 2
+
+//机器人型号
+#define ROBOT_VERSION LEBO_ROBOT
+
+#if (ROBOT_VERSION == LEBO_ROBOT)
+    #define INFRA_TYPE OLD_INFRA
+    #define MOTOR_TYPE OLD_MOTOR
+    #define ENCODER_TYPE OPTICAL_ENCODER
+#elif (ROBOT_VERSION == NEUMANN_S01)
+    #define INFRA_TYPE NEW_INFRA
+    #define MOTOR_TYPE OLD_MOTOR
+    #define ENCODER_TYPE MAGNETIC_ENCODER
+#elif (ROBOT_VERSION == NEUMANN_S02)
+    #define INFRA_TYPE NEW_INFRA
+    #define MOTOR_TYPE NEW_MOTOR
+    #define ENCODER_TYPE MAGNETIC_ENCODER
+#else
+    #error "Please select robot version"
+#endif
+
 
 /* software version*/
 #define  software_verison  0x0200;   // V2.0
@@ -98,7 +127,7 @@
 
 #define STOP_THRESHOLD 60 
 
-#define D_WHEEL_ANGLE_FRONT   47    /*55		 前轮与轴线角度(度) 前轮轮子轴线与小车前后轴线角度*/
+#define D_WHEEL_ANGLE_FRONT   50    /*55		 前轮与轴线角度(度) 前轮轮子轴线与小车前后轴线角度*/
 
 
 //王奕轩新底板54°
