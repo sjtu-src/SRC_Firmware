@@ -89,7 +89,6 @@ timer_t get_one_timer(u32 time);
 void update_sys_timer(void);
 u64 get_sys_tick(void);
 u8 check_timer(timer_t timer);
-void TIM_CCxCmd(TIM_TypeDef* TIMx, uint16_t TIM_Channel, uint16_t TIM_CCx);
 
 /* USER CODE END Private defines */
 

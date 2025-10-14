@@ -416,11 +416,13 @@ void MX_TIM9_Init(void)
   {
     Error_Handler();
   }
+  __HAL_TIM_DISABLE_OCxPRELOAD(&htim9, TIM_CHANNEL_1);
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   if (HAL_TIM_PWM_ConfigChannel(&htim9, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
+  __HAL_TIM_DISABLE_OCxPRELOAD(&htim9, TIM_CHANNEL_2);
   /* USER CODE BEGIN TIM9_Init 2 */
   HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
   HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
@@ -1060,7 +1062,7 @@ timer_t get_one_timer(u32 time)
 }
 
 /*******************************************************************************
-* @brief 更新计数器变�?
+* @brief 更新计数器变�??
 *	@author Xuanting Liu
 *******************************************************************************/
 void update_sys_timer(void)
@@ -1099,20 +1101,4 @@ u8 check_timer(timer_t timer)
 	else return 0;
 }
 
-/*******************************************************************************
-* @brief 开启射门信号输出
-* @author Xuanting Liu
-*******************************************************************************/
-void TIM_CCxCmd(TIM_TypeDef* TIMx, uint16_t TIM_Channel, uint16_t TIM_CCx)
-{
-  uint16_t tmp = 0;
-
-  tmp = CCER_CCE_SET << TIM_Channel;
-
-  /* Reset the CCxE Bit */
-  TIMx->CCER &= (uint16_t)~ tmp;
-
-  /* Set or reset the CCxE Bit */ 
-  TIMx->CCER |=  (uint16_t)(TIM_CCx << TIM_Channel);
-}
 /* USER CODE END 1 */

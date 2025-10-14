@@ -266,13 +266,22 @@ int decode_packet( packet_robot_t *packet, unsigned char *data, int len )
         }
         case CRAY_MODE:
         {
-            // 如果车号大于8，那packet中车号放在data[1]的低4位，否则在data[2]中 
-            if(g_robot.num > 8)
-                if( ( (data[1] & 0x0f) & (0x01 << (g_robot.num - 9)) ) == 0 )
-                    return  -1;  	
-            else
-                if( ((data[2] & 0xff) & (0x01 << (g_robot.num - 1)) ) == 0 )  
-                    return  -1;  	
+			// 如果车号大于8，那packet中车号放在data[1]的低4位，否则在data[2]中 
+			if(g_robot.num > 8)
+			{
+				if( ( (data[1] & 0x0f) & (0x01 << (g_robot.num - 9)) ) == 0 )
+				{
+					return  -1;  		//下发数据包没有自己的车号数据则不接受该数据包
+				}
+			}
+			else
+			{
+				// 判断数据区是否有自己的数据 
+				if( ((data[2] & 0xff) & (0x01 << (g_robot.num - 1)) ) == 0 )  
+				{ 
+					return  -1;  	
+				}
+			}
 
             // 收到自己的数据，通讯溢出清零。
             rf_comm_tim = get_one_timer(COMM_TIMEOUT_TIME);

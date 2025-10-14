@@ -269,11 +269,9 @@ void shoot_on(u32 value)
 
 	if(value == 0) value = 1;
 	
-	
-	TIM_CCxCmd(TIM9, TIM_Channel_1, TIM_CCx_Enable);
-	TIM_CCxCmd(TIM9, TIM_Channel_2, TIM_CCx_Disable);
 	TIM9->CCR1 = value;
-	__HAL_TIM_ENABLE(&htim9);
+	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
 }
 
 
@@ -289,10 +287,9 @@ void chip_on(u32 value)
 
 	if(value == 0) value = 1;
 
-	TIM_CCxCmd(TIM9, TIM_Channel_2, TIM_CCx_Enable);
-	TIM_CCxCmd(TIM9, TIM_Channel_1, TIM_CCx_Disable);
 	TIM9->CCR2 = value;
-	__HAL_TIM_ENABLE(&htim9);
+	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
 }
 
 /*******************************************************************************
