@@ -13,6 +13,7 @@
 
 extern int test_drib_speed;
 extern int test_drib_stage;
+int frequency;
 
 /*******************************************************************************
 * @brief OLED显示初始画面
@@ -151,6 +152,7 @@ void read_dip_sw(u8 *dip_freq, u8 *freq, u8 *num, u8 *mode)
 	*num = (u8)((dat >> 0) & 0xf) + 1; //??????????????1
 
 	*dip_freq = *freq;
+	frequency = *freq;
 
 	/* change rf frq channel to 24l01 freq */
 	switch(*freq)
@@ -261,7 +263,7 @@ void shoot_on(u32 value)
 
 	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
 
-	value= 2.627* pow(value, 2) / 10000 +13.6449* value / 100 +7.042;
+	value= 5.5* pow(value, 2) / 10000 + 7 * value / 100 +7;
 
 	value = (int)(value * 5 + 0.5);
 	
@@ -269,7 +271,10 @@ void shoot_on(u32 value)
 
 	if(value == 0) value = 1;
 	
+
+	__HAL_TIM_ENABLE(&htim9);
 	TIM9->CCR1 = value;
+	//Beep_Show_32bit(value);
 	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
 }

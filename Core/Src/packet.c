@@ -15,7 +15,7 @@
 extern timer_t rf_comm_tim; 
 char packet_flag;
 extern char shooter;
-
+extern int frequency;
 
 /*******************************************************************************
 * @brief 通过包头(data[1])获取包类型
@@ -93,6 +93,8 @@ void packet(char *q)
 {
 	u8 bat_v;
 	u8 cap_v;
+
+	static int last_infra = 0;
 	static int now_infra = 0;
 
 	static int to_shoot = 0;
@@ -153,16 +155,20 @@ void packet(char *q)
 		#endif
 	}
 
-	/* n记录每个packet发送时的次数, 每个新发的包执行50次 */
-	if(n >= 5)
+	/* n记录每个packet发送时的次数, 每个新发的包执行5次 */
+	if(n >= 20)
 	{
-		if(finish_shoot == 1) finish_shoot = 0;
-		if(finish_chip == 1) finish_chip = 0;
+		if(to_shoot == 1) to_shoot = 0;
+		if(to_chip == 1) to_chip = 0;
 		
-		if((now_infra == 1 ))	// 原逻辑：红外变化则发包，现在逻辑：红外有则发包
+		if(last_infra != now_infra)
 		{
-			n = 1;
+			n = 0;
 			m++;
+			packet_flag = 1;
+		}
+		else if(now_infra)
+		{
 			packet_flag = 1;
 		}
 		else
@@ -206,20 +212,22 @@ void packet(char *q)
 	q[3] = (now_infra << 6) + (finish_shoot << 5) + (finish_chip << 4);
 	q[4] = g_robot.bat_v;
 	q[5] = g_robot.cap_v ;
-	q[6] = 0xf0;
-	speed = abs(g_robot.wheels[0].cur_speed) / 10;   
-	q[7] = speed % 255;
-	q[8] = speed / 255;
-	speed = abs(g_robot.wheels[1].cur_speed) / 10;
-	q[9] = speed % 255;
-	q[10] = speed / 255;
-	speed = abs(g_robot.wheels[2].cur_speed) / 10;
-	q[11] = speed % 255;
-	q[12] = speed / 255;
-	speed = abs(g_robot.wheels[3].cur_speed) / 10;
-	q[13] = speed % 255;
-	q[14] = speed / 255;
+	// q[6] = 0xf0;
+	// speed = abs(g_robot.wheels[0].cur_speed) / 10;   
+	// q[7] = speed % 255;
+	// q[8] = speed / 255;
+	// speed = abs(g_robot.wheels[1].cur_speed) / 10;
+	// q[9] = speed % 255;
+	// q[10] = speed / 255;
+	// speed = abs(g_robot.wheels[2].cur_speed) / 10;
+	// q[11] = speed % 255;
+	// q[12] = speed / 255;
+	// speed = abs(g_robot.wheels[3].cur_speed) / 10;
+	// q[13] = speed % 255;
+	// q[14] = speed / 255;
+	q[23] = ((frequency << 4) & 0xf0) + 0x07;
 
+	last_infra = now_infra;
 }
 
 /*******************************************************************************

@@ -108,7 +108,7 @@ void init_robot(void)
 	memset(&g_robot, 0, sizeof(g_robot));
 	g_robot.num = num;
 	g_robot.frq = freq;
-	g_robot.dip_frq = dip_freq;;
+	g_robot.dip_frq = dip_freq;
 	g_robot.mode = (mode_t)(mode & 0x7);
     mode = mode & 0x7;
 

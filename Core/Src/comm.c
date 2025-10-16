@@ -112,7 +112,7 @@ int do_packet_process( unsigned char *data, int len )
 *******************************************************************************/
 void do_comm_up(void)
 {
-	static char data[15]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; 
+	static char data[24]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; 
 
 	nRF24L01_dev.buf.pos = PACKET_LEN_UP;
 
@@ -131,21 +131,23 @@ void do_comm_up(void)
 				nRF24L01_dev.buf.buf[3]=data[3];
 				nRF24L01_dev.buf.buf[4]=data[4];
 				nRF24L01_dev.buf.buf[5]=data[5];
-				nRF24L01_dev.buf.buf[6]=data[6];
-				nRF24L01_dev.buf.buf[7]=data[7];
-				nRF24L01_dev.buf.buf[8]=data[8];
-				nRF24L01_dev.buf.buf[9]=data[9];
-				nRF24L01_dev.buf.buf[10]=data[10];
-				nRF24L01_dev.buf.buf[11]=data[11];
-				nRF24L01_dev.buf.buf[12]=data[12];
-				nRF24L01_dev.buf.buf[13]=data[13];
-				nRF24L01_dev.buf.buf[14]=data[14];
-				memset(&nRF24L01_dev.buf.buf[15], 0, sizeof(unsigned char) * (PACKET_LEN_UP - 15));			
+				// nRF24L01_dev.buf.buf[6]=data[6];
+				// nRF24L01_dev.buf.buf[7]=data[7];
+				// nRF24L01_dev.buf.buf[8]=data[8];
+				// nRF24L01_dev.buf.buf[9]=data[9];
+				// nRF24L01_dev.buf.buf[10]=data[10];
+				// nRF24L01_dev.buf.buf[11]=data[11];
+				// nRF24L01_dev.buf.buf[12]=data[12];
+				// nRF24L01_dev.buf.buf[13]=data[13];
+				// nRF24L01_dev.buf.buf[14]=data[14];
+				// memset(&nRF24L01_dev.buf.buf[15], 0, sizeof(unsigned char) * (PACKET_LEN_UP - 15));		
+				memset(&nRF24L01_dev.buf.buf[6], 0, sizeof(unsigned char) * (PACKET_LEN_UP - 6));
+				nRF24L01_dev.buf.buf[23]=data[23];	
 				nRF24L01_dev.send_packet( &nRF24L01_dev );
-				BEEP_ON();
+				//BEEP_ON();
 			 }
-			 else
-			 BEEP_OFF();
+			 //else
+			 //BEEP_OFF();
 	}
 	
 	g_do_set_receive_mode_flag = 1;
