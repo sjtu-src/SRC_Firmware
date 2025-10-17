@@ -51,6 +51,7 @@ void SRC_Robot_Init(void)
 	init_motor();
 	init_dribbler();
 	init_nrf24l01();
+	init_Power_Board();
 
 	for(delay = 0;delay < 50000000 ; delay++);
 	
