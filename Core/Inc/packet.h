@@ -45,5 +45,8 @@ packet_type_t get_packet_type( unsigned char* data, int len );
 void stop_mode_packet(char *q);
 void packet(char *q);
 int decode_packet( packet_robot_t *packet, unsigned char *data, int len );
+int decode_identify_packet( idenfity_cpuid_struct *id_code, unsigned char *data );
+int cpuid_identify( idenfity_cpuid_struct *id_code );
+int compare_data(u8 data[],u8 data1[],int len );
 
 #endif

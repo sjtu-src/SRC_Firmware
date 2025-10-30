@@ -19,6 +19,7 @@ extern char g_do_set_receive_mode_flag;
 extern char packet_flag;
 
 packet_robot_t src_robot_packet;
+idenfity_cpuid_struct identify_data = {0};
 
 /*******************************************************************************
 * @brief 无线通信部分初始化
@@ -84,6 +85,8 @@ int do_packet_process( unsigned char *data, int len )
     }
 
 	do_comm_up();
+
+	decode_identify_packet( &identify_data, data );
 	
     /*----------------------------通常模式下的数据解包--------------------------------*/
 	/*-----------------------参见协议0.1比赛时通讯包格式-----------------------------*/
@@ -141,7 +144,7 @@ void do_comm_up(void)
 				nRF24L01_dev.buf.buf[13]=data[13];
 				nRF24L01_dev.buf.buf[14]=data[14];
 				// memset(&nRF24L01_dev.buf.buf[15], 0, sizeof(unsigned char) * (PACKET_LEN_UP - 15));		
-				memset(&nRF24L01_dev.buf.buf[6], 0, sizeof(unsigned char) * (PACKET_LEN_UP - 6));
+				//memset(&nRF24L01_dev.buf.buf[6], 0, sizeof(unsigned char) * (PACKET_LEN_UP - 6));
 				nRF24L01_dev.buf.buf[23]=data[23];	
 				nRF24L01_dev.send_packet( &nRF24L01_dev );
 				//BEEP_ON();

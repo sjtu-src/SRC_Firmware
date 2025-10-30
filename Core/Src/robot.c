@@ -18,6 +18,10 @@
 #include "simulate_i2c.h"
 #include "oled.h"
 
+u32 cpuID[3];  //32bit cpuid
+u8  cpuid_data[12]; //12Byte couid
+u8  encrpty_cpuid[8];//加密后的cpuid
+
 int wheel_reduction_ratio_x_set; /*减速比*/		
 int wheel_reduction_ratio_yz_set; /*减速比*/  //旧轮子减速比为70/22 为3.1818 外圈转1圈，内圈码盘转3.1818圈
 int max_shot_strength_set;
