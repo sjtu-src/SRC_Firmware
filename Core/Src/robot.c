@@ -93,7 +93,7 @@ void init_robot(void)
 		BACK_MODIFY_2024
 	};
 		
-	g_robot.PID_type = POSITION_PID; //默认速度环控制
+	g_robot.PID_type = SPEED_PID; //默认速度环控制
 	g_robot.position_pid_going_on = 0;
 	
 	/* initial parameter from eeprom */

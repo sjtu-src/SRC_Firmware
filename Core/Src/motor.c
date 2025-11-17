@@ -116,7 +116,7 @@ void do_update_motor(void)
 		}
 		else if(g_robot.PID_type == POSITION_PID)
 		{
-			g_robot.wheels[i].cur_position = cur_speed_pos[i] + g_robot.wheels[i].cur_position;
+			g_robot.wheels[i].cur_position = cur_speed_pos[i];
 		}
 		pid_h = &(g_robot.wheels[i].pid);
 		//pwm_val = pid_step(pid_h, cur_speed_pos[i], g_robot.bat_v);
@@ -181,15 +181,28 @@ void update_encoder(int *speed_pos)
 		
 		#if (ENCODER_TYPE == OPTICAL_ENCODER)
 			#if (MOTOR_TYPE == OLD_MOTOR)
-				*(speed_pos + i) = (int)tmp_f;
+				if(g_robot.PID_type == SPEED_PID)
+					*(speed_pos + i) = (int)tmp_f;
+				else if(g_robot.PID_type == POSITION_PID)
+					*(speed_pos + i) = g_robot.wheels[i].cur_position + (int)tmp_f;
+				
 			#elif (MOTOR_TYPE == NEW_MOTOR)
-				*(speed_pos + i) = -(int)tmp_f;
+				if(g_robot.PID_type == SPEED_PID)
+					*(speed_pos + i) = -(int)tmp_f;
+				else if(g_robot.PID_type == POSITION_PID)
+					*(speed_pos + i) = g_robot.wheels[i].cur_position - (int)tmp_f;
 			#endif
 		#elif (ENCODER_TYPE == MAGNETIC_ENCODER)
 			#if (MOTOR_TYPE == OLD_MOTOR)
-				*(speed_pos + i) = -(int)tmp_f;
+				if(g_robot.PID_type == SPEED_PID)
+					*(speed_pos + i) = -(int)tmp_f;
+				else if(g_robot.PID_type == POSITION_PID)
+					*(speed_pos + i) = g_robot.wheels[i].cur_position - (int)tmp_f;
 			#elif (MOTOR_TYPE == NEW_MOTOR)
-				*(speed_pos + i) = (int)tmp_f;
+				if(g_robot.PID_type == SPEED_PID)
+					*(speed_pos + i) = (int)tmp_f;
+				else if(g_robot.PID_type == POSITION_PID)
+					*(speed_pos + i) = g_robot.wheels[i].cur_position + (int)tmp_f;
 			#endif
 		#endif
 	}
