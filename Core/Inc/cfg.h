@@ -20,7 +20,7 @@
 #define NEUMANN_S02 2
 
 //机器人型号
-#define ROBOT_VERSION NEUMANN_S01
+#define ROBOT_VERSION LEBO_ROBOT
 
 #if (ROBOT_VERSION == LEBO_ROBOT)
     #define INFRA_TYPE OLD_INFRA
@@ -91,6 +91,13 @@
 //#define MOTOR_PID_KI  	30
 //#define MOTOR_PID_KD	5
 
+#define SPEED_PID 1
+#define POSITION_PID 0
+
+#define POSITION_PID_KP  	5.0f
+#define POSITION_PID_KI  	0.0f
+#define POSITION_PID_KD		0.0f
+
 #define MOTOR_PID_KP  	0.1825f
 #define MOTOR_PID_KI  	0.0475f
 #define MOTOR_PID_KD	0.0f
@@ -110,7 +117,6 @@
 #define MOTOR_PID_KP4 	0.09f
 #define MOTOR_PID_KI4 	0.0005f
 #define MOTOR_PID_KD4	  0.00f
-
 
 #define GYRO_PID_KP   0.2f
 #define GYRO_PID_KI	 0.0575f

@@ -100,21 +100,27 @@ void do_update_motor(void)
 	int pwm_val;
 	u8 motor_dir[CHANNEL_NUM];
 	u16	motor_pwm[CHANNEL_NUM];
-	int cur_speed[CHANNEL_NUM];   //count/s
+	int cur_speed_pos[CHANNEL_NUM];   //count/s
 
 	if(is_motor_run == 0) return;
 	
 	/* update the speed */
-	update_encoder(cur_speed);
+	update_encoder(cur_speed_pos);
 	
 	/* calcualte the pid output */
 	for(i = 0; i < CHANNEL_NUM; i++)
 	{
-		g_robot.wheels[i].cur_speed = cur_speed[i];
-		
+		if(g_robot.PID_type == SPEED_PID)
+		{
+			g_robot.wheels[i].cur_speed = cur_speed_pos[i];
+		}
+		else if(g_robot.PID_type == POSITION_PID)
+		{
+			g_robot.wheels[i].cur_position = cur_speed_pos[i] + g_robot.wheels[i].cur_position;
+		}
 		pid_h = &(g_robot.wheels[i].pid);
-		//pwm_val = pid_step(pid_h, cur_speed[i], g_robot.bat_v);
-		pwm_val = pid_step(pid_h, cur_speed[i], 16.0f);
+		//pwm_val = pid_step(pid_h, cur_speed_pos[i], g_robot.bat_v);
+		pwm_val = pid_step(pid_h, cur_speed_pos[i], 16.0f);
 		
 		if(pwm_val < 0)    //比较寄存器值没有负值
 		{
@@ -138,7 +144,7 @@ void do_update_motor(void)
 *@author Xuanting Liu
 *@brief  更新编码器读数
 *******************************************************************************/
-void update_encoder(int *speed)
+void update_encoder(int *speed_pos)
 {
 	u8 i;
 	u16 time;
@@ -164,19 +170,26 @@ void update_encoder(int *speed)
 	{	
 		TIMx = encoder_tab[i];
 		encoder_cnt = (s16)(TIMx->CNT & 0xffff);  //TF1 TF2双向双边沿计数 计数值为编码器脉冲的4倍
-		tmp_f = (float)encoder_cnt * ((float)ENCODER_TIM_CLK_FREQ *2 / (float)time);  //count/s tim7 计数时钟2M 需要乘以2
+		if(g_robot.PID_type == SPEED_PID)
+		{
+			tmp_f = (float)encoder_cnt * ((float)ENCODER_TIM_CLK_FREQ *2 / (float)time);  //count/s tim7 计数时钟2M 需要乘以2
+		}
+		else if(g_robot.PID_type == POSITION_PID)
+		{
+			tmp_f = (float)encoder_cnt / 4.0f;  //position pid 直接用位置计数值
+		}		
 		
 		#if (ENCODER_TYPE == OPTICAL_ENCODER)
 			#if (MOTOR_TYPE == OLD_MOTOR)
-				*(speed + i) = (int)tmp_f;
+				*(speed_pos + i) = (int)tmp_f;
 			#elif (MOTOR_TYPE == NEW_MOTOR)
-				*(speed + i) = -(int)tmp_f;
+				*(speed_pos + i) = -(int)tmp_f;
 			#endif
 		#elif (ENCODER_TYPE == MAGNETIC_ENCODER)
 			#if (MOTOR_TYPE == OLD_MOTOR)
-				*(speed + i) = -(int)tmp_f;
+				*(speed_pos + i) = -(int)tmp_f;
 			#elif (MOTOR_TYPE == NEW_MOTOR)
-				*(speed + i) = (int)tmp_f;
+				*(speed_pos + i) = (int)tmp_f;
 			#endif
 		#endif
 	}
@@ -238,4 +251,14 @@ void start_motor(void)
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);  
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+}
+
+
+/*******************************************************************************
+* @brief 设置PID控制类型
+* @author Xuanting Liu
+*******************************************************************************/ 
+void switch_pid_type(int pid_type)
+{
+	g_robot.PID_type = pid_type;
 }

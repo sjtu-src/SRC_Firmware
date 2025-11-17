@@ -24,6 +24,7 @@ typedef struct _wheel_
 	volatile float speed;     //小车车体合成线速度值 单位[m/s]
 	volatile int set;         //pid速度设置值 单位count/s
 	volatile int cur_speed;   //当前速度 单位[count/s]
+	volatile int cur_position; //位置环当前值 单位count
 } wheel_t;
 
 typedef struct _error_
@@ -40,6 +41,8 @@ typedef struct _robot_
 	u8 dip_frq; /* dip sw setting freq */
 	
 	wheel_t wheels[ CHANNEL_NUM ]; //各个轮子的pid参数
+	int PID_type;  //速度环还是位置环控制
+	int position_pid_going_on; //位置环控制是否正在进行
 	u16 dribbler;
 	
 	float kv2n;                    // 74037 m/s和count/s 转换系数 单位count/m  用于电机旋转速度转换为线速度

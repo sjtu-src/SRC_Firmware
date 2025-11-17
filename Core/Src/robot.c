@@ -93,6 +93,8 @@ void init_robot(void)
 		BACK_MODIFY_2024
 	};
 		
+	g_robot.PID_type = SPEED_PID; //默认速度环控制
+	g_robot.position_pid_going_on = 0;
 	
 	/* initial parameter from eeprom */
 	load_param(&param);
@@ -264,7 +266,7 @@ void do_robot_run(void)
 				if(forcestopcounter >= 5000)
 				{
 					do_dribbler(0);
-					do_move(0,0,0);
+					do_move(0,0,0,SPEED_PID);
 					do_shoot(0,0);
 					do_chip(0,0);
 					//Very important: clear the packet when communication timeout.
@@ -338,21 +340,21 @@ void do_robot_run(void)
 
 			if(test_time == 1)
 			{
-				do_acc_handle_move(0, 0, 100);
+				do_acc_handle_move(0, 0, 100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0, 0);		
-				do_acc_handle_move(0, 0, -100);
+				do_acc_handle_move(0, 0, 0, g_robot.PID_type);		
+				do_acc_handle_move(0, 0, -100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0, 0);				
+				do_acc_handle_move(0, 0, 0, g_robot.PID_type);				
 			}
 			else if(test_time == 2)
 			{
-				do_acc_handle_move(0, 0,-100);
+				do_acc_handle_move(0, 0,-100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0, 0);
-				do_acc_handle_move(0, 0, 100);
+				do_acc_handle_move(0, 0, 0, g_robot.PID_type);
+				do_acc_handle_move(0, 0, 100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0,0);
+				do_acc_handle_move(0, 0, 0, g_robot.PID_type);
 				test_time = 0;
 			}
 			break;
@@ -372,11 +374,11 @@ void do_robot_run(void)
 			for(test_drib_speed = 0; test_drib_speed <= 511; test_drib_speed += 15)
 			{
 				if(g_robot.is_ball_detected == 0) break;
-				do_acc_handle_move(0, 0, test_drib_speed);
+				do_acc_handle_move(0, 0, test_drib_speed, g_robot.PID_type);
 				osDelay(200);
 			}
 			do_dribbler(0);
-			do_acc_handle_move(0, 0, 0);
+			do_acc_handle_move(0, 0, 0, g_robot.PID_type);
 			osDelay(500);
 
 			int tmp = test_drib_speed / 100;
@@ -418,7 +420,7 @@ void on_robot_command(packet_robot_t *packet)
 				do_shoot(packet->shoot, packet->chip);
 				do_chip(packet->shoot, packet->chip);
 		#endif
-		do_acc_handle_move(packet->speed_x, packet->speed_y, packet->speed_rot);
+		do_acc_handle_move(packet->speed_x, packet->speed_y, packet->speed_rot, g_robot.PID_type);
     }
 }
 

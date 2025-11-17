@@ -12,6 +12,7 @@ void do_update_motor(void);
 void update_encoder(int *speed);
 void start_encoder(void);
 void start_motor(void);
+void switch_pid_type(int pid_type);
 
 
 #endif

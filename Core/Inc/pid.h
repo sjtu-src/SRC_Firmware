@@ -12,6 +12,14 @@ typedef struct _pid_
 	float B;
 	float C;
 
+	float Kp_pos;
+	float Ki_pos;
+	float Kd_pos;
+	
+	float A_pos;
+	float B_pos;
+	float C_pos;
+
 	/* limit */
 	long limit;
 	float torque_limit; /* measured in mNm */

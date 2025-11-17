@@ -272,7 +272,7 @@ void shoot_on(u32 value)
 
 	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
 
-	value= 5.5* pow(value, 2) / 10000 + 7 * value / 100 +7;
+	//value= 5.5* pow(value, 2) / 10000 + 7 * value / 100 +7;
 
 	value = (int)(value * 5 + 0.5);
 	
