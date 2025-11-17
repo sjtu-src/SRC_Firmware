@@ -94,8 +94,8 @@
 #define SPEED_PID 1
 #define POSITION_PID 0
 
-#define POSITION_PID_KP  	5.0f
-#define POSITION_PID_KI  	0.0f
+#define POSITION_PID_KP  	30.0f
+#define POSITION_PID_KI  	0.80f
 #define POSITION_PID_KD		0.0f
 
 #define MOTOR_PID_KP  	0.1825f

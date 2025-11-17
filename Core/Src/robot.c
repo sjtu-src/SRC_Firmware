@@ -93,8 +93,6 @@ void init_robot(void)
 		BACK_MODIFY_2024
 	};
 		
-	g_robot.PID_type = SPEED_PID; //默认速度环控制
-	g_robot.position_pid_going_on = 0;
 	
 	/* initial parameter from eeprom */
 	load_param(&param);
@@ -117,6 +115,7 @@ void init_robot(void)
 	g_robot.frq = freq;
 	g_robot.dip_frq = dip_freq;
 	g_robot.mode = (mode_t)(mode & 0x7);
+	g_robot.PID_type = SPEED_PID;
     mode = mode & 0x7;
 
 	pid_init(&(g_robot.wheels[0].pid), MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD);

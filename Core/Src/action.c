@@ -343,11 +343,11 @@ void do_move( int speed_x, int speed_y, int speed_pos_rot, int PID_type)
 	else if(PID_type == POSITION_PID)
 	{
 		/* 位置环控制 */
-		float delta_angle_move = (float)speed_pos_rot / 180.0f * (float)PI * 0.025f * WHEEL_CENTER_OFFSET; //单位[m]
+		float delta_angle_move = (float)speed_pos_rot / 180.0f * (float)PI * WHEEL_CENTER_OFFSET; //单位[m]
 
 		for( i = 0; i < CHANNEL_NUM; i++ )
 		{
-			g_robot.wheels[i].set = V2N(delta_angle_move);
+			g_robot.wheels[i].set = (long)(delta_angle_move * 5619.89);
 		}
 		/* change wheels' position set point, with dis_int() */
 		DIS_INT();

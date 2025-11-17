@@ -112,7 +112,7 @@ int pid_step(pid_t *pid, int cur_value, float bat_v )
 	{
 		d_out = pid->A * pid->e1 - pid->B * pid->e2 + pid->C * pid->e3;
 	}
-	else //POSITION_PID
+	else if(g_robot.PID_type == POSITION_PID)
 	{
 		d_out = pid->A_pos * pid->e1 - pid->B_pos * pid->e2 + pid->C_pos * pid->e3;
 	}
