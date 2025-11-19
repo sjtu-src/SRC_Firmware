@@ -3,7 +3,7 @@
 <title>Static Call Graph - [SRC_Firmware\SRC_Firmware.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image SRC_Firmware\SRC_Firmware.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Mon Nov 17 21:37:36 2025
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Tue Nov 18 22:02:07 2025
 <BR><P>
 <H3>Maximum Stack Usage =        328 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -2404,7 +2404,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[70]"></a>RobotTask</STRONG> (Thumb, 132 bytes, Stack size 0 bytes, freertos.o(i.RobotTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = RobotTask &rArr; do_robot_run &rArr; on_robot_command &rArr; do_acc_handle_move &rArr; do_move &rArr; __aeabi_dmul
+<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = RobotTask &rArr; do_robot_run &rArr; on_robot_command &rArr; do_acc_handle_move &rArr; do_move &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[173]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 <LI><a href="#[171]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
@@ -2733,7 +2733,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[1a2]"></a>do_acc_handle_move</STRONG> (Thumb, 250 bytes, Stack size 32 bytes, action.o(i.do_acc_handle_move))
-<BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = do_acc_handle_move &rArr; do_move &rArr; __aeabi_dmul
+<BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = do_acc_handle_move &rArr; do_move &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[ea]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_move
 <LI><a href="#[190]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_sqrtf
@@ -2787,8 +2787,8 @@ Global Symbols
 <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Do_Comm
 </UL>
 
-<P><STRONG><a name="[ea]"></a>do_move</STRONG> (Thumb, 262 bytes, Stack size 32 bytes, action.o(i.do_move))
-<BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = do_move &rArr; __aeabi_dmul
+<P><STRONG><a name="[ea]"></a>do_move</STRONG> (Thumb, 274 bytes, Stack size 40 bytes, action.o(i.do_move))
+<BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = do_move &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;V2N
 <LI><a href="#[174]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
@@ -2826,7 +2826,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[173]"></a>do_robot_run</STRONG> (Thumb, 712 bytes, Stack size 32 bytes, robot.o(i.do_robot_run))
-<BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = do_robot_run &rArr; on_robot_command &rArr; do_acc_handle_move &rArr; do_move &rArr; __aeabi_dmul
+<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = do_robot_run &rArr; on_robot_command &rArr; do_acc_handle_move &rArr; do_move &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_robot_command
 <LI><a href="#[171]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
@@ -3094,7 +3094,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[176]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SRC_Robot_Init
 </UL>
 
-<P><STRONG><a name="[17c]"></a>init_robot</STRONG> (Thumb, 494 bytes, Stack size 136 bytes, robot.o(i.init_robot))
+<P><STRONG><a name="[17c]"></a>init_robot</STRONG> (Thumb, 490 bytes, Stack size 136 bytes, robot.o(i.init_robot))
 <BR><BR>[Stack]<UL><LI>Max Depth = 320<LI>Call Chain = init_robot &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_shooter
@@ -3211,7 +3211,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[1b1]"></a>on_robot_command</STRONG> (Thumb, 56 bytes, Stack size 16 bytes, robot.o(i.on_robot_command))
-<BR><BR>[Stack]<UL><LI>Max Depth = 112<LI>Call Chain = on_robot_command &rArr; do_acc_handle_move &rArr; do_move &rArr; __aeabi_dmul
+<BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = on_robot_command &rArr; do_acc_handle_move &rArr; do_move &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot
 <LI><a href="#[e9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_dribbler
@@ -3261,7 +3261,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_comm_up
 </UL>
 
-<P><STRONG><a name="[1cb]"></a>pid_init</STRONG> (Thumb, 102 bytes, Stack size 0 bytes, pid.o(i.pid_init))
+<P><STRONG><a name="[1cb]"></a>pid_init</STRONG> (Thumb, 106 bytes, Stack size 0 bytes, pid.o(i.pid_init))
 <BR><BR>[Calls]<UL><LI><a href="#[1d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pid_reinit
 </UL>
 <BR>[Called By]<UL><LI><a href="#[17c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_robot

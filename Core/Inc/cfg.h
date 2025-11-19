@@ -91,12 +91,18 @@
 //#define MOTOR_PID_KI  	30
 //#define MOTOR_PID_KD	5
 
+#define LIU_WANG_CONST 3.043f // 老车电机与轮子传动比-2024国赛版
+
 #define SPEED_PID 1
 #define POSITION_PID 0
 
 #define POSITION_PID_KP  	30.0f
-#define POSITION_PID_KI  	0.80f
-#define POSITION_PID_KD		0.0f
+#define POSITION_PID_KI  	0.8f
+#define POSITION_PID_KD		10.0f
+
+// #define POSITION_PID_KP  	0
+// #define POSITION_PID_KI  	0
+// #define POSITION_PID_KD		0
 
 #define MOTOR_PID_KP  	0.1825f
 #define MOTOR_PID_KI  	0.0475f

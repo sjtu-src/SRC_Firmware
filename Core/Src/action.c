@@ -347,7 +347,7 @@ void do_move( int speed_x, int speed_y, int speed_pos_rot, int PID_type)
 
 		for( i = 0; i < CHANNEL_NUM; i++ )
 		{
-			g_robot.wheels[i].set = (long)(delta_angle_move * 5619.89);
+			g_robot.wheels[i].set = (long)(delta_angle_move * 5634.96 * LIU_WANG_CONST);
 		}
 		/* change wheels' position set point, with dis_int() */
 		DIS_INT();
