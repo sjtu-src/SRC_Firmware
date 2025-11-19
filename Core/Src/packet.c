@@ -320,7 +320,14 @@ int decode_packet( packet_robot_t *packet, unsigned char *data, int len )
         }
     }
 	
-		
+	// 收到一个包，更新车辆坐标系数据
+	// for(int i = 0; i < CHANNEL_NUM; i++)
+    // {
+    //     g_robot.wheels[i].set = 0;
+    //     g_robot.wheels[i].cur_position = 0;
+    //     g_robot.wheels[i].pid.set = 0;
+    // }
+	
     i = pos * 4 + 3; //数据起始处
 	
    	packet->robot_num = g_robot.num;

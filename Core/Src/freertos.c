@@ -197,10 +197,16 @@ void Do_Comm(void const * argument)
         if(check_timer(rf_comm_tim)) 
           {
             g_do_set_receive_mode_flag = 1; 
-              
+            
+            for(int i = 0; i < CHANNEL_NUM; i++)
+            {
+              g_robot.wheels[i].set = 0;
+              g_robot.wheels[i].cur_position = 0;
+              g_robot.wheels[i].pid.set = 0;
+            }
+
             do_dribbler(0);
-            do_move(0,0,0,SPEED_PID);
-            do_move(0,0,0,POSITION_PID);
+            do_move(0,0,0,g_robot.PID_type);
             do_shoot(0,0);
             do_chip(0,0);
             //Very important: clear the packet when communication timeout.

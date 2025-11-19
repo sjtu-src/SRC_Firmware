@@ -27,15 +27,15 @@ long calc_max_output( float max_torque, long speed, float bat_v )
 * @note 增量式pid u(k)=u(k-1)+deta_u(k)
 * @note deat_u(k)=(kp+ki+kd)*e(k)-(kp+2kd)*e(k-1)+kd*e(k-2)
 ******************************************************************************/
-void pid_init(pid_t *pid, float Kp, float Ki, float Kd)
+void pid_init(pid_t *pid)
 {
-	pid->Kp = Kp;
-	pid->Ki = Ki;
-	pid->Kd = Kd;
+	pid->Kp = MOTOR_PID_KP;
+	pid->Ki = MOTOR_PID_KI;
+	pid->Kd = MOTOR_PID_KD;
 
-	pid->A = Kp + Ki + Kd;
-	pid->B = Kp + 2 * Kd;
-	pid->C = Kd;
+	pid->A = pid->Kp + pid->Ki + pid->Kd;
+	pid->B = pid->Kp + 2 * pid->Kd;
+	pid->C = pid->Kd;
 
 	pid->Kp_pos = POSITION_PID_KP;
 	pid->Ki_pos = POSITION_PID_KI;

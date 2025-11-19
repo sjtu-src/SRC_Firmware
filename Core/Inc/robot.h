@@ -59,10 +59,10 @@ typedef struct _robot_
 	volatile float cap_v_f;  //充电电容电压 单位[v]
 	volatile float bat_v_f;  //电池电压
 
-	float sin_angle[ CHANNEL_NUM]; //车轮与正方向轴线的角度正弦
-	float cos_angle[ CHANNEL_NUM];
-	
-	float cos_mod_angle[ CHANNEL_NUM]; //后轮修正角度
+	float sin_angle[CHANNEL_NUM]; //车轮与正方向轴线的角度正弦
+	float cos_angle[CHANNEL_NUM];
+
+	float wheel_diameter[CHANNEL_NUM]; //车轮直径
 
 	err_t error[ERROR_NUM];
 	
