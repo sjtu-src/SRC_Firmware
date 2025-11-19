@@ -301,6 +301,7 @@ void chip_on(u32 value)
 
 	if(value == 0) value = 1;
 
+	__HAL_TIM_ENABLE(&htim9);
 	TIM9->CCR2 = value;
 	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);

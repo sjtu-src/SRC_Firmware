@@ -114,7 +114,7 @@ void init_robot(void)
 	g_robot.frq = freq;
 	g_robot.dip_frq = dip_freq;
 	g_robot.mode = (mode_t)(mode & 0x7);
-	g_robot.PID_type = POSITION_PID; 
+	g_robot.PID_type = SPEED_PID; 
     mode = mode & 0x7;
 
 	pid_init(&(g_robot.wheels[0].pid));
@@ -337,17 +337,17 @@ void do_robot_run(void)
 
 			if(test_time == 1)
 			{
-				do_acc_handle_move(0, 0, 90, g_robot.PID_type);
+				do_acc_handle_move(0, 0, 100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0, -90, g_robot.PID_type);
+				do_acc_handle_move(0, 0, -100, g_robot.PID_type);
 				osDelay(2000);
 				do_acc_handle_move(0, 0, 0, g_robot.PID_type);				
 			}
 			else if(test_time == 2)
 			{
-				do_acc_handle_move(0, 0,-90, g_robot.PID_type);
+				do_acc_handle_move(0, 0,-100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0, 90, g_robot.PID_type);
+				do_acc_handle_move(0, 0, 100, g_robot.PID_type);
 				osDelay(2000);
 				do_acc_handle_move(0, 0, 0, g_robot.PID_type);
 				test_time = 0;
