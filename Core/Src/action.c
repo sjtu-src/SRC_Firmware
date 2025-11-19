@@ -246,82 +246,122 @@ void update_shooter(void)
 
 /*******************************************************************************
 * @brief 限制加速度执行运动
-* @param speed_x x方向速度 单位[cm/s]
-* @param speed_y y方向速度 单位[cm/s]
-* @param speed_rot 旋转速度 单位[0.025rad/s]
-* @note 限定小车xy方向上合加速度值小于MAX_ACC,并且设定小车x,y,z方向上移动速度分别为speed_x, speed_y, speed_rot
+* @param speed_pos_x x方向速度 单位[cm/s]或前进距离 [cm]
+* @param speed_pos_y y方向速度 单位[cm/s]或侧移距离 [cm]
+* @param speed_pos_rot 旋转速度 单位[0.025rad/s]或旋转角度 [度]
+* @param PID_type PID控制类型 速度环或位置环
+* @note 限定小车xy方向上合加速度值小于MAX_ACC,并且设定小车x,y,z方向上移动速度分别为speed_pos_x, speed_pos_y, speed_pos_rot
 * @note 单位为国际单位，max_rot=256/40=6.4rad/s	
 * @author Xuanting Liu
 *******************************************************************************/
-void do_acc_handle_move(int speed_x,int speed_y,int speed_rot)
+void do_acc_handle_move(int speed_pos_x,int speed_pos_y,int speed_pos_rot, int PID_type)
 {
 	static float last_speed_x = 0;
 	static float last_speed_y = 0;
 
-	float acc_x = 0;
-	float acc_y = 0;
-	float acc_whole = 0;
-	float sin_x = 0;
-	float sin_y = 0;
-	float tmp_float;
-	
-	acc_x = speed_x - last_speed_x;   //x方向加速度计算 时间单位为通讯包周期
-	acc_y = speed_y - last_speed_y;
-	acc_whole = acc_x * acc_x + acc_y * acc_y ;
+	switch(PID_type)
+	{
+		case SPEED_PID:
+		{
+			float acc_x = 0;
+			float acc_y = 0;
+			float acc_whole = 0;
+			float sin_x = 0;
+			float sin_y = 0;
+			float tmp_float;
+			
+			acc_x = speed_pos_x - last_speed_x;   //x方向加速度计算 时间单位为通讯包周期
+			acc_y = speed_pos_y - last_speed_y;
+			acc_whole = acc_x * acc_x + acc_y * acc_y ;
 
-	tmp_float = sqrtf(acc_whole); //计算合加速度
-	acc_whole = tmp_float + 0.001f;
-	
-	sin_x = acc_x / acc_whole;
-	sin_y = acc_y / acc_whole;
+			tmp_float = sqrtf(acc_whole); //计算合加速度
+			acc_whole = tmp_float + 0.001f;
+			
+			sin_x = acc_x / acc_whole;
+			sin_y = acc_y / acc_whole;
 
-   	if(acc_whole > MAX_ACC)
-  	{
-		acc_whole = MAX_ACC;
-		acc_x = acc_whole * sin_x;
-		acc_y = acc_whole * sin_y;
-		speed_x = ceil(last_speed_x + acc_x);
-		speed_y = ceil(last_speed_y + acc_y); 
-  	}
+			if(acc_whole > MAX_ACC)
+			{
+				acc_whole = MAX_ACC;
+				acc_x = acc_whole * sin_x;
+				acc_y = acc_whole * sin_y;
+				speed_pos_x = ceil(last_speed_x + acc_x);
+				speed_pos_y = ceil(last_speed_y + acc_y); 
+			}
 
-	do_move(speed_x,speed_y,speed_rot);
-	last_speed_x = speed_x;
-	last_speed_y = speed_y;
-
+			do_move(speed_pos_x,speed_pos_y,speed_pos_rot, SPEED_PID);
+			last_speed_x = speed_pos_x;
+			last_speed_y = speed_pos_y;
+			break;
+		}
+		case POSITION_PID:
+		{
+			last_speed_x = 0;
+			last_speed_y = 0;
+			do_move(speed_pos_x, speed_pos_y, speed_pos_rot, POSITION_PID);
+			break;
+		}
+	}
 }
 
 /*******************************************************************************
 * @brief 执行运动函数
-* @param speed_x x方向速度 单位[cm/s]
-* @param speed_y y方向速度 单位[cm/s]
-* @param speed_rot 旋转速度 单位[0.025rad/s]
+* @param speed_pos_x x方向速度 单位[cm/s]
+* @param speed_pos_y y方向速度 单位[cm/s]
+* @param speed_pos_rot 旋转速度 单位[0.025rad/s]或旋转角度
 * @author Xuanting Liu
 *******************************************************************************/
-void do_move( int speed_x, int speed_y, int speed_rot )
+void do_move( int speed_pos_x, int speed_pos_y, int speed_pos_rot, int PID_type)
 {
 	int i = 0;
  
-	/* 线速度 vx, vy, vz are all measured in m/s */
-	float vx = (float)(speed_x) / 100;
-	float vy = (float)(speed_y)  / 100;    //单位[m/s]
-	float vz = (float)(speed_rot) * 0.025f * WHEEL_CENTER_OFFSET; //V=2*pi*r/t = w*r 单位[m/s]
+	if(PID_type == SPEED_PID)
+	{
+		/* 线速度 vx, vy, vz are all measured in m/s */
+		float vx = (float)(speed_pos_x) / 100;
+		float vy = (float)(speed_pos_y)  / 100;    //单位[m/s]
+		float vz = (float)(speed_pos_rot) * 0.025f * WHEEL_CENTER_OFFSET; //V=2*pi*r/t = w*r 单位[m/s]
 
-	/* 各轮子线速度(m/s)设定值 */
-	for( i = 0; i < CHANNEL_NUM; i++ )
-	{
-		/* trasnform wheel angle */
-		g_robot.wheels[i].speed = ( g_robot.sin_angle[ i ] * vx + g_robot.cos_angle[ i ] * vy + vz );
-		g_robot.wheels[i].set = V2N(g_robot.wheels[i].speed);//线速度转换为编码器速度
-		
+		/* 各轮子线速度(m/s)设定值 */
+		for( i = 0; i < CHANNEL_NUM; i++ )
+		{
+			/* trasnform wheel angle */
+			g_robot.wheels[i].speed = ( g_robot.sin_angle[ i ] * vx + g_robot.cos_angle[ i ] * vy + vz );
+			g_robot.wheels[i].set = (long)(g_robot.wheels[i].speed / ((float)PI * g_robot.wheel_diameter[i]) 
+											* ENCODER_COUNTS_PER_TURN_SET * LIU_WANG_CONST);//线速度转换为编码器速度
+		}
+	
+		/* change wheels' speed set point, with dis_int() */
+		DIS_INT();
+		for( i = 0; i < CHANNEL_NUM; i++ )
+		{
+			g_robot.wheels[i].pid.set = g_robot.wheels[i].set;
+		}
+		EN_INT();
 	}
-  
-	/* change wheels' speed set point, with dis_int() */
-	DIS_INT();
-	for( i = 0; i < CHANNEL_NUM; i++ )
+	else if(PID_type == POSITION_PID)
 	{
-		g_robot.wheels[i].pid.set = g_robot.wheels[i].set;
+		/* 位置环控制 */
+		float delta_angle_move = (float)speed_pos_rot / 180.0f * (float)PI * WHEEL_CENTER_OFFSET; //单位[m]
+		float delta_x_move = (float)speed_pos_x / 100.0f; //单位[m]
+		float delta_y_move = (float)speed_pos_y / 100.0f; //单位[m]
+		float tmp_move;
+
+		for( i = 0; i < CHANNEL_NUM; i++ )
+		{
+			tmp_move = g_robot.sin_angle[i] * delta_x_move + g_robot.cos_angle[i] * delta_y_move + delta_angle_move;
+			g_robot.wheels[i].set = (long)(tmp_move / ((float)PI * g_robot.wheel_diameter[i]) 
+											* ENCODER_COUNTS_PER_TURN_SET * LIU_WANG_CONST);
+		}
+		/* change wheels' position set point, with dis_int() */
+		DIS_INT();
+		for( i = 0; i < CHANNEL_NUM; i++ )
+		{
+			g_robot.wheels[i].pid.set = g_robot.wheels[i].set;
+		}
+		EN_INT();		
 	}
-	EN_INT();
+
 
 }
 

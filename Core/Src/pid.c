@@ -27,15 +27,23 @@ long calc_max_output( float max_torque, long speed, float bat_v )
 * @note 增量式pid u(k)=u(k-1)+deta_u(k)
 * @note deat_u(k)=(kp+ki+kd)*e(k)-(kp+2kd)*e(k-1)+kd*e(k-2)
 ******************************************************************************/
-void pid_init(pid_t *pid, float Kp, float Ki, float Kd )
+void pid_init(pid_t *pid)
 {
-	pid->Kp = Kp;
-	pid->Ki = Ki;
-	pid->Kd = Kd;
+	pid->Kp = MOTOR_PID_KP;
+	pid->Ki = MOTOR_PID_KI;
+	pid->Kd = MOTOR_PID_KD;
 
-	pid->A = Kp + Ki + Kd;
-	pid->B = Kp + 2 * Kd;
-	pid->C = Kd;
+	pid->A = pid->Kp + pid->Ki + pid->Kd;
+	pid->B = pid->Kp + 2 * pid->Kd;
+	pid->C = pid->Kd;
+
+	pid->Kp_pos = POSITION_PID_KP;
+	pid->Ki_pos = POSITION_PID_KI;
+	pid->Kd_pos = POSITION_PID_KD;
+
+	pid->A_pos = pid->Kp_pos + pid->Ki_pos + pid->Kd_pos;
+	pid->B_pos = pid->Kp_pos + 2 * pid->Kd_pos;
+	pid->C_pos = pid->Kd_pos;
   
   	pid->set = 0;
 	
@@ -89,18 +97,27 @@ void pid_reinit(pid_t *pid)
 * @note 增量式pid u(k)=u(k-1)+deta_u(k)
 * @note deat_u(k)=(kp+ki+kd)*e(k)-(kp+2kd)*e(k-1)+kd*e(k-2)
 *******************************************************************************/
-int pid_step(pid_t *pid, int cur_value, float bat_v )
+int pid_step(pid_t *pid, int cur_pos, int cur_speed, float bat_v )
 {
 	long rpm = 0; 
 	long max_output_for_torque = 0;
 	int d_out;
   
 	/* standard digital PID algorithm */
-	pid->e3 = pid->e2;
-	pid->e2 = pid->e1;
-	pid->e1 = pid->set - cur_value;
-
-	d_out = pid->A * pid->e1 - pid->B * pid->e2 + pid->C * pid->e3;
+	if(g_robot.PID_type == SPEED_PID)
+	{
+		pid->e3 = pid->e2;
+		pid->e2 = pid->e1;
+		pid->e1 = pid->set - cur_speed;
+		d_out = pid->A * pid->e1 - pid->B * pid->e2 + pid->C * pid->e3;
+	}
+	else if(g_robot.PID_type == POSITION_PID)
+	{
+		pid->e3 = pid->e2;
+		pid->e2 = pid->e1;
+		pid->e1 = pid->set - cur_pos;
+		d_out = pid->A_pos * pid->e1 - pid->B_pos * pid->e2 + pid->C_pos * pid->e3;
+	}
   
 	pid->out = pid->out + d_out;
 	
@@ -112,7 +129,7 @@ int pid_step(pid_t *pid, int cur_value, float bat_v )
   
 	#ifdef ENABLE_TORQUE_LIMIT
 		/* perform torque limit */
-		rpm = N2RPM(cur_value);
+		rpm = N2RPM(cur_speed);
 		if( rpm < 0 ) rpm = -rpm;
 		max_output_for_torque = calc_max_output( pid->torque_limit, rpm, bat_v);
 

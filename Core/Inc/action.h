@@ -23,8 +23,8 @@ int set_shooter(int channel, int value);
 void do_shoot( int shoot, int chip );
 void do_chip( int shoot, int chip );
 void update_shooter(void);
-void do_acc_handle_move(int speed_x,int speed_y,int speed_rot);
-void do_move(int speed_x,int speed_y,int speed_rot);
+void do_acc_handle_move(int speed_x,int speed_y,int speed_rot, int PID_type);
+void do_move( int speed_x, int speed_y, int speed_rot, int PID_type);
 
 static float last_speed_x = 0;
 static float last_speed_y = 0;
