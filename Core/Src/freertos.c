@@ -34,6 +34,7 @@
 #include "comm.h"
 #include "action.h"
 #include "oled.h"
+#include "misc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
