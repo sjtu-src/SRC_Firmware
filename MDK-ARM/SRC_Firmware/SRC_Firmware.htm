@@ -3,7 +3,7 @@
 <title>Static Call Graph - [SRC_Firmware\SRC_Firmware.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image SRC_Firmware\SRC_Firmware.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Wed Nov 19 15:33:25 2025
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Wed Nov 19 16:05:25 2025
 <BR><P>
 <H3>Maximum Stack Usage =        320 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -2507,7 +2507,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[6e]"></a>Update_Motor</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, freertos.o(i.Update_Motor))
-<BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = Update_Motor &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
+<BR><BR>[Stack]<UL><LI>Max Depth = 116<LI>Call Chain = Update_Motor &rArr; do_update_motor &rArr; update_encoder &rArr; start_encoder
 </UL>
 <BR>[Calls]<UL><LI><a href="#[183]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_update_motor
 <LI><a href="#[182]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
@@ -2720,7 +2720,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_packet_process
 </UL>
 
-<P><STRONG><a name="[1a1]"></a>decode_packet</STRONG> (Thumb, 478 bytes, Stack size 32 bytes, packet.o(i.decode_packet))
+<P><STRONG><a name="[1a1]"></a>decode_packet</STRONG> (Thumb, 508 bytes, Stack size 32 bytes, packet.o(i.decode_packet))
 <BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = decode_packet &rArr; get_one_timer
 </UL>
 <BR>[Calls]<UL><LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_one_timer
@@ -2848,8 +2848,8 @@ Global Symbols
 <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Do_Comm
 </UL>
 
-<P><STRONG><a name="[183]"></a>do_update_motor</STRONG> (Thumb, 184 bytes, Stack size 56 bytes, motor.o(i.do_update_motor))
-<BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = do_update_motor &rArr; update_encoder &rArr; start_encoder
+<P><STRONG><a name="[183]"></a>do_update_motor</STRONG> (Thumb, 148 bytes, Stack size 88 bytes, motor.o(i.do_update_motor))
+<BR><BR>[Stack]<UL><LI>Max Depth = 116<LI>Call Chain = do_update_motor &rArr; update_encoder &rArr; start_encoder
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pid_step
 <LI><a href="#[1b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;update_encoder
@@ -3263,7 +3263,7 @@ Global Symbols
 <LI><a href="#[1ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pid_init
 </UL>
 
-<P><STRONG><a name="[1b4]"></a>pid_step</STRONG> (Thumb, 184 bytes, Stack size 16 bytes, pid.o(i.pid_step))
+<P><STRONG><a name="[1b4]"></a>pid_step</STRONG> (Thumb, 220 bytes, Stack size 16 bytes, pid.o(i.pid_step))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = pid_step
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;N2RPM
@@ -3444,8 +3444,8 @@ Global Symbols
 <LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Do_Comm
 </UL>
 
-<P><STRONG><a name="[1b3]"></a>update_encoder</STRONG> (Thumb, 268 bytes, Stack size 12 bytes, motor.o(i.update_encoder))
-<BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = update_encoder &rArr; start_encoder
+<P><STRONG><a name="[1b3]"></a>update_encoder</STRONG> (Thumb, 258 bytes, Stack size 16 bytes, motor.o(i.update_encoder))
+<BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = update_encoder &rArr; start_encoder
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_encoder
 </UL>
