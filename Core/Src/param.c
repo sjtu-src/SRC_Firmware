@@ -96,10 +96,10 @@ void init_param(param_t *param)
 	param->dat[10] = MOTOR_PID_KI4;							//轮子4 I 参数
 	param->dat[11] = MOTOR_PID_KD4;							//轮子4 D 参数
 
-	param->dat[12] = D_WHEEL_REDUCTION_RATIO_X;			//减速比X
-	param->dat[13] = D_WHEEL_REDUCTION_RATIO_YZ; 		//减速比YZ
+	param->dat[12] = LIU_WANG_CONST;					//减速比
+	param->dat[13] = WHEEL_DIAMETER_SMALL; 				//小轮直径
 	param->dat[14] = MAX_SHOT_STRENGTH;					//最大射门力度		
-    param->dat[15] = 1;                                 //蓝牙模块是否初始化过标志
+    param->dat[15] = WHEEL_DIAMETER_BIG;                //大轮直径
 	param->magic = MAGIC_NUM;
 	
 	param->chk_sum = get_param_ch_sum(param);

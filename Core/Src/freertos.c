@@ -34,6 +34,7 @@
 #include "comm.h"
 #include "action.h"
 #include "oled.h"
+#include "misc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -197,9 +198,16 @@ void Do_Comm(void const * argument)
         if(check_timer(rf_comm_tim)) 
           {
             g_do_set_receive_mode_flag = 1; 
-              
+            
+            for(int i = 0; i < CHANNEL_NUM; i++)
+            {
+              g_robot.wheels[i].set = 0;
+              g_robot.wheels[i].cur_position = 0;
+              g_robot.wheels[i].pid.set = 0;
+            }
+
             do_dribbler(0);
-            do_move(0,0,0);
+            do_move(0,0,0,g_robot.PID_type);
             do_shoot(0,0);
             do_chip(0,0);
             //Very important: clear the packet when communication timeout.
@@ -215,7 +223,7 @@ void Do_Comm(void const * argument)
             identify_cpuid_tim = get_one_timer(IDENTIFY_CPUID_TIMEOUT_TIME);
           }
 
-				if(g_do_set_receive_mode_flag)	//发出数据包后置为1，等待数据发出去后将模式修改为接收模�?			
+				if(g_do_set_receive_mode_flag)	//发出数据包后置为1，等待数据发出去后将模式修改为接收模式			
           {
             if(g_set_receive_mode_flag >= 3)
             {				

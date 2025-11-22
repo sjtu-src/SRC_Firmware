@@ -12,6 +12,14 @@ typedef struct _pid_
 	float B;
 	float C;
 
+	float Kp_pos;
+	float Ki_pos;
+	float Kd_pos;
+	
+	float A_pos;
+	float B_pos;
+	float C_pos;
+
 	/* limit */
 	long limit;
 	float torque_limit; /* measured in mNm */
@@ -85,10 +93,10 @@ typedef struct
 }net_pid;
 
 
-void pid_init(pid_t *pid, float Kp, float Ki, float Kd );
+void pid_init(pid_t *pid);
 void gyro_pid_init(GYRO_PID_STRUCT *pid, float Kp, float Ki, float Kd );
 void pid_reinit(pid_t *pid);
-int pid_step(pid_t *pid, int cur_value, float bat_v );
+int pid_step(pid_t *pid, int cur_pos, int cur_speed, float bat_v );
 extern GYRO_PID_STRUCT gyro_pid;
 
 

@@ -272,7 +272,7 @@ void shoot_on(u32 value)
 
 	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
 
-	value= 5.5* pow(value, 2) / 10000 + 7 * value / 100 +7;
+	//value= 5.5* pow(value, 2) / 10000 + 7 * value / 100 +7;
 
 	value = (int)(value * 5 + 0.5);
 	
@@ -301,6 +301,7 @@ void chip_on(u32 value)
 
 	if(value == 0) value = 1;
 
+	__HAL_TIM_ENABLE(&htim9);
 	TIM9->CCR2 = value;
 	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
@@ -541,7 +542,7 @@ u8 get_bat_v(void)
 }
 
 /*******************************************************************************
-* @brief 将轮子的速度单位从(m/s)转换到码盘的(count/s)
+* @brief 将轮子的速度单位从(m/s)转换到码盘的(count/s)，这个函数存在误差，最好不要用
 * @param vel 速度值 单位m/s
 * @return 编码器速度 格/s  count/s 
 * @author Xuanting Liu
@@ -553,7 +554,7 @@ long V2N(float vel)
 
 
 /*******************************************************************************
-* @brief 将轮子的速度单位从码盘的(count/s)转换到轮子的(m/s)
+* @brief 将轮子的速度单位从码盘的(count/s)转换到轮子的(m/s)，这个函数存在误差，最好不要用
 * @param n 编码器速度 格/s  count/s 4倍频后的速度
 * @return 速度值 单位m/s g_robot.kv2n=74037 电机最大转速3000rpm=50rps=50*1024*4=204800/74037=2.76m/s
 * @author Xuanting Liu

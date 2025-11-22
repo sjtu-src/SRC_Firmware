@@ -22,8 +22,7 @@ u32 cpuID[3];  //32bit cpuid
 u8  cpuid_data[12]; //12Byte couid
 u8  encrpty_cpuid[8];//加密后的cpuid
 
-int wheel_reduction_ratio_x_set; /*减速比*/		
-int wheel_reduction_ratio_yz_set; /*减速比*/  //旧轮子减速比为70/22 为3.1818 外圈转1圈，内圈码盘转3.1818圈
+int wheel_reduction_ratio; /*减速比*/		
 int max_shot_strength_set;
 u8 is_low_power_cnt = 0;
 
@@ -80,24 +79,24 @@ void init_robot(void)
 	float angle;
 	
   	float wheel_angle[ 4 ] = { 
-		 D_WHEEL_ANGLE_FRONT,     //左前轮
-		-D_WHEEL_ANGLE_FRONT,      //右前轮
-		-D_WHEEL_ANGLE_BACK_2013,   //右后轮
-		 D_WHEEL_ANGLE_BACK_2013     //左后轮轮
+		 D_WHEEL_ANGLE_FRONT,    //左前轮
+		-D_WHEEL_ANGLE_FRONT,	 //右前轮
+		-D_WHEEL_ANGLE_BACK,  	 //右后轮
+		 D_WHEEL_ANGLE_BACK,     //左后轮
 	};
 	
-	float rotate_modify[4] = {
-		FRONT_MODIFY_2024,
-		FRONT_MODIFY_2024,
-		BACK_MODIFY_2024,
-		BACK_MODIFY_2024
-	};
 		
-	
+	float wheel_diameter[4] = {
+		WHEEL_DIAMETER_SMALL, //左前轮
+		WHEEL_DIAMETER_SMALL, //右前轮
+		WHEEL_DIAMETER_BIG,   //右后轮
+		WHEEL_DIAMETER_BIG    //左后轮
+	};
+
 	/* initial parameter from eeprom */
 	load_param(&param);
-	wheel_reduction_ratio_x_set = param.dat[12];
- 	wheel_reduction_ratio_yz_set = param.dat[13];
+	wheel_reduction_ratio = param.dat[12];
+
 	if(param.dat[14] <= MAX_SHOT_STRENGTH)
     {
     	max_shot_strength_set = param.dat[14];
@@ -115,39 +114,32 @@ void init_robot(void)
 	g_robot.frq = freq;
 	g_robot.dip_frq = dip_freq;
 	g_robot.mode = (mode_t)(mode & 0x7);
+	g_robot.PID_type = SPEED_PID; 
     mode = mode & 0x7;
 
-	pid_init(&(g_robot.wheels[0].pid), MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD);
-	pid_init(&(g_robot.wheels[1].pid), MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD);
-	pid_init(&(g_robot.wheels[2].pid), MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD);
-	pid_init(&(g_robot.wheels[3].pid), MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD);
+	pid_init(&(g_robot.wheels[0].pid));
+	pid_init(&(g_robot.wheels[1].pid));
+	pid_init(&(g_robot.wheels[2].pid));
+	pid_init(&(g_robot.wheels[3].pid));
 
 	g_robot.dribbler = 0;
 	g_robot.kv2n = 74037;
 	
 	/* initial sin and cos table */
-	for( i = 0; i < 2; i++ )
+	for( i = 0; i < 4; i++ )
 	{
 	    angle = wheel_angle[ i ] / 180.0f * (float)PI;
 	    g_robot.sin_angle[i] = sin( angle ) ;
 	    g_robot.cos_angle[i] = cos( angle ) ;
 	}
 	
-	
-    for(i = 2; i < 4; i++)
-    {
-      	angle = wheel_angle[ i ] / 180.0f * (float)PI;
-		g_robot.sin_angle[i] = sin(angle) ;
-      	g_robot.cos_angle[i] = cos(angle) ;
-    }
-	
 	for(i = 0; i < 4; i++)
 	{
-		angle = rotate_modify[i] / 180.0f * (float)PI;
-		g_robot.cos_mod_angle[i] = cos(angle);
+		g_robot.wheel_diameter[i] = wheel_diameter[i];
 	}
 	
     g_robot.firmware_version = software_verison;
+
 	/* initial other */
 	init_shooter();
 
@@ -263,8 +255,15 @@ void do_robot_run(void)
 				forcestopcounter++;
 				if(forcestopcounter >= 5000)
 				{
+					for(int i = 0; i < CHANNEL_NUM; i++)
+					{
+					g_robot.wheels[i].set = 0;
+					g_robot.wheels[i].cur_position = 0;
+					g_robot.wheels[i].pid.set = 0;
+					}
+
 					do_dribbler(0);
-					do_move(0,0,0);
+					do_move(0,0,0,g_robot.PID_type);
 					do_shoot(0,0);
 					do_chip(0,0);
 					//Very important: clear the packet when communication timeout.
@@ -338,21 +337,19 @@ void do_robot_run(void)
 
 			if(test_time == 1)
 			{
-				do_acc_handle_move(0, 0, 100);
+				do_acc_handle_move(0, 0, 100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0, 0);		
-				do_acc_handle_move(0, 0, -100);
+				do_acc_handle_move(0, 0, -100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0, 0);				
+				do_acc_handle_move(0, 0, 0, g_robot.PID_type);				
 			}
 			else if(test_time == 2)
 			{
-				do_acc_handle_move(0, 0,-100);
+				do_acc_handle_move(0, 0,-100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0, 0);
-				do_acc_handle_move(0, 0, 100);
+				do_acc_handle_move(0, 0, 100, g_robot.PID_type);
 				osDelay(2000);
-				do_acc_handle_move(0, 0,0);
+				do_acc_handle_move(0, 0, 0, g_robot.PID_type);
 				test_time = 0;
 			}
 			break;
@@ -372,11 +369,11 @@ void do_robot_run(void)
 			for(test_drib_speed = 0; test_drib_speed <= 511; test_drib_speed += 15)
 			{
 				if(g_robot.is_ball_detected == 0) break;
-				do_acc_handle_move(0, 0, test_drib_speed);
+				do_acc_handle_move(0, 0, test_drib_speed, g_robot.PID_type);
 				osDelay(200);
 			}
 			do_dribbler(0);
-			do_acc_handle_move(0, 0, 0);
+			do_acc_handle_move(0, 0, 0, g_robot.PID_type);
 			osDelay(500);
 
 			int tmp = test_drib_speed / 100;
@@ -418,7 +415,7 @@ void on_robot_command(packet_robot_t *packet)
 				do_shoot(packet->shoot, packet->chip);
 				do_chip(packet->shoot, packet->chip);
 		#endif
-		do_acc_handle_move(packet->speed_x, packet->speed_y, packet->speed_rot);
+		do_acc_handle_move(packet->speed_x, packet->speed_y, packet->speed_rot, g_robot.PID_type);
     }
 }
 

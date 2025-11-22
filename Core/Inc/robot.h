@@ -24,6 +24,7 @@ typedef struct _wheel_
 	volatile float speed;     //小车车体合成线速度值 单位[m/s]
 	volatile int set;         //pid速度设置值 单位count/s
 	volatile int cur_speed;   //当前速度 单位[count/s]
+	volatile int cur_position; //位置环当前值 单位count
 } wheel_t;
 
 typedef struct _error_
@@ -40,6 +41,7 @@ typedef struct _robot_
 	u8 dip_frq; /* dip sw setting freq */
 	
 	wheel_t wheels[ CHANNEL_NUM ]; //各个轮子的pid参数
+	int PID_type;  //速度环还是位置环控制
 	u16 dribbler;
 	
 	float kv2n;                    // 74037 m/s和count/s 转换系数 单位count/m  用于电机旋转速度转换为线速度
@@ -57,10 +59,10 @@ typedef struct _robot_
 	volatile float cap_v_f;  //充电电容电压 单位[v]
 	volatile float bat_v_f;  //电池电压
 
-	float sin_angle[ CHANNEL_NUM]; //车轮与正方向轴线的角度正弦
-	float cos_angle[ CHANNEL_NUM];
-	
-	float cos_mod_angle[ CHANNEL_NUM]; //后轮修正角度
+	float sin_angle[CHANNEL_NUM]; //车轮与正方向轴线的角度正弦
+	float cos_angle[CHANNEL_NUM];
+
+	float wheel_diameter[CHANNEL_NUM]; //车轮直径
 
 	err_t error[ERROR_NUM];
 	

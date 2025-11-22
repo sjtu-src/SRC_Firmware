@@ -20,27 +20,30 @@
 #define NEUMANN_S02 2
 
 //机器人型号
-#define ROBOT_VERSION LEBO_ROBOT
+#define ROBOT_VERSION LEBO_ROBOT 
 
 #if (ROBOT_VERSION == LEBO_ROBOT)
     #define INFRA_TYPE OLD_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE OPTICAL_ENCODER
+    #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
 #elif (ROBOT_VERSION == NEUMANN_S01)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
+    #define ENCODER_COUNTS_PER_TURN_SET 1024    //电机一圈编码器线数
 #elif (ROBOT_VERSION == NEUMANN_S02)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE NEW_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
+    #define ENCODER_COUNTS_PER_TURN_SET 1024    //电机一圈编码器线数
 #else
     #error "Please select robot version"
 #endif
 
 
 /* software version*/
-#define  software_verison  0x0200;   // V2.0
+#define  software_verison  0x0300;   // V3.0
 
 /* SYSTEM CLK */
 #define FREQ_CPU_CLK		SystemCoreClock
@@ -82,14 +85,17 @@
 #define MOTOR_KV  374.0f /* measured in rpm/V */
 #define MOTOR_R   1.2f /* measured in ohm */
 
-/* motor pid parameter */
-//#define MOTOR_PID_KP  	210
-//#define MOTOR_PID_KI  	150
-//#define MOTOR_PID_KD	0
+#define LIU_WANG_CONST 3.043f // 老车电机与轮子传动比-2024国赛版，变量名为纪念lxt与wyx2025.11.18的工作而起
+#define WHEEL_DIAMETER_SMALL 0.0554f //小轮直径(m) 2025.11.19测量结果
+#define WHEEL_DIAMETER_BIG 0.0579f //大轮直径(m) 2025.11.19测量结果
 
-//#define MOTOR_PID_KP  	50
-//#define MOTOR_PID_KI  	30
-//#define MOTOR_PID_KD	5
+/* motor pid parameter */
+#define SPEED_PID 1
+#define POSITION_PID 0
+
+#define POSITION_PID_KP  	30.0f
+#define POSITION_PID_KI  	0.8f
+#define POSITION_PID_KD		10.0f
 
 #define MOTOR_PID_KP  	0.1825f
 #define MOTOR_PID_KI  	0.0475f
@@ -111,7 +117,6 @@
 #define MOTOR_PID_KI4 	0.0005f
 #define MOTOR_PID_KD4	  0.00f
 
-
 #define GYRO_PID_KP   0.2f
 #define GYRO_PID_KI	 0.0575f
 #define GYRO_PID_KD	 0.0f
@@ -127,22 +132,18 @@
 
 #define STOP_THRESHOLD 60 
 
-#define D_WHEEL_ANGLE_FRONT   50    /*55		 前轮与轴线角度(度) 前轮轮子轴线与小车前后轴线角度*/
-
-
 //王奕轩新底板54°
-#define D_WHEEL_ANGLE_BACK_2013 135
+#define D_WHEEL_ANGLE_FRONT   53    /*前轮与轴线角度(度) 前轮轮子轴线与小车前后轴线角度*/
+#define D_WHEEL_ANGLE_BACK    142   /*后轮与轴线角度(度) 后轮轮子轴线与小车前后轴线角度*/
 
 #define FRONT_MODIFY_2024 2.33 // 后轮偏转角
 #define BACK_MODIFY_2024 4.08
 
+// 以下三个参数目前已被弃用，为远古版本车辆参数
+// 新参数请见上文
 #define D_WHEEL_REDUCTION_RATIO_X 3		/*减速比*/     // X.YZ
 #define D_WHEEL_REDUCTION_RATIO_YZ 18	/*减速比*/   //X.YZ      
 #define WHEEL_RADIUS 0.028f            //轮子半径 单位[m]
-
-//#define ENCODER_COUNTS_PER_TURN_SET 256
-//#define ENCODER_COUNTS_PER_TURN_SET 512    //电机一圈编码器线数
-#define ENCODER_COUNTS_PER_TURN_SET 1024    //电机一圈编码器线数
 
 #define SHOOT_DELAY 15
 
