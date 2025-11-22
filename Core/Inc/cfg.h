@@ -20,20 +20,23 @@
 #define NEUMANN_S02 2
 
 //机器人型号
-#define ROBOT_VERSION LEBO_ROBOT
+#define ROBOT_VERSION NEUMANN_S01 
 
 #if (ROBOT_VERSION == LEBO_ROBOT)
     #define INFRA_TYPE OLD_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE OPTICAL_ENCODER
+    #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
 #elif (ROBOT_VERSION == NEUMANN_S01)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
+    #define ENCODER_COUNTS_PER_TURN_SET 1024    //电机一圈编码器线数
 #elif (ROBOT_VERSION == NEUMANN_S02)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE NEW_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
+    #define ENCODER_COUNTS_PER_TURN_SET 1024    //电机一圈编码器线数
 #else
     #error "Please select robot version"
 #endif
@@ -141,8 +144,6 @@
 #define D_WHEEL_REDUCTION_RATIO_X 3		/*减速比*/     // X.YZ
 #define D_WHEEL_REDUCTION_RATIO_YZ 18	/*减速比*/   //X.YZ      
 #define WHEEL_RADIUS 0.028f            //轮子半径 单位[m]
-
-#define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
 
 #define SHOOT_DELAY 15
 
