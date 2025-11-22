@@ -71,7 +71,7 @@
 
 /* motor parameter define */
 #define MOTOR_PWM_FREQ		25000		//25KHz PWM
-#define MOTOR_PWM_PERIOD	(SystemCoreClock / MOTOR_PWM_FREQ)
+#define MOTOR_PWM_PERIOD	(168000000 / MOTOR_PWM_FREQ)
 
 /* dribble motor dir define */
 #define NEW_DRIBBLE_MOTOR_DIR		1
