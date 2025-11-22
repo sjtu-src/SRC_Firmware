@@ -89,13 +89,18 @@
 #define WHEEL_DIAMETER_SMALL 0.0554f //小轮直径(m) 2025.11.19测量结果
 #define WHEEL_DIAMETER_BIG 0.0579f //大轮直径(m) 2025.11.19测量结果
 
-/* motor pid parameter */
-#define SPEED_PID 1
-#define POSITION_PID 0
+#define LIU_WANG_CONST 3.043f // 老车电机与轮子传动比-2024国赛版，变量名为纪念lxt与wyx2025.11.18的工作而起
+#define WHEEL_DIAMETER_SMALL 0.0554f //小轮直径(m) 2025.11.19测量结果
+#define WHEEL_DIAMETER_BIG 0.0579f //大轮直径(m) 2025.11.19测量结果
 
-#define POSITION_PID_KP  	30.0f
-#define POSITION_PID_KI  	0.8f
-#define POSITION_PID_KD		10.0f
+/* motor pid parameter */
+//#define MOTOR_PID_KP  	210
+//#define MOTOR_PID_KI  	150
+//#define MOTOR_PID_KD	0
+
+//#define MOTOR_PID_KP  	50
+//#define MOTOR_PID_KI  	30
+//#define MOTOR_PID_KD	5
 
 #define MOTOR_PID_KP  	0.1825f
 #define MOTOR_PID_KI  	0.0475f
