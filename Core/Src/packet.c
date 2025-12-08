@@ -359,7 +359,7 @@ int decode_packet( packet_robot_t *packet, unsigned char *data, int len )
 	packet->speed_x = temp & 0x7F;
 	high_value_x = (unsigned short)data[i];
 	high_value_x = ((unsigned short)(high_value_x & 0x0c)) << 5;
-	packet->speed_x = packet->speed_x + high_value_x; //速度值+max(0x80) 127+128=256
+	packet->speed_x = packet->speed_x + high_value_x; //速度值+max(0x80) 127+128=255
 	temp = data[i+1];
 	packet->speed_x = ( ( temp & 0x80 ) ? ( -packet->speed_x ) : packet->speed_x );
 		 

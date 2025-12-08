@@ -82,7 +82,8 @@ void Robot_State_Display(void)
 			// 显示各轮轮速
 			for(i=0; i<4; i++)
 			{
-				OLED_Printf(0, 11+i*10, OLED_6X8, "LeftFront:%d", g_robot.wheels[i].cur_speed);
+				OLED_Printf(0, 11+i*10, OLED_6X8, "wheel[%d]:%d", i, g_robot.wheels[i].cur_speed);
+				//OLED_Printf(0, 11+i*10, OLED_6X8, "wheel[%d]:%d", i, g_robot.wheels[i].cur_position);
 			}
 			break;
 		}

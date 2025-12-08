@@ -230,7 +230,7 @@ void Beep_Show_32bit(u32 val)
 *@author Xuanting Liu
 *@brief 若receive_mode_flag被置位，则增加g_set_receive_mode_flag
 *******************************************************************************/
-void inc_receive_mode_flag(void)
+void  inc_receive_mode_flag(void)
 {
 	if(g_do_set_receive_mode_flag)
 	{

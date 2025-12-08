@@ -327,7 +327,8 @@ void do_move( int speed_pos_x, int speed_pos_y, int speed_pos_rot, int PID_type)
 		{
 			/* trasnform wheel angle */
 			g_robot.wheels[i].speed = ( g_robot.sin_angle[ i ] * vx + g_robot.cos_angle[ i ] * vy + vz );
-			g_robot.wheels[i].set = V2N(g_robot.wheels[i].speed);//线速度转换为编码器速度
+			g_robot.wheels[i].set = (long)(g_robot.wheels[i].speed / ((float)PI * g_robot.wheel_diameter[i]) 
+											* ENCODER_COUNTS_PER_TURN_SET * LIU_WANG_CONST)*3; //enhace the speed to bring the max speed out
 		}
 	
 		/* change wheels' speed set point, with dis_int() */
