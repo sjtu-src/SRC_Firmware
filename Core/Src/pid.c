@@ -131,7 +131,7 @@ int pid_step(pid_t *pid, int cur_pos, int cur_speed, float bat_v )
 		/* perform torque limit */
 		rpm = N2RPM(cur_speed);
 		if( rpm < 0 ) rpm = -rpm;
-		max_output_for_torque = calc_max_output( pid->torque_limit, rpm, bat_v);
+		max_output_for_torque = calc_max_output( pid->torque_limit, rpm, 16.0f);
 
 		/* torque limit */
 		if( pid->out > max_output_for_torque )

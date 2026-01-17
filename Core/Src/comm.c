@@ -103,6 +103,7 @@ int do_packet_process( unsigned char *data, int len )
 			return -1;
 		}
 		
+		on_robot_command(&src_robot_packet);
 		Communication_Success();
 	}
 	

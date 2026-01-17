@@ -18,12 +18,13 @@
 #define LEBO_ROBOT 0
 #define NEUMANN_S01 1
 #define NEUMANN_S02 2
+#define NEUMANN_OPTICAL 3
 
 //机器人型号
-#define ROBOT_VERSION NEUMANN_S01
+#define ROBOT_VERSION NEUMANN_OPTICAL
 
 #if (ROBOT_VERSION == LEBO_ROBOT)
-    #define INFRA_TYPE OLD_INFRA
+    #define INFRA_TYPE OLD_INFRA 
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE OPTICAL_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
@@ -37,6 +38,11 @@
     #define MOTOR_TYPE NEW_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 500    //电机一圈编码器线数
+#elif (ROBOT_VERSION == NEUMANN_OPTICAL)
+    #define INFRA_TYPE NEW_INFRA
+    #define MOTOR_TYPE OLD_MOTOR
+    #define ENCODER_TYPE OPTICAL_ENCODER
+    #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
 #else
     #error "Please select robot version"
 #endif
@@ -125,7 +131,7 @@
 #define GYRO_PID_KI	 0.0575f
 #define GYRO_PID_KD	 0.0f
 
-#define MOTOR_TORQUE_LIMIT	175.0f
+#define MOTOR_TORQUE_LIMIT	275.0f
 
 #define BATTERY_V   13.0f /* measured in V, maybe detected while running */
 

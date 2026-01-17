@@ -314,10 +314,7 @@ void do_robot_run(void)
 	{ 
 		case NORMAL_MODE:
 		case CRAY_MODE:
-		{
-			on_robot_command(&src_robot_packet);
 			break;
-		}
 		case SELFTEST_MODE:
 		{
 			static int test_time = 0;	
