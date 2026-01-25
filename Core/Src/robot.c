@@ -425,7 +425,7 @@ void on_robot_command(packet_robot_t *packet)
 int do_power_monitor(void)
 {
 	char retflag;
-	u8 cap_v;
+	u16 cap_v;
 	
 	/* check the cap voltage */
 	cap_v = get_cap_v();

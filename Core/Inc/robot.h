@@ -53,7 +53,7 @@ typedef struct _robot_
 	int speed_x;
 	int speed_y;
 
-	vu8 cap_v;                //电容电压 单位[bit]
+	vu16 cap_v;                //电容电压 单位[bit]
 	vu8 bat_v;
 
 	volatile float cap_v_f;  //充电电容电压 单位[v]

@@ -404,7 +404,7 @@ void heart_beat(void)
 * @return 16bit adc/16 取12bit的高8位
 * @author Xuanting Liu
 *******************************************************************************/
-u8 get_cap_v(void)
+u16 get_cap_v(void)
 {
     u16 val;
 
@@ -427,10 +427,11 @@ u8 get_cap_v(void)
 	// 停止ADC1
 	HAL_ADC_Stop(&hadc1);
 
-    // 将16位ADC值右移4位，取高8位
-    val = val >> 4;
+    // // 将16位ADC值右移4位，取高8位
+    // val = val >> 4;
 
-    return (uint8_t)(val & 0xFF);
+    // return (uint8_t)(val & 0xFF);
+	return val;
 }
 
 /*******************************************************************************

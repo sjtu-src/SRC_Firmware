@@ -21,7 +21,7 @@
 #define NEUMANN_OPTICAL 3
 
 //机器人型号
-#define ROBOT_VERSION NEUMANN_OPTICAL
+#define ROBOT_VERSION NEUMANN_S01
 
 #if (ROBOT_VERSION == LEBO_ROBOT)
     #define INFRA_TYPE OLD_INFRA 
@@ -161,7 +161,7 @@
 #define BAT_V_ADC_GAIN			(3.3f / 256.0f / (3300.0f / (22000.0f + 3300.0f)))  //电池电压电阻分压系数
 
 // #define CAP_V_ADC_GAIN			(3.3f / 256.0f / (5.1f / (249.0f + 5.1f)))    //充电电容电阻分压系数
-#define CAP_V_ADC_GAIN			(3.3f / 256.0f / (12.0f / (1800.0f + 12.0f)))    //充电电容电阻分压系数
+#define CAP_V_ADC_GAIN			(3.3f / 4096.0f / (12.4f / (1800.0f + 12.4f)) * 1.225 / 1.5)    //充电电容电阻分压系数
 
 /* battery low power protection time */
 #define LOW_POWER_TIME		(5 * SYS_TICK_FREQ) //5s
@@ -170,7 +170,7 @@
 #define PID_COUNTER_OVERFLOW 2
 #define SECOND_COUNTER_OVERFLOW 	SYS_TICK_FREQ
 #define HEARTBEAT_TIME 	SYS_TICK_FREQ
-#define COMM_TIMEOUT_TIME 1000
+#define COMM_TIMEOUT_TIME 100
 #define IDENTIFY_CPUID_TIMEOUT_TIME 10000
 #define INFRA_COUNTER_ON_OVERFLOW 6
 #define INFRA_COUNTER_OFF_OVERFLOW 2
@@ -212,8 +212,8 @@
 #define IR_BALL_PWM_DUTY	20		//20%
 
 /* Low power limit define */
-#define WARNING_POWER_A 13.8f       //电池电压阈值1 单位v 蜂鸣器响
-#define FORCESTOP_POWER_A 13.2f     //电池电压阈值2  停止机器人
+#define WARNING_POWER_A 13.0f       //电池电压阈值1 单位v 蜂鸣器响
+#define FORCESTOP_POWER_A 12.5f     //电池电压阈值2  停止机器人
 
 #define WARNING_POWER_D 	(WARNING_POWER_A * 3.3f / (22 + 3.3f) / 3.3f * 256)
 #define FORCESTOP_POWER_D 	(FORCESTOP_POWER_A * 3.3f / (22 + 3.3f) / 3.3f * 256)
