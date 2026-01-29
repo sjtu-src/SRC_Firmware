@@ -65,17 +65,32 @@ void do_dribbler( int dribbler )
 {
   	int dribbler_temp;
 	u8 dir = 0;
+	float gain;
 
 	if(dribbler < 0) 
 	{
 		dribbler_temp = -dribbler;
-		dir = 1;
+		#if (DIRB_MOTOR_VERSION == OLD_DIRB_MOTOR)
+			dir = 1;
+		#elif (DIRB_MOTOR_VERSION == NEW_DIRB_MOTOR)
+			dir = 0;
+		#endif
 	}
 	else 
 	{
 		dribbler_temp = dribbler;
-		dir = 0;
-	}		
+		#if (DIRB_MOTOR_VERSION == OLD_DIRB_MOTOR)
+			dir = 0;
+		#elif (DIRB_MOTOR_VERSION == NEW_DIRB_MOTOR)
+			dir = 1;
+		#endif
+	}
+		
+	#if (DIRB_MOTOR_VERSION == OLD_DIRB_MOTOR)
+		gain = 0.5;
+	#elif (DIRB_MOTOR_VERSION == NEW_DIRB_MOTOR)
+		gain = 0.2;
+	#endif	
 
     if(dribbler_temp == 0)
     {
@@ -83,15 +98,15 @@ void do_dribbler( int dribbler )
     }
     else if(dribbler_temp == 1)
     {
-        g_robot.dribbler = MOTOR_PWM_PERIOD * 0.5;
+        g_robot.dribbler = MOTOR_PWM_PERIOD * gain;
     }
     else if(dribbler_temp == 2)
     {
-        g_robot.dribbler = MOTOR_PWM_PERIOD * 0.5;
+        g_robot.dribbler = MOTOR_PWM_PERIOD * gain;
     }
     else if(dribbler_temp == 3)
     {
-        g_robot.dribbler = MOTOR_PWM_PERIOD * 0.5;
+        g_robot.dribbler = MOTOR_PWM_PERIOD * gain;
     }
 	else
 	{

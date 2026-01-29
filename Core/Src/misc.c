@@ -298,7 +298,9 @@ void chip_on(u32 value)
 {
 	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
 
-	value = MAX_SHOT_STRENGTH - value;
+	value = (int)(value * 5 + 0.5);
+	
+	value = 5 * MAX_SHOT_STRENGTH - value; // 越小踢得越快
 
 	if(value == 0) value = 1;
 

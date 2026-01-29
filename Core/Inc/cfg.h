@@ -20,8 +20,13 @@
 #define NEUMANN_S02 2
 #define NEUMANN_OPTICAL 3
 
+#define OLD_DIRB_MOTOR 0
+#define NEW_DIRB_MOTOR 1
+
 //机器人型号
 #define ROBOT_VERSION NEUMANN_S01
+// 吸球电机型号
+#define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
 
 #if (ROBOT_VERSION == LEBO_ROBOT)
     #define INFRA_TYPE OLD_INFRA 
