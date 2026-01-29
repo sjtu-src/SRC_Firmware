@@ -84,7 +84,7 @@ void stop_mode_packet(char *q)
 	q[4] = g_robot.cap_v ;
 	
 	g_robot.bat_v_f = g_robot.bat_v * BAT_V_ADC_GAIN;
-	g_robot.cap_v_f = g_robot.cap_v * CAP_V_ADC_GAIN;
+	g_robot.cap_v_f = g_robot.cap_v * (float)CAP_V_ADC_GAIN;
 
 	EN_INT();
 	
@@ -162,11 +162,13 @@ void packet(char *q)
 		#endif
 	}
 
-	/* n记录每个packet发送时的次数, 每个新发的包执行5次 */
+	/* n记录每个packet发送时的次数, 每个新发的包执行20次 */
 	if(n >= 20)
 	{
-		if(to_shoot == 1) to_shoot = 0;
-		if(to_chip == 1) to_chip = 0;
+		if(to_shoot == 1)	 	to_shoot = 0;
+		if(to_chip == 1) 		to_chip = 0;
+		if(finish_shoot == 1)	finish_shoot = 0;
+		if(finish_chip == 1) 	finish_chip = 0;
 		
 		if(last_infra != now_infra)
 		{
