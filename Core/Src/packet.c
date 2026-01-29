@@ -165,19 +165,13 @@ void packet(char *q)
 	/* n记录每个packet发送时的次数, 每个新发的包执行20次 */
 	if(n >= 20)
 	{
-		if(to_shoot == 1)	 	to_shoot = 0;
-		if(to_chip == 1) 		to_chip = 0;
-		if(finish_shoot == 1)	finish_shoot = 0;
-		if(finish_chip == 1) 	finish_chip = 0;
+		if(finish_shoot == 1) finish_shoot = 0;
+		if(finish_chip == 1) finish_chip = 0;
 		
-		if(last_infra != now_infra)
+		if((last_infra != now_infra))
 		{
-			n = 0;
+			n = 1;
 			m++;
-			packet_flag = 1;
-		}
-		else if(now_infra)
-		{
 			packet_flag = 1;
 		}
 		else
@@ -195,7 +189,6 @@ void packet(char *q)
 	{
 		m = 0;
 	}
-
 	bat_v = get_bat_v();
 	cap_v = get_cap_v();
 
