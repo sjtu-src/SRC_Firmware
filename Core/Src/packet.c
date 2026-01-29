@@ -174,6 +174,10 @@ void packet(char *q)
 			m++;
 			packet_flag = 1;
 		}
+		else if(now_infra)
+		{
+			packet_flag = 1;
+		}
 		else
 		{
 			packet_flag = 0;
@@ -213,7 +217,7 @@ void packet(char *q)
     q[2] = (g_robot.mode == NORMAL_MODE) ? ((g_robot.num-1) & 0x0F) : (g_robot.num & 0x0F);
 	q[3] = (now_infra << 6) + (finish_shoot << 5) + (finish_chip << 4);
 	q[4] = g_robot.bat_v;
-	q[5] = g_robot.cap_v ;
+	q[5] = g_robot.cap_v;
 	q[6] = 0xf0;
 	speed = abs(g_robot.wheels[0].cur_speed) / 10;   
 	q[7] = speed % 255;
