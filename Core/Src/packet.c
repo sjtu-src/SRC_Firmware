@@ -168,14 +168,10 @@ void packet(char *q)
 		if(finish_shoot == 1) finish_shoot = 0;
 		if(finish_chip == 1) finish_chip = 0;
 		
-		if((last_infra != now_infra))
+		if((last_infra != now_infra) || (now_infra == 1))
 		{
 			n = 1;
 			m++;
-			packet_flag = 1;
-		}
-		else if(now_infra)
-		{
 			packet_flag = 1;
 		}
 		else
