@@ -24,7 +24,9 @@ unsigned char identify_success = 1;   //认证成功标志位 1 认证成功 0 �
 
 extern timer_t identify_cpuid_tim;
 
-unsigned char data_21_to_23_label = 0;
+int finish_shoot = 0;
+int finish_chip = 0;
+
 
 /*******************************************************************************
 * @brief 通过包头(data[1])获取包类型
@@ -106,52 +108,24 @@ void packet(char *q)
 	static int last_infra = 0;
 	static int now_infra = 0;
 
-	static int to_shoot = 0;
-	static int to_chip = 0;
-
-	static int finish_shoot = 0;
-	static int finish_chip = 0;
-
 	static int m = 0;
 	static int n = 20;
 	
 	int speed = 0;
     now_infra = g_robot.is_ball_detected;
 
-	/* 首先，射门命令如果已提交，设置to_shoot */
 	if(shooter == 0x02) //shoot
 	{
-	    to_shoot = 1;
 		shooter = 0x00;
 	}
         
 	if(shooter == 0x01)//chip
 	{
-		to_chip = 1;
     	shooter = 0x00;
 	}
 	
     if(now_infra == 0)
     {
-		/* 如果现在嘴里没球，但shoot命令有，说明球已经踢出去了 */
-        if(to_shoot == 1)
-        {
-            finish_shoot = 1;
-            to_shoot = 0;
-			n = 0;
-			m++;
-			packet_flag = 1;
-        }
-		
-        if(to_chip == 1)
-        {
-            finish_chip = 1;
-            to_chip = 0;
-			n = 0;
-			m++;
-			packet_flag = 1;
-        }    
-		
 		/* ENABLE_INFRA_BEEP红外叫声 */
 		#ifdef ENABLE_INFRA_BEEP
 			if(do_power_monitor() == 0)	BEEP_OFF();
@@ -333,15 +307,8 @@ int decode_packet( packet_robot_t *packet, unsigned char *data, int len )
 	temp = data[i];
 	packet->dribbler = ((( temp >> 4 ) & 0x03));	//吸球力度
 	packet->dribbler = (( temp & 0x80) ? (-packet->dribbler) : packet->dribbler); //滚筒向前or向后转
-	/* 认证数据区(21~23)与射门力度字节重叠时，避免误触发 */
-	if(data_21_to_23_label && ((pos + 20) >= IDENTIFY_START_ADDR) && ((pos + 20) <= (IDENTIFY_START_ADDR + 2)))
-	{
-		temp = 0;
-	}
-	else
-	{
-		temp = data[pos+20]; //射门力度
-	}
+
+	temp = data[pos+20]; //射门力度
 	
 	if( (data[i] >> 6) & 0x01 ) //挑射
 	{
@@ -420,7 +387,6 @@ int decode_identify_packet( idenfity_cpuid_struct *id_code, unsigned char *data 
        id_code->recv_cpuid_start_flag = 1;
 	}
 	/* 认证进行中需屏蔽21~23字节的业务字段 */
-	data_21_to_23_label = (id_code->recv_cpuid_start_flag != 0);
 	if(id_code->recv_cpuid_start_flag)
 	{   
 	    identify_packet_cnt++;  //
