@@ -24,6 +24,8 @@ unsigned char identify_success = 1;   //认证成功标志位 1 认证成功 0 �
 
 extern timer_t identify_cpuid_tim;
 
+unsigned char data_21_to_23_label = 0;
+
 /*******************************************************************************
 * @brief 通过包头(data[1])获取包类型
 * @param data 接收到的数据包
@@ -111,7 +113,7 @@ void packet(char *q)
 	static int finish_chip = 0;
 
 	static int m = 0;
-	static int n = 5;
+	static int n = 20;
 	
 	int speed = 0;
     now_infra = g_robot.is_ball_detected;
@@ -331,7 +333,7 @@ int decode_packet( packet_robot_t *packet, unsigned char *data, int len )
 	temp = data[i];
 	packet->dribbler = ((( temp >> 4 ) & 0x03));	//吸球力度
 	packet->dribbler = (( temp & 0x80) ? (-packet->dribbler) : packet->dribbler); //滚筒向前or向后转
-	temp = data[pos+20]; //射门力度
+	temp = (data_21_to_23_label == 0) ? data[pos+20] : 0; //射门力度
 	
 	if( (data[i] >> 6) & 0x01 ) //挑射
 	{
@@ -408,8 +410,12 @@ int decode_identify_packet( idenfity_cpuid_struct *id_code, unsigned char *data 
        identify_packet_cnt = 0;
        id_code->recv_packet_cnt = (data[IDENTIFY_START_ADDR] & 0x7f) + 1;  //认证包需要传的packet个数
        id_code->recv_cpuid_start_flag = 1;
-	   
+	   data_21_to_23_label = 1;
     }
+	else
+	{
+	    data_21_to_23_label = 0;
+	}
 	if(id_code->recv_cpuid_start_flag)
 	{   
 	    identify_packet_cnt++;  //
