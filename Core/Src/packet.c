@@ -333,7 +333,15 @@ int decode_packet( packet_robot_t *packet, unsigned char *data, int len )
 	temp = data[i];
 	packet->dribbler = ((( temp >> 4 ) & 0x03));	//吸球力度
 	packet->dribbler = (( temp & 0x80) ? (-packet->dribbler) : packet->dribbler); //滚筒向前or向后转
-	temp = (data_21_to_23_label == 0) ? data[pos+20] : 0; //射门力度
+	/* 认证数据区(21~23)与射门力度字节重叠时，避免误触发 */
+	if(data_21_to_23_label && ((pos + 20) >= IDENTIFY_START_ADDR) && ((pos + 20) <= (IDENTIFY_START_ADDR + 2)))
+	{
+		temp = 0;
+	}
+	else
+	{
+		temp = data[pos+20]; //射门力度
+	}
 	
 	if( (data[i] >> 6) & 0x01 ) //挑射
 	{
@@ -410,12 +418,9 @@ int decode_identify_packet( idenfity_cpuid_struct *id_code, unsigned char *data 
        identify_packet_cnt = 0;
        id_code->recv_packet_cnt = (data[IDENTIFY_START_ADDR] & 0x7f) + 1;  //认证包需要传的packet个数
        id_code->recv_cpuid_start_flag = 1;
-	   data_21_to_23_label = 1;
-    }
-	else
-	{
-	    data_21_to_23_label = 0;
 	}
+	/* 认证进行中需屏蔽21~23字节的业务字段 */
+	data_21_to_23_label = (id_code->recv_cpuid_start_flag != 0);
 	if(id_code->recv_cpuid_start_flag)
 	{   
 	    identify_packet_cnt++;  //
