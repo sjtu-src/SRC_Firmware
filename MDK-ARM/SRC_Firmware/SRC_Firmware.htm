@@ -3,7 +3,7 @@
 <title>Static Call Graph - [SRC_Firmware\SRC_Firmware.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image SRC_Firmware\SRC_Firmware.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Sat Jan 31 19:53:20 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Sat Jan 31 21:33:39 2026
 <BR><P>
 <H3>Maximum Stack Usage =        320 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1350,8 +1350,7 @@ Global Symbols
 <P><STRONG><a name="[6f]"></a>Do_Comm</STRONG> (Thumb, 170 bytes, Stack size 0 bytes, freertos.o(i.Do_Comm))
 <BR><BR>[Stack]<UL><LI>Max Depth = 176<LI>Call Chain = Do_Comm &rArr; start_nRF24L01_RX &rArr; L01_ClearIRQ &rArr; L01_ReadStatusReg &rArr; nrf_spi_wr_rd &rArr; HAL_SPI_TransmitReceive &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
-<BR>[Calls]<UL><LI><a href="#[e8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_timer
-<LI><a href="#[eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot
+<BR>[Calls]<UL><LI><a href="#[eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot
 <LI><a href="#[ea]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_move
 <LI><a href="#[e9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_dribbler
 <LI><a href="#[ec]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_chip
@@ -1359,6 +1358,7 @@ Global Symbols
 <LI><a href="#[ed]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_nRF24L01_RX
 <LI><a href="#[e7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_communication
 <LI><a href="#[e6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
+<LI><a href="#[e8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_timer
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.constdata)
 </UL>
@@ -2683,7 +2683,7 @@ Global Symbols
 <LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_shooter
 </UL>
 
-<P><STRONG><a name="[19c]"></a>chip_on</STRONG> (Thumb, 82 bytes, Stack size 8 bytes, misc.o(i.chip_on))
+<P><STRONG><a name="[19c]"></a>chip_on</STRONG> (Thumb, 78 bytes, Stack size 8 bytes, misc.o(i.chip_on))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = chip_on &rArr; __aeabi_d2iz
 </UL>
 <BR>[Calls]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_PWM_Stop
@@ -2823,8 +2823,7 @@ Global Symbols
 <P><STRONG><a name="[173]"></a>do_robot_run</STRONG> (Thumb, 704 bytes, Stack size 32 bytes, robot.o(i.do_robot_run))
 <BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = do_robot_run &rArr; do_power_monitor &rArr; Debug_Here &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[e8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_timer
-<LI><a href="#[171]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
+<BR>[Calls]<UL><LI><a href="#[171]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
 <LI><a href="#[1b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;update_shooter
 <LI><a href="#[1b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_test_shooter
 <LI><a href="#[eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot
@@ -2837,6 +2836,7 @@ Global Symbols
 <LI><a href="#[1b0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_heart_led
 <LI><a href="#[1af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;heart_beat
 <LI><a href="#[e6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
+<LI><a href="#[e8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_timer
 </UL>
 <BR>[Called By]<UL><LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
 </UL>
@@ -2931,8 +2931,8 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[19a]"></a>get_sys_tick</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, tim.o(i.get_sys_tick))
-<BR><BR>[Called By]<UL><LI><a href="#[e8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_timer
-<LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_one_timer
+<BR><BR>[Called By]<UL><LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_one_timer
+<LI><a href="#[e8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_timer
 </UL>
 
 <P><STRONG><a name="[1af]"></a>heart_beat</STRONG> (Thumb, 78 bytes, Stack size 16 bytes, misc.o(i.heart_beat))
@@ -3247,7 +3247,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[14b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MX_FREERTOS_Init
 </UL>
 
-<P><STRONG><a name="[1a5]"></a>packet</STRONG> (Thumb, 344 bytes, Stack size 24 bytes, packet.o(i.packet))
+<P><STRONG><a name="[1a5]"></a>packet</STRONG> (Thumb, 392 bytes, Stack size 24 bytes, packet.o(i.packet))
 <BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = packet &rArr; get_cap_v &rArr; HAL_ADC_PollForConversion
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_cap_v
@@ -3388,7 +3388,7 @@ Global Symbols
 <LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_shooter
 </UL>
 
-<P><STRONG><a name="[1f3]"></a>shoot_on</STRONG> (Thumb, 82 bytes, Stack size 8 bytes, misc.o(i.shoot_on))
+<P><STRONG><a name="[1f3]"></a>shoot_on</STRONG> (Thumb, 78 bytes, Stack size 8 bytes, misc.o(i.shoot_on))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = shoot_on &rArr; __aeabi_d2iz
 </UL>
 <BR>[Calls]<UL><LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_TIM_PWM_Stop

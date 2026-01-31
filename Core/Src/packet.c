@@ -24,9 +24,6 @@ unsigned char identify_success = 1;   //认证成功标志位 1 认证成功 0 �
 
 extern timer_t identify_cpuid_tim;
 
-int finish_shoot = 0;
-int finish_chip = 0;
-
 
 /*******************************************************************************
 * @brief 通过包头(data[1])获取包类型
@@ -97,7 +94,7 @@ void stop_mode_packet(char *q)
 }
 
 /******************************************************************************
- * @brief 打包函数，将所需返回上位机的信息打包，并检测是否有状态变化(平射、挑射有一种变化)，当发生状态变化时，置位上传标志 packet_flag.
+ * @brief 打包函数，将所需返回上位机的信息打包，并检测是否有状态变化(红外、平射、挑射有一种变化)，当发生状态变化时，置位上传标志 packet_flag.
  * @author Xuanting Liu
  ******************************************************************************/
 void packet(char *q)
@@ -108,24 +105,52 @@ void packet(char *q)
 	static int last_infra = 0;
 	static int now_infra = 0;
 
+	static int to_shoot = 0;
+	static int to_chip = 0;
+
+	static int finish_shoot = 0;
+	static int finish_chip = 0;
+
 	static int m = 0;
 	static int n = 20;
 	
 	int speed = 0;
     now_infra = g_robot.is_ball_detected;
 
+	/* 首先，射门命令如果已提交，设置to_shoot */
 	if(shooter == 0x02) //shoot
 	{
+	    to_shoot = 1;
 		shooter = 0x00;
 	}
         
 	if(shooter == 0x01)//chip
 	{
+		to_chip = 1;
     	shooter = 0x00;
 	}
 	
     if(now_infra == 0)
     {
+		/* 如果现在嘴里没球，但shoot命令有，说明球已经踢出去了 */
+        if(to_shoot == 1)
+        {
+            finish_shoot = 1;
+            to_shoot = 0;
+			n = 0;
+			m++;
+			packet_flag = 1;
+        }
+		
+        if(to_chip == 1)
+        {
+            finish_chip = 1;
+            to_chip = 0;
+			n = 0;
+			m++;
+			packet_flag = 1;
+        }    
+		
 		/* ENABLE_INFRA_BEEP红外叫声 */
 		#ifdef ENABLE_INFRA_BEEP
 			if(do_power_monitor() == 0)	BEEP_OFF();
@@ -146,7 +171,7 @@ void packet(char *q)
 		
 		if((last_infra != now_infra) || (now_infra == 1))
 		{
-			n = 1;
+			n = 0;
 			m++;
 			packet_flag = 1;
 		}
@@ -187,7 +212,7 @@ void packet(char *q)
 	q[0] = 0xff;
     q[1] = 0x02;
     q[2] = (g_robot.mode == NORMAL_MODE) ? ((g_robot.num-1) & 0x0F) : (g_robot.num & 0x0F);
-	q[3] = (now_infra << 6) + (finish_shoot << 5) + (finish_chip << 4);
+	q[3] = (now_infra << 6) + (to_shoot << 5) + (to_chip << 4);
 	q[4] = g_robot.bat_v;
 	q[5] = g_robot.cap_v;
 	q[6] = 0xf0;

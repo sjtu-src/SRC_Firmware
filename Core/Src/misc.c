@@ -14,9 +14,6 @@
 extern int test_drib_speed;
 extern int test_drib_stage;
 
-extern int finish_shoot;
-extern int finish_chip;
-
 int frequency;
 
 /*******************************************************************************
@@ -291,7 +288,6 @@ void shoot_on(u32 value)
 	//Beep_Show_32bit(value);
 	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
-	finish_shoot = 1;
 }
 
 
@@ -313,7 +309,6 @@ void chip_on(u32 value)
 	TIM9->CCR2 = value;
 	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
-	finish_chip = 1;
 }
 
 /*******************************************************************************
