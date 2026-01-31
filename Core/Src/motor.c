@@ -10,6 +10,28 @@
 
 u8 is_motor_run = 0;
 
+/* 防止编码器方向反接导致疯转的保护参数 */
+#define RUNAWAY_SPEED_THRESHOLD   300   /* count/s，判定为“已运动”的最低速度 */
+#define RUNAWAY_MISMATCH_LIMIT    500   /* 连续检测到方向错误的次数 500ms */
+
+static int abs_int(int v)
+{
+	return (v < 0) ? -v : v;
+}
+
+static int sign_int(int v)
+{
+	return (v > 0) - (v < 0);
+}
+
+static void motor_emergency_stop(void)
+{
+	set_motor_pwm(0, 0, 0, 0);
+	set_motor_break(1, 1, 1, 1);
+	set_motor_dir(0, 0, 0, 0);
+	is_motor_run = 0;
+}
+
 /* encoder tim tab, 0 for wheel, 1 for wheel 2 ... */
 TIM_TypeDef * encoder_tab[4] = {TIM5, TIM3, TIM4, TIM2};  //encoder1 encoder2 encoder3 encoder4 
 
@@ -102,6 +124,7 @@ void do_update_motor(void)
 	u16	motor_pwm[CHANNEL_NUM];
 	int cur_pos[CHANNEL_NUM];   //count
 	int cur_speed[CHANNEL_NUM]; //count/s
+	static u8 mismatch_cnt[CHANNEL_NUM] = {0};
 
 	if(is_motor_run == 0) return;
 	
@@ -115,6 +138,43 @@ void do_update_motor(void)
 		g_robot.wheels[i].cur_position = cur_pos[i];
 
 		pid_h = &(g_robot.wheels[i].pid);
+
+		/* 防止编码器方向反接导致疯转：期望方向与反馈方向持续相反则急停 */
+		{
+			int desired_dir = 0;
+			int speed_dir = sign_int(cur_speed[i]);
+			int speed_abs = abs_int(cur_speed[i]);
+
+			if(g_robot.PID_type == SPEED_PID)
+			{
+				desired_dir = sign_int(pid_h->set);
+			}
+			else
+			{
+				desired_dir = sign_int(pid_h->set - cur_pos[i]);
+			}
+
+			if(desired_dir == 0)
+			{
+				if(speed_abs > RUNAWAY_SPEED_THRESHOLD)
+					mismatch_cnt[i]++;
+				else
+					mismatch_cnt[i] = 0;
+			}
+			else
+			{
+				if((speed_dir != 0) && (speed_dir != desired_dir) && (speed_abs > RUNAWAY_SPEED_THRESHOLD))
+					mismatch_cnt[i]++;
+				else
+					mismatch_cnt[i] = 0;
+			}
+
+			if(mismatch_cnt[i] >= RUNAWAY_MISMATCH_LIMIT)
+			{
+				motor_emergency_stop();
+				return;
+			}
+		}
 		
 		//pwm_val = pid_step(pid_h, cur_pos[i], cur_speed[i], g_robot.bat_v);
 		pwm_val = pid_step(pid_h, cur_pos[i], cur_speed[i], 16.0f);
