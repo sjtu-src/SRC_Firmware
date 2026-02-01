@@ -3,7 +3,7 @@
 <title>Static Call Graph - [SRC_Firmware\SRC_Firmware.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image SRC_Firmware\SRC_Firmware.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Sat Jan 31 21:33:39 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Sun Feb 01 22:43:36 2026
 <BR><P>
 <H3>Maximum Stack Usage =        320 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -3106,7 +3106,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[176]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SRC_Robot_Init
 </UL>
 
-<P><STRONG><a name="[1cc]"></a>init_shooter</STRONG> (Thumb, 10 bytes, Stack size 8 bytes, action.o(i.init_shooter))
+<P><STRONG><a name="[1cc]"></a>init_shooter</STRONG> (Thumb, 14 bytes, Stack size 8 bytes, action.o(i.init_shooter))
 <BR><BR>[Stack]<UL><LI>Max Depth = 44<LI>Call Chain = init_shooter &rArr; shooter_off &rArr; shoot_off &rArr; HAL_TIM_PWM_Stop &rArr; TIM_CCxChannelCmd
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1ce]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;shooter_off
@@ -3205,7 +3205,7 @@ Global Symbols
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;L01_ClearIRQ
 </UL>
 
-<P><STRONG><a name="[1ab]"></a>on_robot_command</STRONG> (Thumb, 56 bytes, Stack size 16 bytes, robot.o(i.on_robot_command))
+<P><STRONG><a name="[1ab]"></a>on_robot_command</STRONG> (Thumb, 60 bytes, Stack size 16 bytes, robot.o(i.on_robot_command))
 <BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = on_robot_command &rArr; do_acc_handle_move &rArr; __hardfp_ceil &rArr; __aeabi_cdrcmple
 </UL>
 <BR>[Calls]<UL><LI><a href="#[eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot

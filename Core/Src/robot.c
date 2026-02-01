@@ -409,7 +409,9 @@ void on_robot_command(packet_robot_t *packet)
     {
 		do_dribbler( packet->dribbler ); 
 		#ifdef ENABLE_SHOOTER
+			if(packet->shoot != 0)
 				do_shoot(packet->shoot, packet->chip);
+			if(packet->chip != 0)
 				do_chip(packet->shoot, packet->chip);
 		#endif
 		do_acc_handle_move(packet->speed_x, packet->speed_y, packet->speed_rot, g_robot.PID_type);

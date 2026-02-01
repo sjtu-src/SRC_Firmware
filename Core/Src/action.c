@@ -39,6 +39,7 @@ int shooter_off(void)
 int init_shooter(void)
 {
 	shooter_off();
+	shooter = 0x00;
 	return 0;
 }
 

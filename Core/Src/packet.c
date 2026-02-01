@@ -212,7 +212,7 @@ void packet(char *q)
 	q[0] = 0xff;
     q[1] = 0x02;
     q[2] = (g_robot.mode == NORMAL_MODE) ? ((g_robot.num-1) & 0x0F) : (g_robot.num & 0x0F);
-	q[3] = (now_infra << 6) + (to_shoot << 5) + (to_chip << 4);
+	q[3] = (now_infra << 6) + (finish_shoot << 5) + (finish_chip << 4);
 	q[4] = g_robot.bat_v;
 	q[5] = g_robot.cap_v;
 	q[6] = 0xf0;
