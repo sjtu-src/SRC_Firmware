@@ -4,6 +4,7 @@
 #include "nrf24l01_drv.h"
 
 #define PI 3.14159265358979f
+#define TARGET_V_CAP 180.0f
 
 // 红外类型
 #define NEW_INFRA 1
@@ -24,30 +25,34 @@
 #define NEW_DIRB_MOTOR 1
 
 //机器人型号
-#define ROBOT_VERSION NEUMANN_S01
+#define ROBOT_VERSION NEUMANN_S02
 // 吸球电机型号
-#define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
+// #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
 
 #if (ROBOT_VERSION == LEBO_ROBOT)
     #define INFRA_TYPE OLD_INFRA 
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE OPTICAL_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
+    #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
 #elif (ROBOT_VERSION == NEUMANN_S01)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 500    //电机一圈编码器线数
+    #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
 #elif (ROBOT_VERSION == NEUMANN_S02)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE NEW_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 500    //电机一圈编码器线数
+    #define DIRB_MOTOR_VERSION NEW_DIRB_MOTOR
 #elif (ROBOT_VERSION == NEUMANN_OPTICAL)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE OPTICAL_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
+    #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
 #else
     #error "Please select robot version"
 #endif
@@ -217,8 +222,8 @@
 #define IR_BALL_PWM_DUTY	20		//20%
 
 /* Low power limit define */
-#define WARNING_POWER_A 13.0f       //电池电压阈值1 单位v 蜂鸣器响
-#define FORCESTOP_POWER_A 12.5f     //电池电压阈值2  停止机器人
+#define WARNING_POWER_A 13.5f       //电池电压阈值1 单位v 蜂鸣器响
+#define FORCESTOP_POWER_A 13.2f     //电池电压阈值2  停止机器人
 
 #define WARNING_POWER_D 	(WARNING_POWER_A * 3.3f / (22 + 3.3f) / 3.3f * 256)
 #define FORCESTOP_POWER_D 	(FORCESTOP_POWER_A * 3.3f / (22 + 3.3f) / 3.3f * 256)

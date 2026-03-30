@@ -90,7 +90,7 @@ void do_dribbler( int dribbler )
 	#if (DIRB_MOTOR_VERSION == OLD_DIRB_MOTOR)
 		gain = 0.5;
 	#elif (DIRB_MOTOR_VERSION == NEW_DIRB_MOTOR)
-		gain = 0.2;
+		gain = 0.22; 
 	#endif	
 
     if(dribbler_temp == 0)
@@ -343,8 +343,14 @@ void do_move( int speed_pos_x, int speed_pos_y, int speed_pos_rot, int PID_type)
 		{
 			/* trasnform wheel angle */
 			g_robot.wheels[i].speed = ( g_robot.sin_angle[ i ] * vx + g_robot.cos_angle[ i ] * vy + vz );
+			
+			int gain = 3;
+			#if ROBOT_VERSION == NEUMANN_S02
+				gain = 8;
+			#endif			
+			 /* 线速度(m/s)转换为电机转速(count/s)设定值 */
 			g_robot.wheels[i].set = (long)(g_robot.wheels[i].speed / ((float)PI * g_robot.wheel_diameter[i]) 
-											* ENCODER_COUNTS_PER_TURN_SET * LIU_WANG_CONST)*3; //enhace the speed to bring the max speed out
+											* ENCODER_COUNTS_PER_TURN_SET * LIU_WANG_CONST)*gain; //enhace the speed to bring the max speed out
 		}
 	
 		/* change wheels' speed set point, with dis_int() */

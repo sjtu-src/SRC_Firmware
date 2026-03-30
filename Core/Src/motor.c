@@ -236,16 +236,16 @@ void update_encoder(int *pos, int *speed)
 					*(speed + i) = (int)tmp_f_speed;
 					*(pos + i) = g_robot.wheels[i].cur_position + (int)tmp_f_pos;
 			#elif (MOTOR_TYPE == NEW_MOTOR)
-					*(speed + i) = -(int)tmp_f_speed;
-					*(pos + i) = g_robot.wheels[i].cur_position - (int)tmp_f_pos;
+					*(speed + i) = (int)tmp_f_speed;
+					*(pos + i) = g_robot.wheels[i].cur_position + (int)tmp_f_pos;
 			#endif
 		#elif (ENCODER_TYPE == MAGNETIC_ENCODER)
 			#if (MOTOR_TYPE == OLD_MOTOR)
 					*(speed + i) = -(int)tmp_f_speed;
 					*(pos + i) = g_robot.wheels[i].cur_position - (int)tmp_f_pos;
 			#elif (MOTOR_TYPE == NEW_MOTOR)
-					*(speed + i) = (int)tmp_f_speed;
-					*(pos + i) = g_robot.wheels[i].cur_position + (int)tmp_f_pos;
+					*(speed + i) = -(int)tmp_f_speed;
+					*(pos + i) = g_robot.wheels[i].cur_position - (int)tmp_f_pos;
 			#endif
 		#endif
 	}

@@ -238,6 +238,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         time_cnt = 0;
       }
+
+      // if(g_robot.cap_v_f < TARGET_V_CAP) 
+      //     HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_SET);
+      // else 
+      //     HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_RESET);
+
 			inc_receive_mode_flag();
 			update_sys_timer();
     }

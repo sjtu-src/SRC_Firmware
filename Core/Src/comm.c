@@ -148,7 +148,7 @@ void do_comm_up(void)
 				//memset(&nRF24L01_dev.buf.buf[6], 0, sizeof(unsigned char) * (PACKET_LEN_UP - 6));
 				nRF24L01_dev.buf.buf[23]=data[23];	
 				nRF24L01_dev.send_packet( &nRF24L01_dev );
-				//BEEP_ON();
+				//BEEP_ON(); 
 			 }
 			 //else
 			 //BEEP_OFF();
