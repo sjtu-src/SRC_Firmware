@@ -4,6 +4,11 @@
 - 该工程使用 HAL 库进行开发，相较以往版本进行了较大改动，但其可移植性和可扩展性将得到极大改善。
 - 在该工程中，我们首次引入PID位置控制，加入OLED显示功能，并对以往错误或冗余的代码进行了删改，车辆性能得到较大提升。
 
+![TOC](https://github.com/user-attachments/assets/ddda1489-a7e0-43f8-95c0-507971dda0a2)
+
+车辆硬件相关视频：
+【NEUMANN S02 装配】 https://www.bilibili.com/video/BV1vXXTByE12/?share_source=copy_web&vd_source=6b4f6e52f2e9f7bd92d009a7f1926502
+
 ## 代码说明
 主要代码存放在 .\Core 文件夹中，其中 .\Core\Inc 为头文件， .\Core\Src 为源代码。以下是各部分代码的功能说明：
 - `main.c`：主程序。
