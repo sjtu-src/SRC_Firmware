@@ -16,6 +16,24 @@ GYRO_PID_STRUCT gyro_pid = {0};
 ******************************************************************************/
 long calc_max_output( float max_torque, long speed, float bat_v )
 {
+	/**
+	 * @brief 根据目标扭矩与当前转速估算电机端电压 Vin（稳态近似模型）。
+	 *
+	 * 公式含义：
+	 * Vin = (max_torque / MOTOR_KI) * MOTOR_R + speed / MOTOR_KV
+	 *
+	 * 参数对应的电机物理量：
+	 * - max_torque : 目标/最大电磁转矩（单位通常为 N·m）
+	 * - MOTOR_KI   : 转矩常数 Kt（电流-转矩系数，N·m/A），用于将转矩换算为电流
+	 * - MOTOR_R    : 电机相电阻/等效绕组电阻（Ω）
+	 * - speed      : 电机机械转速（需与 MOTOR_KV 的单位匹配）
+	 * - MOTOR_KV   : 反电动势常数 Kv（转速-电压系数，常见 rpm/V 或 rad/s/V）
+	 * - Vin        : 估算得到的驱动输入电压（V）
+	 *
+	 * 物理意义拆分：
+	 * - (max_torque / MOTOR_KI) * MOTOR_R -> 电阻压降项 I*R
+	 * - speed / MOTOR_KV                  -> 反电动势项 Back-EMF
+	 */
 	float Vin = max_torque / MOTOR_KI * MOTOR_R + (float)speed / MOTOR_KV;
 
 	return MOTOR_PWM_PERIOD * Vin / bat_v;

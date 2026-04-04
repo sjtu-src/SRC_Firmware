@@ -100,6 +100,9 @@
 #define MOTOR_KI  25.5f /* measured in mNm/A */
 #define MOTOR_KV  374.0f /* measured in rpm/V */
 #define MOTOR_R   1.2f /* measured in ohm */
+// #define MOTOR_KI  25.1f /* measured in mNm/A */
+// #define MOTOR_KV  380.0f /* measured in rpm/V */
+// #define MOTOR_R   0.464f /* measured in ohm */
 
 #define LIU_WANG_CONST 3.043f // 老车电机与轮子传动比-2024国赛版，变量名为纪念lxt与wyx2025.11.18的工作而起
 #define WHEEL_DIAMETER_SMALL 0.0554f //小轮直径(m) 2025.11.19测量结果
@@ -142,11 +145,12 @@
 #define GYRO_PID_KD	 0.0f
 
 #define MOTOR_TORQUE_LIMIT	275.0f
+// #define MOTOR_TORQUE_LIMIT	97.1f
 
 #define BATTERY_V   13.0f /* measured in V, maybe detected while running */
 
 #define MAX_SHOT_STRENGTH 127
-#define MAX_ACC 20	/* 限定车子的加速度 */
+#define MAX_ACC 10	/* 限定车子的加速度 */
 
 #define WHEEL_CENTER_OFFSET 0.080f  /* 轮子距车中心距离(m) 2024.4.16中心重新测定结果*/
 
