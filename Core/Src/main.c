@@ -30,6 +30,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "robot.h"
+#include "misc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -218,18 +219,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	
   if(htim->Instance == TIM12)
     { 
+      int now_infra;
       //更新持球状濿
       #if INFRA_TYPE == OLD_INFRA
             if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
-                g_robot.is_ball_detected = 1;
+                now_infra = 1;
             else 
-                g_robot.is_ball_detected = 0;  
+                now_infra = 0;  
       #elif INFRA_TYPE == NEW_INFRA  
             if (HAL_GPIO_ReadPin(IR_BALL_DECT_GPIO_Port, IR_BALL_DECT_Pin) == GPIO_PIN_SET) 
-                g_robot.is_ball_detected = 0;
+                now_infra = 0;
             else  
-                g_robot.is_ball_detected = 1; 
+                now_infra = 1; 
       #endif
+
+      g_robot.is_ball_detected = Infra_Filter_Update(now_infra);
 
       if(++time_cnt >= 2)
       {

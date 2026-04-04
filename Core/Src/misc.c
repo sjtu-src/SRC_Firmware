@@ -599,4 +599,47 @@ void Communication_Success(void)
 	if(comm_count > 30)	comm_count=0;
 }
 
+/*******************************************************************************
+* @brief 红外信号积分滞回滤波，抑制瞬时跳变
+* @param raw_infra 原始红外状态
+* @return 滤波后的稳定红外状态(0/1)
+* @author Xuanting Liu
+*******************************************************************************/
+int Infra_Filter_Update(int raw_infra)
+{
+	enum
+	{
+		INFRA_SCORE_MAX = 150,
+		INFRA_UP_STEP = 1,
+		INFRA_DOWN_STEP = 20,
+		INFRA_TH_ON = 80,
+		INFRA_TH_OFF = 100
+	};
 
+	static int infra_score = 0;
+	static int infra_state = 0;
+
+	raw_infra = (raw_infra != 0) ? 1 : 0;
+
+	if(raw_infra)
+	{
+		infra_score += INFRA_UP_STEP;
+		if(infra_score > INFRA_SCORE_MAX) infra_score = INFRA_SCORE_MAX;
+	}
+	else
+	{
+		infra_score -= INFRA_DOWN_STEP;
+		if(infra_score < 0) infra_score = 0;
+	}
+
+	if((infra_state == 0) && (infra_score >= INFRA_TH_ON))
+	{
+		infra_state = 1;
+	}
+	else if((infra_state == 1) && (infra_score <= INFRA_TH_OFF))
+	{
+		infra_state = 0;
+	}
+
+	return infra_state;
+}

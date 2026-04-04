@@ -24,6 +24,7 @@ long V2N(float vel);
 float N2V(long n);
 void Communication_Success(void);
 void init_Power_Board(void);
+int Infra_Filter_Update(int raw_infra);
 
 #endif
  
