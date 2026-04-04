@@ -115,6 +115,8 @@ void init_robot(void)
 	g_robot.dip_frq = dip_freq;
 	g_robot.mode = (mode_t)(mode & 0x7);
 	g_robot.PID_type = SPEED_PID; 
+	g_robot.continuous_kick_cnt = 0;
+	g_robot.continuous_kick_mode = 0;
     mode = mode & 0x7;
 
 	pid_init(&(g_robot.wheels[0].pid));
@@ -383,12 +385,39 @@ void do_robot_run(void)
 			}
 
 			while(1);
-		}							
+			break;
+		}
+		case CONTINUOUS_KICKING_MODE:
+		{
+			set_test_shooter();
+			do_shoot(127, 0);
+			g_robot.continuous_kick_cnt++;
+			g_robot.continuous_kick_mode = 0;
+			osDelay(5000);
+
+			//rest for 1min for every 3min
+			if(g_robot.continuous_kick_cnt % 36 == 0)
+			{
+				osDelay(60000);
+				g_robot.continuous_kick_mode = 1;
+			}
+
+			if(g_robot.continuous_kick_cnt >= 500) //stop after 500 kicks
+			{
+				g_robot.continuous_kick_mode = 1;
+				while(1)
+				{
+					Debug_Here();
+				}
+			}
+
+			break;
+		}								
 	}				
 
 		/* 对射门完成之后的延时进行计时 */
     #ifdef ENABLE_SHOOTER
-        if(g_robot.mode != SELFTEST_MODE)
+        if((g_robot.mode != SELFTEST_MODE) && (g_robot.mode != CONTINUOUS_KICKING_MODE) )
             {
               if(check_timer(shoot_interval_timer)) 
 				{

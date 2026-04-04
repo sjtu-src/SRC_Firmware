@@ -14,6 +14,7 @@ typedef enum _mode
 	NORMAL_MODE = 0,     //正常比赛模式 与通讯机通讯
     SELFTEST_MODE = 3,   //自检模式
 	TEST_DRIBBLING_MODE = 2, //自主吸球模式
+	CONTINUOUS_KICKING_MODE = 4, //连续踢球模式
 	CRAY_MODE = 7 //CRAY模式
 }mode_t;
 
@@ -67,6 +68,9 @@ typedef struct _robot_
 	err_t error[ERROR_NUM];
 	
 	u16 firmware_version;    //软件版本
+
+	int continuous_kick_cnt; //连续踢球模式下已执行的射门次数
+	int continuous_kick_mode; //连续踢球模式下的状态 0:踢球 1:休息
 
 } robot_t;
 

@@ -52,6 +52,9 @@ void OLED_Display_Init(void)
 		case CRAY_MODE:
 			OLED_ShowString(78, 55, "Cray",  OLED_6X8);
 			break;
+		case CONTINUOUS_KICKING_MODE:
+			OLED_ShowString(78, 55, "kicking",  OLED_6X8);
+			break;
 		default:
 			OLED_ShowString(78, 55, "Invalid",  OLED_6X8);
 			break;
@@ -94,6 +97,15 @@ void Robot_State_Display(void)
 				OLED_Printf(19, 28, OLED_6X8, "Get me a ball!");
 			else if(test_drib_stage == 1)
 				OLED_Printf(13, 28, OLED_6X8, "Rotate speed:%d", test_drib_speed);
+			break;
+		}
+		case CONTINUOUS_KICKING_MODE:
+		{
+			OLED_Printf(19, 28, OLED_6X8, "Kicked: %d", g_robot.continuous_kick_cnt);
+			if(g_robot.continuous_kick_mode == 0)
+				OLED_Printf(13, 38, OLED_6X8, "I am kicking!");
+			else
+				OLED_Printf(13, 38, OLED_6X8, "I am resting!");
 			break;
 		}
 	}

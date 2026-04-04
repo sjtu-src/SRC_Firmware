@@ -3,11 +3,11 @@
 <title>Static Call Graph - [SRC_Firmware\SRC_Firmware.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image SRC_Firmware\SRC_Firmware.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Fri Apr 03 20:55:17 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Sat Apr 04 15:13:31 2026
 <BR><P>
-<H3>Maximum Stack Usage =        320 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =        328 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
-_printf_f &rArr; _printf_fp_dec &rArr; _printf_fp_dec_real &rArr; _fp_digits &rArr; _btod_etento &rArr; _btod_emul &rArr; _e2e
+__rt_entry_main &rArr; main &rArr; SRC_Robot_Init &rArr; init_robot &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dmul
 <P>
 <H3>
 Functions with no stack information
@@ -421,7 +421,7 @@ Global Symbols
 <P><STRONG><a name="[23a]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000009))
 
 <P><STRONG><a name="[a6]"></a>__rt_entry_main</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000D))
-<BR><BR>[Stack]<UL><LI>Max Depth = 320 + Unknown Stack Size
+<BR><BR>[Stack]<UL><LI>Max Depth = 328 + Unknown Stack Size
 <LI>Call Chain = __rt_entry_main &rArr; main &rArr; SRC_Robot_Init &rArr; init_robot &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -1344,7 +1344,8 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_WritePin
 <LI><a href="#[e6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osDelay
 </UL>
-<BR>[Called By]<UL><LI><a href="#[171]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
+<BR>[Called By]<UL><LI><a href="#[173]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
+<LI><a href="#[171]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
 </UL>
 
 <P><STRONG><a name="[6f]"></a>Do_Comm</STRONG> (Thumb, 170 bytes, Stack size 0 bytes, freertos.o(i.Do_Comm))
@@ -2269,7 +2270,7 @@ Global Symbols
 <LI><a href="#[ef]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Robot_State_Display
 </UL>
 
-<P><STRONG><a name="[15f]"></a>OLED_Display_Init</STRONG> (Thumb, 150 bytes, Stack size 16 bytes, misc.o(i.OLED_Display_Init))
+<P><STRONG><a name="[15f]"></a>OLED_Display_Init</STRONG> (Thumb, 160 bytes, Stack size 16 bytes, misc.o(i.OLED_Display_Init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = OLED_Display_Init &rArr; OLED_Init &rArr; OLED_Update &rArr; OLED_WriteData &rArr; HAL_I2C_Master_Transmit &rArr; I2C_MasterRequestWrite &rArr; I2C_WaitOnMasterAddressFlagUntilTimeout
 </UL>
 <BR>[Calls]<UL><LI><a href="#[165]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OLED_Update
@@ -2416,7 +2417,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> freertos.o(.constdata)
 </UL>
-<P><STRONG><a name="[ef]"></a>Robot_State_Display</STRONG> (Thumb, 190 bytes, Stack size 24 bytes, misc.o(i.Robot_State_Display))
+<P><STRONG><a name="[ef]"></a>Robot_State_Display</STRONG> (Thumb, 234 bytes, Stack size 24 bytes, misc.o(i.Robot_State_Display))
 <BR><BR>[Stack]<UL><LI>Max Depth = 208 + Unknown Stack Size
 <LI>Call Chain = Robot_State_Display &rArr; OLED_Printf &rArr; vsprintf &rArr; _printf_char_common &rArr; __printf
 </UL>
@@ -2429,7 +2430,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[176]"></a>SRC_Robot_Init</STRONG> (Thumb, 50 bytes, Stack size 8 bytes, robot.o(i.SRC_Robot_Init))
-<BR><BR>[Stack]<UL><LI>Max Depth = 320<LI>Call Chain = SRC_Robot_Init &rArr; init_robot &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dmul
+<BR><BR>[Stack]<UL><LI>Max Depth = 328<LI>Call Chain = SRC_Robot_Init &rArr; init_robot &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[17c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_robot
 <LI><a href="#[179]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_dribbler
@@ -2820,10 +2821,11 @@ Global Symbols
 <LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
 </UL>
 
-<P><STRONG><a name="[173]"></a>do_robot_run</STRONG> (Thumb, 704 bytes, Stack size 32 bytes, robot.o(i.do_robot_run))
+<P><STRONG><a name="[173]"></a>do_robot_run</STRONG> (Thumb, 792 bytes, Stack size 32 bytes, robot.o(i.do_robot_run))
 <BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = do_robot_run &rArr; do_power_monitor &rArr; Debug_Here &rArr; osDelay &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[171]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_power_monitor
+<LI><a href="#[e5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Debug_Here
 <LI><a href="#[1b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;update_shooter
 <LI><a href="#[1b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_test_shooter
 <LI><a href="#[eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot
@@ -2841,7 +2843,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[70]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RobotTask
 </UL>
 
-<P><STRONG><a name="[eb]"></a>do_shoot</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, action.o(i.do_shoot))
+<P><STRONG><a name="[eb]"></a>do_shoot</STRONG> (Thumb, 34 bytes, Stack size 0 bytes, action.o(i.do_shoot))
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = do_shoot &rArr; set_shooter &rArr; shoot_on &rArr; __aeabi_d2iz
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_shooter
@@ -3089,8 +3091,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[176]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SRC_Robot_Init
 </UL>
 
-<P><STRONG><a name="[17c]"></a>init_robot</STRONG> (Thumb, 310 bytes, Stack size 128 bytes, robot.o(i.init_robot))
-<BR><BR>[Stack]<UL><LI>Max Depth = 312<LI>Call Chain = init_robot &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dmul
+<P><STRONG><a name="[17c]"></a>init_robot</STRONG> (Thumb, 326 bytes, Stack size 136 bytes, robot.o(i.init_robot))
+<BR><BR>[Stack]<UL><LI>Max Depth = 320<LI>Call Chain = init_robot &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1cc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_shooter
 <LI><a href="#[1cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_ir_pwm
@@ -3145,7 +3147,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[a7]"></a>main</STRONG> (Thumb, 104 bytes, Stack size 0 bytes, main.o(i.main))
-<BR><BR>[Stack]<UL><LI>Max Depth = 320<LI>Call Chain = main &rArr; SRC_Robot_Init &rArr; init_robot &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dmul
+<BR><BR>[Stack]<UL><LI>Max Depth = 328<LI>Call Chain = main &rArr; SRC_Robot_Init &rArr; init_robot &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_dmul
 </UL>
 <BR>[Calls]<UL><LI><a href="#[176]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SRC_Robot_Init
 <LI><a href="#[1cf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;osKernelStart

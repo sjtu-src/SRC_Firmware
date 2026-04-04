@@ -214,7 +214,7 @@ void do_shoot( int shoot, int chip )
   
 	if( shoot )
 	{
-		if ( g_robot.is_ball_detected == 1 )
+		if ( (g_robot.is_ball_detected == 1) || (g_robot.mode == CONTINUOUS_KICKING_MODE) )
 		{
 		   set_shooter( SHOOT, shoot );
 		}
