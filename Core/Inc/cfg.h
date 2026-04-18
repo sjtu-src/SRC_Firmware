@@ -120,6 +120,7 @@
 // #define POSITION_PID_KI  	0.0f
 // #define POSITION_PID_KD		0.0f
 
+#if (MOTOR_TYPE == OLD_MOTOR)
 #define MOTOR_PID_KP  	0.1825f
 #define MOTOR_PID_KI  	0.0475f
 #define MOTOR_PID_KD	0.0f
@@ -139,6 +140,29 @@
 #define MOTOR_PID_KP4 	0.09f
 #define MOTOR_PID_KI4 	0.0005f
 #define MOTOR_PID_KD4	  0.00f
+
+#elif (MOTOR_TYPE == NEW_MOTOR)
+#define MOTOR_PID_KP  	0.1825f
+#define MOTOR_PID_KI  	0.0475f
+#define MOTOR_PID_KD	0.0f
+
+#define MOTOR_PID_KP1  	0.09f    //PID0
+#define MOTOR_PID_KI1  	0.0005f
+#define MOTOR_PID_KD1	  0.00f
+
+#define MOTOR_PID_KP2  	0.09f
+#define MOTOR_PID_KI2  	0.0005f
+#define MOTOR_PID_KD2	  0.00f
+
+#define MOTOR_PID_KP3  	0.09f
+#define MOTOR_PID_KI3  	0.0005f
+#define MOTOR_PID_KD3	  0.00f
+
+#define MOTOR_PID_KP4 	0.09f
+#define MOTOR_PID_KI4 	0.0005f
+#define MOTOR_PID_KD4	  0.00f
+
+#endif
 
 #define GYRO_PID_KP   0.2f
 #define GYRO_PID_KI	 0.0575f
@@ -184,7 +208,7 @@
 #define PID_COUNTER_OVERFLOW 2
 #define SECOND_COUNTER_OVERFLOW 	SYS_TICK_FREQ
 #define HEARTBEAT_TIME 	SYS_TICK_FREQ
-#define COMM_TIMEOUT_TIME 100
+#define COMM_TIMEOUT_TIME 500
 #define IDENTIFY_CPUID_TIMEOUT_TIME 10000
 #define INFRA_COUNTER_ON_OVERFLOW 6
 #define INFRA_COUNTER_OFF_OVERFLOW 2

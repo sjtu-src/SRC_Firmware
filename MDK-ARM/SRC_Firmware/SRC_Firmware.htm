@@ -3,7 +3,7 @@
 <title>Static Call Graph - [SRC_Firmware\SRC_Firmware.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image SRC_Firmware\SRC_Firmware.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Sat Apr 04 20:00:10 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Wed Apr 15 23:05:29 2026
 <BR><P>
 <H3>Maximum Stack Usage =        328 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1348,7 +1348,7 @@ Global Symbols
 <LI><a href="#[174]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_robot_run
 </UL>
 
-<P><STRONG><a name="[6f]"></a>Do_Comm</STRONG> (Thumb, 170 bytes, Stack size 0 bytes, freertos.o(i.Do_Comm))
+<P><STRONG><a name="[6f]"></a>Do_Comm</STRONG> (Thumb, 172 bytes, Stack size 0 bytes, freertos.o(i.Do_Comm))
 <BR><BR>[Stack]<UL><LI>Max Depth = 176<LI>Call Chain = Do_Comm &rArr; start_nRF24L01_RX &rArr; L01_ClearIRQ &rArr; L01_ReadStatusReg &rArr; nrf_spi_wr_rd &rArr; HAL_SPI_TransmitReceive &rArr; SPI_EndRxTxTransaction &rArr; SPI_WaitFlagStateUntilTimeout
 </UL>
 <BR>[Calls]<UL><LI><a href="#[eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_shoot
@@ -2729,7 +2729,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_packet_process
 </UL>
 
-<P><STRONG><a name="[1a2]"></a>decode_packet</STRONG> (Thumb, 496 bytes, Stack size 32 bytes, packet.o(i.decode_packet))
+<P><STRONG><a name="[1a2]"></a>decode_packet</STRONG> (Thumb, 508 bytes, Stack size 32 bytes, packet.o(i.decode_packet))
 <BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = decode_packet &rArr; get_one_timer
 </UL>
 <BR>[Calls]<UL><LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_one_timer

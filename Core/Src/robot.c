@@ -435,7 +435,7 @@ void do_robot_run(void)
 void on_robot_command(packet_robot_t *packet)
 {
     if((g_robot.mode == NORMAL_MODE) || (g_robot.mode == CRAY_MODE))
-    {
+    { 
 		do_dribbler( packet->dribbler ); 
 		#ifdef ENABLE_SHOOTER
 			if(packet->shoot != 0)
