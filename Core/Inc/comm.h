@@ -27,6 +27,7 @@ void init_comm(void);
 void do_communication(void);
 int do_packet_process( unsigned char *data, int len);
 void do_comm_up(void);
+void do_game_telemetry_up(void);
 
 extern rf_comm_t g_rf_comm;
 

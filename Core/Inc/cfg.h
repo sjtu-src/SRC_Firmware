@@ -199,7 +199,7 @@
 #define BAT_V_ADC_GAIN			(3.3f / 256.0f / (3300.0f / (22000.0f + 3300.0f)))  //电池电压电阻分压系数
 
 // #define CAP_V_ADC_GAIN			(3.3f / 256.0f / (5.1f / (249.0f + 5.1f)))    //充电电容电阻分压系数
-#define CAP_V_ADC_GAIN			(3.3f / 4096.0f / (12.4f / (1800.0f + 12.4f)) * 1.225 / 1.5)    //充电电容电阻分压系数
+#define CAP_V_ADC_GAIN			(3.3f / 256.0f / (12.4f / (1800.0f + 12.4f)) * 1.225 / 1.5)    //充电电容电阻分压系数
 
 /* battery low power protection time */
 #define LOW_POWER_TIME		(5 * SYS_TICK_FREQ) //5s

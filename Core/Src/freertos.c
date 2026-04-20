@@ -194,6 +194,7 @@ void Do_Comm(void const * argument)
     if(g_robot.mode == NORMAL_MODE || g_robot.mode == CRAY_MODE)
     {
         do_communication();
+        do_game_telemetry_up();
 
         if(check_timer(rf_comm_tim)) 
           {
