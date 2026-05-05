@@ -90,7 +90,7 @@ void do_dribbler( int dribbler )
 	#if (DIRB_MOTOR_VERSION == OLD_DIRB_MOTOR)
 		gain = 0.5;
 	#elif (DIRB_MOTOR_VERSION == NEW_DIRB_MOTOR)
-		gain = 0.1; 
+		gain = 0.55; 
 	#endif	
 
     if(dribbler_temp == 0)
