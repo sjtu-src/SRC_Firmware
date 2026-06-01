@@ -91,6 +91,12 @@ static const uint8_t game_crc8_table[448] =
 	0x28, 0x76, 0x94, 0xca, 0x49, 0x17, 0xf5, 0xab
 };
 
+
+
+/*******************************************************************************
+* @brief 计算CRC校验
+* @author OpenAI codex	
+*******************************************************************************/
 static uint8_t game_crc8_calc(const uint8_t *buf, int len)
 {
 	uint8_t fcs = 0;
@@ -101,6 +107,11 @@ static uint8_t game_crc8_calc(const uint8_t *buf, int len)
 	return fcs;
 }
 
+
+/*******************************************************************************
+* @brief 比赛状态实时回包
+* @author OpenAI codex	
+*******************************************************************************/
 static void build_game_telemetry_packet(uint8_t *out, uint8_t robot_id)
 {
 	memset(out, 0, PACKET_LEN_UP);
