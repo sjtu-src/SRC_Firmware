@@ -120,7 +120,7 @@ int pid_step(pid_t *pid, int cur_pos, int cur_speed, float bat_v )
 	long rpm = 0; 
 	long max_output_for_torque = 0;
 	int d_out;
-  
+    //kp*e1 + ki*(e1+e2+e3) + kd * (e1-2*e2+e3)
 	/* standard digital PID algorithm */
 	if(g_robot.PID_type == SPEED_PID)
 	{
