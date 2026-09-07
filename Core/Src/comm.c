@@ -7,6 +7,9 @@
 #include "misc.h"
 #include "tim.h"
 #include "comm.h"
+#include "attitude_protocol.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "action.h"
 #include "pid.h"
 #include "NRF24L01.h"
@@ -142,7 +145,20 @@ static void build_game_telemetry_packet(uint8_t *out, uint8_t robot_id)
 		out[offset + 1] = (uint8_t)((w >> 8) & 0xFF);
 	}
 
-	/* bytes [15..22] reserved */
+    /* Snapshot all attitude fields together; the IMU task publishes atomically. */
+    {
+        imu_attitude_t attitude;
+        taskENTER_CRITICAL();
+        attitude = g_robot.attitude;
+        taskEXIT_CRITICAL();
+        if (HAL_GetTick() - attitude.sample_tick > 100U)
+            attitude.flags &= (uint8_t)~IMU_VALID;
+        attitude_encode_angle(out + 15, attitude.roll_deg);
+        attitude_encode_angle(out + 17, attitude.pitch_deg);
+        attitude_encode_angle(out + 19, attitude.yaw_deg);
+        out[21] = ATTITUDE_VERSION | (attitude.flags & 0x0FU);
+        out[22] = attitude.sequence;
+    }
 	out[GAME_TELEMETRY_FRAME_LEN - 1] = game_crc8_calc(out, (int)GAME_TELEMETRY_FRAME_LEN - 1);
 }
 
@@ -290,6 +306,7 @@ void do_game_telemetry_up(void)
 	{
 		return;
 	}
+    if (get_receive_flag() == 0) return;
 	last_slot = slot;
 
 	if(type != PACKET_Normal)

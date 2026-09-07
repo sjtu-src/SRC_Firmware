@@ -28,6 +28,7 @@
 #include "robot.h"
 #include "main.h"
 #include "oled.h"
+#include "i2c.h"
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -262,7 +263,11 @@ void OLED_WriteCommand(uint8_t Command)
     OLED_I2C_Stop();            // I2C终止
 #elif defined(OLED_USE_HW_I2C)
     uint8_t TxData[2] = {0x00, Command};
-    HAL_I2C_Master_Transmit(&OLED_I2C, OLED_ADDRESS, (uint8_t*)TxData, 2, OLED_I2C_TIMEOUT);
+    if (I2C2_Lock(10U))
+    {
+        HAL_I2C_Master_Transmit(&OLED_I2C, OLED_ADDRESS, (uint8_t*)TxData, 2, 20U);
+        I2C2_Unlock();
+    }
 #endif 
 }
 
@@ -275,7 +280,6 @@ void OLED_WriteCommand(uint8_t Command)
 void OLED_WriteData(uint8_t *Data, uint8_t Count)
 {
     uint8_t i;
-    HAL_StatusTypeDef status;
 #ifdef OLED_USE_SW_I2C
     OLED_I2C_Start();        // I2C起始
 	OLED_I2C_SendByte(0x78);		//发送OLED的I2C从机地址
@@ -293,7 +297,11 @@ void OLED_WriteData(uint8_t *Data, uint8_t Count)
     for (i = 0; i < Count; i++) {
         TxData[i + 1] = Data[i];
     }
-    status = HAL_I2C_Master_Transmit(&OLED_I2C, OLED_ADDRESS, (uint8_t*)TxData, Count + 1, OLED_I2C_TIMEOUT);
+    if (I2C2_Lock(10U))
+    {
+        HAL_I2C_Master_Transmit(&OLED_I2C, OLED_ADDRESS, (uint8_t*)TxData, Count + 1, 20U);
+        I2C2_Unlock();
+    }
 #endif    
 }
 

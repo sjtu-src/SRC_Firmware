@@ -135,7 +135,22 @@ extern MPU6050_ACC_GYRO_MEASUREMENT acc_gyro_actul ;
 extern LOWPASS_1ND_PARAMETER  z_factory ;
 extern MPU6050_ACC_GYRO_ANGEL acc_agro_angel;
 
+/* Startup result is retained for inspection in the debugger. */
+typedef enum
+{
+    MPU6050_NOT_TESTED = 0,
+    MPU6050_INIT_OK,
+    MPU6050_BUS_ERROR,
+    MPU6050_ID_ERROR,
+    MPU6050_CONFIG_ERROR
+} MPU6050_InitStatus_t;
+
+extern volatile MPU6050_InitStatus_t g_mpu6050_status;
+
+/* Task context only; I2C2 must be initialized and exclusively owned. */
 int InitMPU6050(void);
+/* Runtime task API: 1 = fresh burst, 0 = not ready/bus occupied, -1 = I2C error. */
+int MPU6050_ReadMotion(float accel[3], float gyro[3], float *temperature);
 unsigned int Get_RegData(unsigned char REG_Address);
 void Get_Motion_data(MPU6050_ACC_GYRO_ADC *acc_gyro_adc,MPU6050_ACC_GYRO_MEASUREMENT *acc_gyro_actual);
 void Lowpass_1nd_caulate(MPU6050_ACC_GYRO_MEASUREMENT meam,LOWPASS_1ND_PARAMETER factory);

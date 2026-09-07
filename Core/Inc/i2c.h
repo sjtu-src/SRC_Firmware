@@ -41,6 +41,9 @@ extern I2C_HandleTypeDef hi2c2;
 void MX_I2C2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+void I2C2_CreateMutex(void);
+int I2C2_Lock(uint32_t timeout_ms);
+void I2C2_Unlock(void);
 
 /* USER CODE END Prototypes */
 

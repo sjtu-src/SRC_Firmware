@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "i2c.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
 
 /* USER CODE BEGIN 0 */
 
@@ -113,5 +115,24 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 }
 
 /* USER CODE BEGIN 1 */
+static SemaphoreHandle_t i2c2_mutex;
+
+/* Priority inheritance prevents display traffic from blocking the IMU task. */
+void I2C2_CreateMutex(void)
+{
+    i2c2_mutex = xSemaphoreCreateMutex();
+    if (i2c2_mutex == NULL) Error_Handler();
+}
+
+int I2C2_Lock(uint32_t timeout_ms)
+{
+    return i2c2_mutex != NULL &&
+           xSemaphoreTake(i2c2_mutex, pdMS_TO_TICKS(timeout_ms)) == pdTRUE;
+}
+
+void I2C2_Unlock(void)
+{
+    xSemaphoreGive(i2c2_mutex);
+}
 
 /* USER CODE END 1 */

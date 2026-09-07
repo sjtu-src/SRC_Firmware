@@ -35,6 +35,8 @@
 #include "action.h"
 #include "oled.h"
 #include "misc.h"
+#include "MPU6050_driver.h"
+#include "i2c.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +58,9 @@
 /* USER CODE BEGIN Variables */
 SemaphoreHandle_t xMotorTickSem = NULL;
 
+/* Release communication and display only after startup owns the bus and buzzer. */
+static volatile uint8_t startup_complete = 0U;
+
 timer_t power_mon_timer;
 timer_t heart_led_timer;
 timer_t rf_comm_tim;           //发射机�?�信超时时间
@@ -75,6 +80,7 @@ osThreadId IdleHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+static void Update_Imu(void const *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -113,6 +119,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
+  I2C2_CreateMutex();
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
@@ -150,6 +157,8 @@ void MX_FREERTOS_Init(void) {
   IdleHandle = osThreadCreate(osThread(Idle), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  osThreadDef(ImuUpdate, Update_Imu, osPriorityBelowNormal, 0, 512);
+  if (osThreadCreate(osThread(ImuUpdate), NULL) == NULL) Error_Handler();
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
@@ -188,6 +197,10 @@ void Update_Motor(void const * argument)
 void Do_Comm(void const * argument)
 {
   /* USER CODE BEGIN Do_Comm */
+  while (startup_complete == 0U)
+  {
+    osDelay(10U);
+  }
   /* Infinite loop */
   for(;;)
   {
@@ -263,6 +276,30 @@ void RobotTask(void const * argument)
 			i--;
 	}
 
+    /* Separate the gyro result from the preceding mode beep sequence. */
+    BEEP_OFF();
+    osDelay(1000U);
+    if (InitMPU6050() != 0)
+    {
+        /* Success: two short beeps, 150 ms each, separated by 150 ms. */
+        for (i = 0; i < 2; i++)
+        {
+            BEEP_ON();
+            osDelay(150U);
+            BEEP_OFF();
+            osDelay(150U);
+        }
+    }
+    else
+    {
+        /* Failure: one long beep. Continue startup without gyro assistance. */
+        BEEP_ON();
+        osDelay(1000U);
+        BEEP_OFF();
+    }
+    /* Keep runtime power/infrared indications separate from the gyro result. */
+    osDelay(500U);
+
 	/* initial timer */
 	power_mon_timer = get_one_timer(POWER_MON_TIME);
 	heart_led_timer = get_one_timer(HEARTBEAT_TIME);
@@ -274,6 +311,7 @@ void RobotTask(void const * argument)
 	/* start motor */
 	start_motor();
   HAL_TIM_Base_Start_IT(&htim12);  // 启动TIM12中断
+  startup_complete = 1U;
   /* Infinite loop */
   for(;;)
   {
@@ -294,11 +332,17 @@ void Do_Display(void const * argument)
 {
   /* USER CODE BEGIN Do_Display */
   osDelay(2000);
+  while (startup_complete == 0U)
+  {
+    osDelay(10U);
+  }
+  /* The startup MPU6050 check has released I2C2. */
+  OLED_Display_Init();
   /* Infinite loop */
   for(;;)
   {
     Robot_State_Display();
-    osDelay(1);
+    osDelay(100U);
   }
   /* USER CODE END Do_Display */
 }
@@ -323,5 +367,40 @@ void Do_Default(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+/*******************************************************************************
+* @brief Sample the IMU at nominal 100 Hz; publish a consistent robot snapshot.
+* @note Leave the board stationary for at least two seconds after startup.
+*******************************************************************************/
+static void Update_Imu(void const *argument)
+{
+    static imu_filter_t filter;
+    float accel[3], gyro[3], temperature;
+    TickType_t wake;
+    uint32_t last_fresh;
+    (void)argument;
+    while (startup_complete == 0U) osDelay(10U);
+    ImuFilter_Reset(&filter);
+    last_fresh = HAL_GetTick();
+    wake = xTaskGetTickCount();
+    for (;;)
+    {
+        int result = g_mpu6050_status == MPU6050_INIT_OK ?
+                     MPU6050_ReadMotion(accel, gyro, &temperature) : -1;
+        uint32_t now = HAL_GetTick();
+        if (result > 0)
+        {
+            ImuFilter_Update(&filter, accel, gyro, temperature, now);
+            last_fresh = now;
+        }
+        else if (result < 0 || now - last_fresh > 100U)
+        {
+            ImuFilter_ReadError(&filter);
+        }
+        taskENTER_CRITICAL();
+        g_robot.attitude = filter.attitude;
+        taskEXIT_CRITICAL();
+        vTaskDelayUntil(&wake, pdMS_TO_TICKS(10U));
+    }
+}
 
 /* USER CODE END Application */

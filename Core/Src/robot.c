@@ -61,7 +61,6 @@ void SRC_Robot_Init(void)
 	EN_INT();
 
 	init_robot();
-	OLED_Display_Init();
 	init_comm();
 }
 
