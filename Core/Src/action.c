@@ -10,6 +10,9 @@
 #include "misc.h"
 #include "motor.h"
 #include "MPU6050_driver.h"
+#include "heading_control.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 shooter_t g_shooter[ SHOOTER_NUM ];
 char shooter;
@@ -274,6 +277,8 @@ void do_acc_handle_move(int speed_pos_x,int speed_pos_y,int speed_pos_rot, int P
 {
 	static float last_speed_x = 0;
 	static float last_speed_y = 0;
+	imu_attitude_t attitude;
+	float corrected_speed_rot = (float)speed_pos_rot;
 
 	switch(PID_type)
 	{
@@ -305,7 +310,21 @@ void do_acc_handle_move(int speed_pos_x,int speed_pos_y,int speed_pos_rot, int P
 				speed_pos_y = ceil(last_speed_y + acc_y); 
 			}
 
-			do_move(speed_pos_x,speed_pos_y,speed_pos_rot, SPEED_PID);
+			if (g_robot.mode == NORMAL_MODE || g_robot.mode == CRAY_MODE)
+			{
+				taskENTER_CRITICAL();
+				attitude = g_robot.attitude;
+				taskEXIT_CRITICAL();
+				corrected_speed_rot = HeadingControl_Update(&g_robot.heading_control,
+					speed_pos_x, speed_pos_y, (float)speed_pos_rot, SPEED_PID,
+					attitude.yaw_deg, attitude.gyro_corrected_dps[2],
+					attitude.flags, attitude.sample_tick, HAL_GetTick());
+			}
+			else
+			{
+				HeadingControl_Reset(&g_robot.heading_control);
+			}
+			do_move(speed_pos_x, speed_pos_y, corrected_speed_rot, SPEED_PID);
 			last_speed_x = speed_pos_x;
 			last_speed_y = speed_pos_y;
 			break;
@@ -314,6 +333,7 @@ void do_acc_handle_move(int speed_pos_x,int speed_pos_y,int speed_pos_rot, int P
 		{
 			last_speed_x = 0;
 			last_speed_y = 0;
+			HeadingControl_Reset(&g_robot.heading_control);
 			do_move(speed_pos_x, speed_pos_y, speed_pos_rot, POSITION_PID);
 			break;
 		}
@@ -327,7 +347,7 @@ void do_acc_handle_move(int speed_pos_x,int speed_pos_y,int speed_pos_rot, int P
 * @param speed_pos_rot 旋转速度 单位[0.025rad/s]或旋转角度
 * @author Xuanting Liu
 *******************************************************************************/
-void do_move( int speed_pos_x, int speed_pos_y, int speed_pos_rot, int PID_type)
+void do_move(int speed_pos_x, int speed_pos_y, float speed_pos_rot, int PID_type)
 {
 	int i = 0;
  
@@ -344,13 +364,10 @@ void do_move( int speed_pos_x, int speed_pos_y, int speed_pos_rot, int PID_type)
 			/* trasnform wheel angle */
 			g_robot.wheels[i].speed = ( g_robot.sin_angle[ i ] * vx + g_robot.cos_angle[ i ] * vy + vz );
 			
-			int gain = 3;
-			#if ROBOT_VERSION == NEUMANN_S02
-				gain = 8;
-			#endif			
 			 /* 线速度(m/s)转换为电机转速(count/s)设定值 */
-			g_robot.wheels[i].set = (long)(g_robot.wheels[i].speed / ((float)PI * g_robot.wheel_diameter[i]) 
-											* ENCODER_COUNTS_PER_TURN_SET * LIU_WANG_CONST)*gain; //enhace the speed to bring the max speed out
+			g_robot.wheels[i].set = (long)(g_robot.wheels[i].speed / ((float)PI * g_robot.wheel_diameter[i])
+											* ENCODER_COUNTS_PER_TURN_SET * LIU_WANG_CONST
+											* MOTION_COMMAND_GAIN);
 		}
 	
 		/* change wheels' speed set point, with dis_int() */

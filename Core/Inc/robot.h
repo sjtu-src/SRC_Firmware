@@ -7,6 +7,7 @@
 #include "tim.h"
 #include "packet.h"
 #include "imu_attitude.h"
+#include "heading_control.h"
 
 
 /***控制器几种工作模式选择***/
@@ -73,8 +74,9 @@ typedef struct _robot_
 	int continuous_kick_cnt; //连续踢球模式下已执行的射门次数
 	int continuous_kick_mode; //连续踢球模式下的状态 0:踢球 1:休息
 
-    /* Published atomically by the IMU task; no connection to motor control yet. */
+    /* Published atomically by the IMU task. */
     imu_attitude_t attitude;
+    heading_control_t heading_control;
 
 } robot_t;
 

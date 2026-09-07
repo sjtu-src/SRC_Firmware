@@ -29,7 +29,7 @@ typedef struct _packet_robot_
 	int chip;      //挑射
 	int speed_x;   //小车整体x轴方向速度 单位[cm/s] X轴为吸球嘴巴方向
 	int speed_y;   //y轴方向速度 单位[cm/s]
-	int speed_rot; //旋转方向速度  单位[1表示0.25rad/s]
+	int speed_rot; /* Base unit is 0.025 rad/s before MOTION_COMMAND_GAIN. */
 } packet_robot_t;
 
 /**cpuid接收缓存一个加密的cpuid为8Byte 最大支持32个robot 同时进行cpuid认证**/

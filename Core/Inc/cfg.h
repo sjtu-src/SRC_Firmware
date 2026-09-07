@@ -57,6 +57,36 @@
     #error "Please select robot version"
 #endif
 
+/* Final scale applied to every wheel speed command. Keep heading reference
+ * conversion tied to this value so command feedforward uses the same scale.
+ */
+#if (ROBOT_VERSION == NEUMANN_S02)
+    #define MOTION_COMMAND_GAIN 8.0f
+#else
+    #define MOTION_COMMAND_GAIN 3.0f
+#endif
+
+/* IMU heading tracking parameters. One rotation command unit first represents
+ * 0.025 rad/s and is then scaled by MOTION_COMMAND_GAIN in do_move().
+ */
+#define HEADING_CONTROL_ENABLE             1
+#define HEADING_COMMAND_BASE_RAD_S         0.025f
+#define HEADING_COMMAND_RAD_S              (HEADING_COMMAND_BASE_RAD_S * MOTION_COMMAND_GAIN)
+#define HEADING_SENSOR_YAW_SIGN           -1.0f
+#define HEADING_ANGLE_KP                   2.0f
+#define HEADING_RATE_KP                    0.08f
+#define HEADING_RATE_KI                    0.01f
+#define HEADING_RATE_INTEGRAL_LIMIT        200.0f
+#define HEADING_HOLD_KP                    0.16f
+#define HEADING_HOLD_KI                    0.04f
+#define HEADING_HOLD_KD                    0.08f
+#define HEADING_YAW_INTEGRAL_LIMIT         200.0f
+#define HEADING_MAX_CORRECTION_COMMAND     32.0f
+#define HEADING_MAX_ROTATION_COMMAND       511.0f
+#define HEADING_MAX_TRACKING_ERROR_DEG     30.0f
+#define HEADING_ATTITUDE_TIMEOUT_MS        100U
+#define HEADING_UPDATE_TIMEOUT_MS          100U
+
 
 /* software version*/
 #define  software_verison  0x0300;   // V3.0

@@ -15,7 +15,9 @@
 typedef struct
 {
     float accel_g[3];
-    float gyro_dps[3];
+    float gyro_dps[3]; /* Raw MPU6050 measurement. */
+    float gyro_bias_dps[3];
+    float gyro_corrected_dps[3];
     float temperature_c;
     float quaternion[4]; /* w, x, y, z */
     float roll_deg;

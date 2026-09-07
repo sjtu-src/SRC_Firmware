@@ -400,6 +400,11 @@
               <FilePath>..\Core\Src\imu_attitude.c</FilePath>
             </File>
             <File>
+              <FileName>heading_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\heading_control.c</FilePath>
+            </File>
+            <File>
               <FileName>MPU6050_driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Src\MPU6050_driver.c</FilePath>

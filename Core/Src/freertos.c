@@ -157,7 +157,7 @@ void MX_FREERTOS_Init(void) {
   IdleHandle = osThreadCreate(osThread(Idle), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  osThreadDef(ImuUpdate, Update_Imu, osPriorityBelowNormal, 0, 512);
+  osThreadDef(ImuUpdate, Update_Imu, osPriorityAboveNormal, 0, 512);
   if (osThreadCreate(osThread(ImuUpdate), NULL) == NULL) Error_Handler();
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -221,6 +221,7 @@ void Do_Comm(void const * argument)
             }
 
             do_dribbler(0);
+            HeadingControl_Reset(&g_robot.heading_control);
             do_move(0,0,0,g_robot.PID_type);
             do_shoot(0,0);
             do_chip(0,0);

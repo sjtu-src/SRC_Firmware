@@ -98,6 +98,8 @@ void ImuFilter_Update(imu_filter_t *f, const float accel[3],
                 return;
             }
             f->bias[i] = f->mean[i];
+            a->gyro_bias_dps[i] = f->bias[i];
+            a->gyro_corrected_dps[i] = gyro[i] - f->bias[i];
         }
         {
             const float *g = f->accel_sum;
@@ -118,7 +120,12 @@ void ImuFilter_Update(imu_filter_t *f, const float accel[3],
 
     a->flags = IMU_VALID;
     memcpy(q, a->quaternion, sizeof(q));
-    for (i = 0U; i < 3U; i++) rate[i] = (gyro[i] - f->bias[i]) * DEG_TO_RAD;
+    for (i = 0U; i < 3U; i++)
+    {
+        a->gyro_bias_dps[i] = f->bias[i];
+        a->gyro_corrected_dps[i] = gyro[i] - f->bias[i];
+        rate[i] = a->gyro_corrected_dps[i] * DEG_TO_RAD;
+    }
     if (norm >= 0.85f && norm <= 1.15f)
     {
         /* Measured gravity cross predicted gravity: proportional tilt correction.

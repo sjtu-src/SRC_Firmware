@@ -1,6 +1,7 @@
 --cpu=Cortex-M4.fp.sp
 "src_firmware\startup_stm32f407xx.o"
 "src_firmware\imu_attitude.o"
+"src_firmware\heading_control.o"
 "src_firmware\mpu6050_driver.o"
 "src_firmware\misc.o"
 "src_firmware\packet.o"

@@ -22,9 +22,12 @@ int main(void)
     unsigned int i;
     uint8_t bytes[2];
     calibrate(&f, level, bias, 0);
+    assert(fabsf(f.attitude.gyro_bias_dps[2]-.6f)<.001f);
+    assert(fabsf(f.attitude.gyro_corrected_dps[2])<.001f);
     for(i=211;i<=1210;i++) ImuFilter_Update(&f,level,bias,25,i*10);
     assert(fabsf(f.attitude.yaw_deg)<.01f);
     for(i=1211;i<=1310;i++) ImuFilter_Update(&f,level,turn,25,i*10);
+    assert(fabsf(f.attitude.gyro_corrected_dps[2]-90)<.001f);
     assert(fabsf(f.attitude.yaw_deg-90)<.1f);
     for(i=1311;i<=1510;i++) ImuFilter_Update(&f,level,turn,25,i*10);
     assert(fabsf(f.attitude.yaw_deg+90)<.1f);
