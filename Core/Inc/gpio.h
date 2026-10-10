@@ -33,15 +33,14 @@ extern "C" {
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
-#define GET_CAP_LOW_IO()	1
 
 #define GET_BALL_DECET_IO()	((GPIOC->IDR & GPIO_PIN_0) == GPIO_PIN_0)
 
 #define COMM_LED_ON()		HAL_GPIO_WritePin(LED_COMM_GPIO_Port, LED_COMM_Pin, GPIO_PIN_SET)
 #define COMM_LED_OFF()	HAL_GPIO_WritePin(LED_COMM_GPIO_Port, LED_COMM_Pin, GPIO_PIN_RESET)
 
-#define BEEP_ON()			HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_SET)
-#define BEEP_OFF()		HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET)
+#define BEEP_ON()			set_buzzer(1)
+#define BEEP_OFF()		set_buzzer(0)
 
 #define GET_NRF_IRQ_IO()	(HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin) == GPIO_PIN_SET)
 
@@ -57,7 +56,7 @@ extern "C" {
 #define DIP_SW_LD_LOW()		HAL_GPIO_WritePin(SW_LD_GPIO_Port, SW_LD_Pin, GPIO_PIN_RESET)
 #define DIP_SW_LD_HI()		HAL_GPIO_WritePin(SW_LD_GPIO_Port, SW_LD_Pin, GPIO_PIN_SET)
 
-#define GET_DIP_SW_D_IO()	((GPIOC->IDR & GPIO_PIN_9) == GPIO_PIN_9)
+#define GET_DIP_SW_D_IO()	(HAL_GPIO_ReadPin(SW_D_GPIO_Port, SW_D_Pin) == GPIO_PIN_SET)
 
 #define MOTOR_BALL_DIR_LOW()		HAL_GPIO_WritePin(MOTOR_DIR5_GPIO_Port, MOTOR_DIR5_Pin, GPIO_PIN_RESET)
 #define MOTOR_BALL_DIR_HI()			HAL_GPIO_WritePin(MOTOR_DIR5_GPIO_Port, MOTOR_DIR5_Pin, GPIO_PIN_SET)
@@ -79,6 +78,7 @@ void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 void init_gpio(void);
+void set_buzzer(uint8_t enable);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

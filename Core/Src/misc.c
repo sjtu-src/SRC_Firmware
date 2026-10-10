@@ -7,7 +7,9 @@
 #include "main.h"
 #include "tim.h"
 #include "spi.h"
-#include "adc.h"
+#include "board_monitor.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "cmsis_os.h"
 #include "oled.h"
 
@@ -236,12 +238,12 @@ void start_ir_pwm(void)
 }
 
 /*******************************************************************************
-* @brief 开启功率板升压
-* @author Xuanting Liu
+* @brief 初始化功率板；有效测量到达后由监控任务控制升压
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 void init_Power_Board(void)
 {
-	HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_SET);
+	board_monitor_init();
 }
 
 /*******************************************************************************
@@ -278,49 +280,51 @@ void chip_off(void)
 }
 
 /*******************************************************************************
+* @brief Arm one high-active pulse; PWM2/HIGH returns low at the OPM rollover.
+* @author COEX, Xuanting Liu
+*******************************************************************************/
+static void start_kick(uint32_t channel, u32 value)
+{
+	uint32_t period = __HAL_TIM_GET_AUTORELOAD(&htim9) + 1U;
+	if(value == 0) return;
+	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
+	taskENTER_CRITICAL();
+	if(!board_kicker_ready() || (TIM9->CR1 & TIM_CR1_CEN))
+	{
+		taskEXIT_CRITICAL();
+		return;
+	}
+	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
+	HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_RESET);
+	/* 20 us/tick: strength 1..127 gives 100 us..12.7 ms, exactly. */
+	value *= 5U;
+	if(value >= period) value = period - 1U;
+	__HAL_TIM_SET_COMPARE(&htim9, channel, period - value);
+	/* Reset both CNT and the prescaler phase before enabling the selected output. */
+	HAL_TIM_GenerateEvent(&htim9, TIM_EVENTSOURCE_UPDATE);
+	__HAL_TIM_CLEAR_FLAG(&htim9, TIM_FLAG_UPDATE);
+	HAL_TIM_PWM_Start(&htim9, channel);
+	taskEXIT_CRITICAL();
+}
+
+/*******************************************************************************
 * @brief 开启shoot平射功能
-* @author Xuanting Liu
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 void shoot_on(u32 value)
 {
-
-	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
-
-	//value= 5.5* pow(value, 2) / 10000 + 7 * value / 100 +7;
-
-	value = (int)(value * 5 + 0.5);
-	
-	value = 5 * MAX_SHOT_STRENGTH - value; // 越小踢得越快
-
-	if(value == 0) value = 1;
-	
-
-	__HAL_TIM_ENABLE(&htim9);
-	TIM9->CCR1 = value;
-	//Beep_Show_32bit(value);
-	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
+	start_kick(TIM_CHANNEL_1, value);
 }
 
 
 /*******************************************************************************
 * @brief 开启chip挑射功能
-* @author Xuanting Liu
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 void chip_on(u32 value)
 {
-	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
-
-	value = (int)(value * 5 + 0.5);
-	
-	value = 5 * MAX_SHOT_STRENGTH - value; // 越小踢得越快
-
-	if(value == 0) value = 1;
-
-	__HAL_TIM_ENABLE(&htim9);
-	TIM9->CCR2 = value;
-	HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
+	start_kick(TIM_CHANNEL_2, value);
 }
 
 /*******************************************************************************
@@ -415,147 +419,48 @@ void heart_beat(void)
 }
 
 /*******************************************************************************
-* @brief 获取电容adc值
-* @return 8bit adc/16 取12bit的高8位
-* @author Xuanting Liu
+* @brief 将功率板电容电压编码为兼容旧无线协议的单字节数值
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 u8 get_cap_v(void)
 {
-    u16 val;
-
-    // 配置ADC通道8（PB0）
-    ADC_ChannelConfTypeDef sConfig = {0};
-    sConfig.Channel = ADC_CHANNEL_8;  // 选择通道8
-    sConfig.Rank = 1;                 // 设置为第1个通道
-    sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES; // 设置采样时间
-    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-
-    // 启动ADC1
-    HAL_ADC_Start(&hadc1);
-
-    // 等待ADC转换完成
-    HAL_ADC_PollForConversion(&hadc1, 10);
-
-    // 获取ADC值
-    val = HAL_ADC_GetValue(&hadc1);
-
-	// 停止ADC1
-	HAL_ADC_Stop(&hadc1);
-
-    // 将16位ADC值右移4位，取高8位
-    val = val >> 4;
-
-    return (uint8_t)(val & 0xFF);
-	return val;
+	board_status_t status;
+	float value;
+	board_monitor_get(&status);
+	if(!status.kicker_valid) return 0;
+	value = status.cap_v / CAP_V_ADC_GAIN;
+	if(value > 254.0f) value = 254.0f;
+	return (u8)(value + 0.5f);
 }
 
 /*******************************************************************************
 * @brief 检测电池电压是否过低
 * @return 若低于报警电压，返回1;若低于强制停止的电压，返回2;电压正常返回0
-* @author Xuanting Liu
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 int is_power_low(void)
 {
-  	/* compare battery power AD value with low power threashold */
-	static int powerarr[5] = {0};
- 	static int num = 0;
-	static int avepower;
-	static int limpower = 5;
-	static u8 is_fifo_full = 0;
-	int i,u,d;
-	u8 bat_v;
-	int ret = 0;
-  	
-   	bat_v = get_bat_v(); 
-
-	//Beep_Show_8bit(bat_v);
-   	
-   	powerarr[num++] = bat_v;
-	if(num == 5) 
-	{
-		num = 0;
-		is_fifo_full = 1;
-	}
-
-	u = 0;
-	d = 0;
-	
-	if(is_fifo_full)
-	{
-		for(i = 1; i < 5; i++)
-		{
-			if(powerarr[i] > powerarr[u]) u = i;
-			if(powerarr[i] < powerarr[d]) d = i;			
-		}
-        
-		if(powerarr[u] > (avepower + limpower)) powerarr[u] = avepower;
-		if(powerarr[d] < (avepower - limpower)) powerarr[d] = avepower;
-        
-        avepower = powerarr[0];
-		
-        for(i = 1; i < 5; i++)
-		{
-			avepower = avepower + powerarr[i];
-		}
-
-		avepower = avepower / 5;
-		bat_v = (u8)avepower;
-
-		if(avepower < (int)WARNING_POWER_D)
-		{
-			ret = 1;
-  			if(avepower <= (int)FORCESTOP_POWER_D)
-  			{
-				ret = 2;
-  			}
-    	}
-	}
-	else 
-	{
-		avepower = (powerarr[0] + powerarr[1] + powerarr[2] + powerarr[3]) / 4;
-	}
-
-	DIS_INT();
-	g_robot.bat_v = bat_v;
-	g_robot.bat_v_f = bat_v  * BAT_V_ADC_GAIN;
-	EN_INT();
-	
-    return ret;
+	board_status_t status;
+	board_monitor_get(&status);
+	g_robot.bat_v = get_bat_v();
+	if(!status.battery_valid || status.bat_v <= FORCESTOP_POWER_A) return 2;
+	if(status.bat_v < WARNING_POWER_A) return 1;
+	return 0;
 }
 
 /*******************************************************************************
-* @brief 获取电池电压adc值
-* @author Xuanting Liu
+* @brief 将INA226电池电压编码为兼容旧无线协议的单字节数值
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 u8 get_bat_v(void)
 {
-    u16 val;
-
-    // 配置ADC通道9（PB1）
-    ADC_ChannelConfTypeDef sConfig = {0};
-    sConfig.Channel = ADC_CHANNEL_9;  // 选择通道9
-    sConfig.Rank = 1;                 // 设置为第1个通道
-    sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES; // 设置采样时间
-    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-
-    // 启动ADC1
-    HAL_ADC_Start(&hadc1);
-
-    // 等待ADC转换完成
-    HAL_ADC_PollForConversion(&hadc1, 10);
-
-    // 获取ADC值
-    val = HAL_ADC_GetValue(&hadc1);
-
-	// 停止ADC1
-	HAL_ADC_Stop(&hadc1);
-
-	//Beep_Show_32bit(val);
-
-    // 将16位ADC值右移4位，取高8位
-    val = val >> 4;
-
-    return (uint8_t)(val & 0xFF);
+	board_status_t status;
+	float value;
+	board_monitor_get(&status);
+	if(!status.battery_valid) return 0;
+	value = status.bat_v / BAT_V_ADC_GAIN;
+	if(value > 254.0f) value = 254.0f;
+	return (u8)(value + 0.5f);
 }
 
 /*******************************************************************************

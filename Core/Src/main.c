@@ -20,15 +20,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "adc.h"
 #include "i2c.h"
 #include "spi.h"
 #include "tim.h"
-#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "board_monitor.h"
+#include "dribbler_control.h"
 #include "robot.h"
 #include "misc.h"
 /* USER CODE END Includes */
@@ -97,7 +97,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC1_Init();
   MX_SPI3_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
@@ -108,10 +107,12 @@ int main(void)
   MX_TIM9_Init();
   MX_TIM10_Init();
   MX_TIM11_Init();
-  MX_USART1_UART_Init();
   MX_TIM6_Init();
   MX_TIM12_Init();
   MX_I2C2_Init();
+  MX_I2C3_Init();
+  MX_SPI2_Init();
+  MX_TIM8_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
@@ -195,6 +196,16 @@ static void MX_NVIC_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/*******************************************************************************
+* @brief Route new board interrupts; bus transfers and control stay in tasks.
+* @author COEX, Xuanting Liu
+*******************************************************************************/
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin == FG1_Pin) dribbler_fg_edge();
+	else board_monitor_exti(GPIO_Pin);
+}
+
 
 /* USER CODE END 4 */
 
@@ -237,16 +248,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
       if(++time_cnt >= 2)
       {
-        static BaseType_t xHigherPriorityTaskWoken;
-        xSemaphoreGiveFromISR(xMotorTickSem, &xHigherPriorityTaskWoken);
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        if(xMotorTickSem != NULL) xSemaphoreGiveFromISR(xMotorTickSem, &xHigherPriorityTaskWoken);
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         time_cnt = 0;
       }
 
-      // if(g_robot.cap_v_f < TARGET_V_CAP) 
-      //     HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_SET);
-      // else 
-      //     HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_RESET);
 
 			inc_receive_mode_flag();
 			update_sys_timer();

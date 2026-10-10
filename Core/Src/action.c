@@ -13,6 +13,8 @@
 #include "heading_control.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "board_monitor.h"
+#include "dribbler_control.h"
 
 shooter_t g_shooter[ SHOOTER_NUM ];
 char shooter;
@@ -62,67 +64,18 @@ int set_test_shooter(void)
 }
 
 /*******************************************************************************
-* @brief 设置吸球档位力度
-* @note 给带球电机力度参数（g_robot.dribbler.set）赋值，输入为带球力度档数，档数分为0-1-2-3			
+* @brief 设置吸球电机启停与方向，非零档统一使用cfg.h的目标转速
+* @note FG1反馈和PI运算由监控任务周期执行。
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 void do_dribbler( int dribbler )
 {
-  	int dribbler_temp;
-	u8 dir = 0;
-	float gain;
-
-	if(dribbler < 0) 
-	{
-		dribbler_temp = -dribbler;
-		#if (DIRB_MOTOR_VERSION == OLD_DIRB_MOTOR)
-			dir = 1;
-		#elif (DIRB_MOTOR_VERSION == NEW_DIRB_MOTOR)
-			dir = 0;
-		#endif
-	}
-	else 
-	{
-		dribbler_temp = dribbler;
-		#if (DIRB_MOTOR_VERSION == OLD_DIRB_MOTOR)
-			dir = 0;
-		#elif (DIRB_MOTOR_VERSION == NEW_DIRB_MOTOR)
-			dir = 1;
-		#endif
-	}
-		
-	#if (DIRB_MOTOR_VERSION == OLD_DIRB_MOTOR)
-		gain = 0.5;
-	#elif (DIRB_MOTOR_VERSION == NEW_DIRB_MOTOR)
-		gain = 0.55; 
-	#endif	
-
-    if(dribbler_temp == 0)
-    {
-        g_robot.dribbler = 0;
-    }
-    else if(dribbler_temp == 1)
-    {
-        g_robot.dribbler = MOTOR_PWM_PERIOD * gain;
-    }
-    else if(dribbler_temp == 2)
-    {
-        g_robot.dribbler = MOTOR_PWM_PERIOD * gain;
-    }
-    else if(dribbler_temp == 3)
-    {
-        g_robot.dribbler = MOTOR_PWM_PERIOD * gain;
-    }
-	else
-	{
-		g_robot.dribbler = 0;
-	}
-
-	set_dribbler(g_robot.dribbler, dir);
+	dribbler_set_target(dribbler);
 }
 
 /*******************************************************************************
 * @brief 设置吸球电机的方向和力度
-* @author Xuanting Liu
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 void set_dribbler(u16 value, u8 dir)
 {
@@ -145,7 +98,12 @@ void set_dribbler(u16 value, u8 dir)
 		MOTOR_BALL_DIR_HI();
 	}
 #endif
+	taskENTER_CRITICAL();
+	if(board_is_shutdown()) value = 0;
+	if(value > __HAL_TIM_GET_AUTORELOAD(&htim11) + 1U)
+		value = __HAL_TIM_GET_AUTORELOAD(&htim11) + 1U;
 	__HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, value);
+	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -153,56 +111,29 @@ void set_dribbler(u16 value, u8 dir)
 * @param channel 为1时挑射,为0时平射
 * @param value 射门力度范围
 * @note 执行射门前检查电容电压和力度大小,只有电容电压足够且射门力度不为0时才能射门.
-* @author Xuanting Liu
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 int set_shooter( int channel, int value )
 {
+	if(channel < 0 || channel >= SHOOTER_NUM) return -1;
 	if(value <= 0) return 0;
-	
-	if(g_shooter[ channel ].count_down ) 
+	taskENTER_CRITICAL();
+	if((TIM9->CR1 & TIM_CR1_CEN) || g_shooter[channel].count_down)
 	{
+		taskEXIT_CRITICAL();
 		return -1;
 	}
-
-	if(GET_CAP_LOW_IO()){
-		g_robot.is_cap_low = 0;
-	}else{
-		g_robot.is_cap_low = 1;
-	}
-
-	if((!g_robot.is_cap_low) && value )
+	g_robot.is_cap_low = !board_kicker_ready();
+	if(!g_robot.is_cap_low)
 	{
-		g_shooter[ channel ].strength = value;
-		g_shooter[ channel ].count_down = SHOOTER_INTERVAL;
-
-		switch ( channel )
-		{
-			// channel 0 is shoot , high is active , 
-			case SHOOT : 
-			{
-				shoot_on(value);
-				shooter = 0x02;
-				break;
-			}
-			
-			// channel 1 is chip ,  high is active , 
-			case CHIP :
-			{
-				chip_on(value);
-				shooter = 0x01;
-				break;
-			}
-
-			default:
-			{
-				chip_off();
-				shoot_off();
-				return -1;
-			}
-		}
+		if(channel == SHOOT) shoot_on(value);
+		else chip_on(value);
+		g_shooter[channel].strength = value;
+		g_shooter[channel].count_down = SHOOTER_INTERVAL;
+		shooter = channel == SHOOT ? 0x02 : 0x01;
 	}
-
- 	return 0;
+	taskEXIT_CRITICAL();
+	return 0;
 }
 
 /*******************************************************************************

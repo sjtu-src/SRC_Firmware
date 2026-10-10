@@ -7,6 +7,7 @@
 #include "typedef.h"
 #include "tim.h"
 #include "cfg.h"
+#include "board_monitor.h"
 
 u8 is_motor_run = 0;
 
@@ -100,19 +101,24 @@ void set_motor_break(u8 m1, u8 m2, u8 m3, u8 m4)
 }
 
 /*******************************************************************************
-*@author Xuanting Liu
+* @author COEX, Xuanting Liu
 *@brief 设置电机PWM
 *******************************************************************************/
 void set_motor_pwm(u16 m1, u16 m2, u16 m3, u16 m4)
 {
+	uint32_t primask = __get_PRIMASK();
+	/* init_motor() also runs before the scheduler. */
+	__disable_irq();
+	if(board_is_shutdown()) m1 = m2 = m3 = m4 = 0;
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, m1);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, m2);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, m3);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, m4);
+	__set_PRIMASK(primask);
 }
 
 /*******************************************************************************
-*@author Xuanting Liu
+* @author COEX, Xuanting Liu
 *@brief 执行pid计算并驱动电机
 *******************************************************************************/
 void do_update_motor(void)
@@ -124,9 +130,9 @@ void do_update_motor(void)
 	u16	motor_pwm[CHANNEL_NUM];
 	int cur_pos[CHANNEL_NUM];   //count
 	int cur_speed[CHANNEL_NUM]; //count/s
-	static u8 mismatch_cnt[CHANNEL_NUM] = {0};
+	static u16 mismatch_cnt[CHANNEL_NUM] = {0};
 
-	if(is_motor_run == 0) return;
+	if(is_motor_run == 0 || board_is_shutdown()) return;
 	
 	/* update the speed */
 	update_encoder(cur_pos, cur_speed);

@@ -360,7 +360,7 @@ void do_robot_run(void)
 			if(g_robot.is_ball_detected == 0)
 			{
 				do_dribbler(0);	
-				while(1);
+				while(1) osDelay(1000U);
 			}
 
 			test_drib_stage++;
@@ -384,8 +384,7 @@ void do_robot_run(void)
 				osDelay(300);
 			}
 
-			while(1);
-			break;
+			while(1) osDelay(1000U);
 		}
 		case CONTINUOUS_KICKING_MODE:
 		{
@@ -451,20 +450,13 @@ void on_robot_command(packet_robot_t *packet)
 /*******************************************************************************
 * @brief 电池电压监控
 * @return 返回1表示电池电压降到阈值1 返回2表示电池电压降到阈值2 返回0 电池电压正常
-* @author Xuanting Liu
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 int do_power_monitor(void)
 {
 	char retflag;
-	u16 cap_v;
-	
-	/* check the cap voltage */
-	cap_v = get_cap_v();
-
-	DIS_INT();
-	g_robot.cap_v_f = cap_v * CAP_V_ADC_GAIN;
-	g_robot.cap_v = cap_v;
-	EN_INT();
+	/* Physical voltages are published by the power monitor task. */
+	g_robot.cap_v = get_cap_v();
 
 	retflag = is_power_low();
     if( retflag )

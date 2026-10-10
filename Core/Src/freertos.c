@@ -37,6 +37,8 @@
 #include "misc.h"
 #include "MPU6050_driver.h"
 #include "i2c.h"
+#include "board_monitor.h"
+#include "dribbler_control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -81,6 +83,7 @@ osThreadId IdleHandle;
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 static void Update_Imu(void const *argument);
+static void Update_Board(void const *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -159,6 +162,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   osThreadDef(ImuUpdate, Update_Imu, osPriorityAboveNormal, 0, 512);
   if (osThreadCreate(osThread(ImuUpdate), NULL) == NULL) Error_Handler();
+  osThreadDef(BoardUpdate, Update_Board, osPriorityAboveNormal, 0, 384);
+  if (osThreadCreate(osThread(BoardUpdate), NULL) == NULL) Error_Handler();
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
@@ -175,6 +180,7 @@ void Update_Motor(void const * argument)
 {
   /* USER CODE BEGIN Update_Motor */
   xMotorTickSem = xSemaphoreCreateBinary();
+  if (xMotorTickSem == NULL) Error_Handler();
   /* Infinite loop */
   for(;;)
   {
@@ -310,7 +316,7 @@ void RobotTask(void const * argument)
   do_power_monitor();
 
 	/* start motor */
-	start_motor();
+	if(!board_is_shutdown()) start_motor();
   HAL_TIM_Base_Start_IT(&htim12);  // 启动TIM12中断
   startup_complete = 1U;
   /* Infinite loop */
@@ -402,6 +408,22 @@ static void Update_Imu(void const *argument)
         taskEXIT_CRITICAL();
         vTaskDelayUntil(&wake, pdMS_TO_TICKS(10U));
     }
+}
+
+/*******************************************************************************
+* @brief Power and FG1 service runs during startup too; never blocks in an ISR.
+* @author COEX, Xuanting Liu
+*******************************************************************************/
+static void Update_Board(void const *argument)
+{
+	TickType_t wake = xTaskGetTickCount();
+	(void)argument;
+	for(;;)
+	{
+		board_monitor_update();
+		dribbler_update();
+		vTaskDelayUntil(&wake, pdMS_TO_TICKS(10U));
+	}
 }
 
 /* USER CODE END Application */

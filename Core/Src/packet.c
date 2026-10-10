@@ -84,8 +84,6 @@ void stop_mode_packet(char *q)
 	}
 	q[4] = g_robot.cap_v ;
 	
-	g_robot.bat_v_f = g_robot.bat_v * BAT_V_ADC_GAIN;
-	g_robot.cap_v_f = g_robot.cap_v * (float)CAP_V_ADC_GAIN;
 
 	EN_INT();
 	

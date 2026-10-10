@@ -225,11 +225,26 @@
 
 #define SHOOT_DELAY 15
 
-/* ADC parameter */
+/* TIGERs power board and MOTOR5 parameters. Author: COEX, Xuanting Liu */
+#define KICKER_CAP_FULL_SCALE_V 251.42f
+#define KICKER_MAX_TEMP_C 60.0f
+#define KICKER_CALIBRATION_CONFIRMED 1
+#define INA226_SHUNT_MOHM 2.0f
+#define DRIBBLER_POLE_PAIRS 1U
+#define DRIBBLER_TARGET_RPM 5000.0f
+#define DRIBBLER_SAMPLE_MS 100U
+#define DRIBBLER_FG_TIMEOUT_MS 1000U
+/* Initial PI gains in duty/RPM and duty/(RPM*s); tune on the actual motor. */
+#define DRIBBLER_SPEED_KP 0.00003f
+#define DRIBBLER_SPEED_KI 0.00006f
+#define DRIBBLER_MAX_DUTY 0.55f
+#define DRIBBLER_DUTY_RAMP_PER_S 0.5f
+
+/* Legacy radio voltage encoding only; no longer MCU ADC calibration. */
 #define BAT_V_ADC_GAIN			(3.3f / 256.0f / (3300.0f / (22000.0f + 3300.0f)))  //电池电压电阻分压系数
 
 // #define CAP_V_ADC_GAIN			(3.3f / 256.0f / (5.1f / (249.0f + 5.1f)))    //充电电容电阻分压系数
-#define CAP_V_ADC_GAIN			(3.3f / 256.0f / (12.4f / (1800.0f + 12.4f)) * 1.225 / 1.5)    //充电电容电阻分压系数
+#define CAP_V_ADC_GAIN			(3.3f / 256.0f / (12.4f / (1800.0f + 12.4f)) * 1.225f / 1.5f)    //充电电容电阻分压系数
 
 /* battery low power protection time */
 #define LOW_POWER_TIME		(5 * SYS_TICK_FREQ) //5s
