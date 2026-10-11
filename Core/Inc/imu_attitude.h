@@ -2,6 +2,7 @@
 #define IMU_ATTITUDE_H
 
 #include <stdint.h>
+#include "attitude_protocol.h"
 
 #define IMU_VALID          0x01U
 #define IMU_CALIBRATING    0x02U
@@ -26,6 +27,8 @@ typedef struct
     uint32_t sample_tick;
     uint8_t flags;
     uint8_t sequence;
+    uint8_t calibration_reason; /* Last reset reason; see attitude_protocol.h. */
+    uint8_t calibration_progress; /* 0..100; not attitude validity. */
 } imu_attitude_t;
 
 typedef struct

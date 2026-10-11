@@ -306,6 +306,15 @@
 
 #define MPU6050_GYRO_USED  0
 
+/* This board, Z-up/down measurements on 2026-10-10. COEX, Xuanting Liu
+ * Corrected Z = (measured Z - bias) * scale, before stationary calibration.
+ * Two-face estimate only; X/Y remain unchanged. Recalibrate for another MPU.
+ * Disable this correction with bias=0.0f and scale=1.0f.
+ */
+#define MPU6050_ACCEL_Z_BIAS_G (-0.208984375f)
+#define MPU6050_ACCEL_Z_SCALE 0.982489806f
+
+
 //射门力度调整曲线参数
 #define SHOOT_POWER_CURVE_A 13
 #define SHOOT_POWER_CURVE_B 70

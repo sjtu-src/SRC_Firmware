@@ -16,6 +16,20 @@
 int receive_flag;
 nRF24L01 nRF24L01_dev;
 
+/* Watch diagnostics for AA 55 10 only. TX_DS confirms local transmission,
+ * not remote reception: the radio sends without acknowledgement.
+ * Author: COEX, Xuanting Liu
+ */
+volatile struct
+{
+    uint32_t completed;
+    uint32_t failed;
+    uint32_t unconfirmed;
+    uint8_t last_status;
+} g_telemetry_radio;
+static uint8_t telemetry_tx_pending;
+
+
 /******************************************************************************
  * @brief nrf24L01 SPI通信初始化
  * @author Xuanting Liu
@@ -66,6 +80,9 @@ int get_nRF24L01_packet(nRF24L01 *dev)
  ******************************************************************************/
 int send_nRF24L01_packet(nRF24L01 *dev)
 {
+    telemetry_tx_pending = dev->buf.pos >= 3 && dev->buf.buf[0] == 0xAA &&
+                           dev->buf.buf[1] == 0x55 && dev->buf.buf[2] == 0x10;
+
 	L01_CE_LOW();
 	
 	L01_SetTRMode(TX_MODE);
@@ -141,6 +158,23 @@ void nrf24l01_init(void)
 void start_nRF24L01_RX(void)
 {
 	if(receive_flag == 1) return ;
+
+    /* Read the result before the existing FIFO flush / IRQ clear.
+     * Author: COEX, Xuanting Liu
+     */
+    if (telemetry_tx_pending)
+    {
+        uint8_t status = L01_ReadStatusReg();
+        g_telemetry_radio.last_status = status;
+        if (status == 0xFFU || (status & (1U << MAX_RT)) != 0U)
+            g_telemetry_radio.failed++;
+        else if ((status & (1U << TX_DS)) != 0U)
+            g_telemetry_radio.completed++;
+        else
+            g_telemetry_radio.unconfirmed++;
+        telemetry_tx_pending = 0U;
+    }
+
 	
 	L01_CE_LOW();
 	

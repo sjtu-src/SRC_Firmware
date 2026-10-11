@@ -47,9 +47,29 @@ int main(void)
     ImuFilter_Reset(&f);
     for(i=0;i<400;i++) ImuFilter_Update(&f,level,moving,25,i*10);
     assert(!f.calibrated);
+    assert(f.attitude.calibration_reason == IMU_CAL_GYRO);
+    {
+        float low_g[3] = {0,0,0.8f};
+        float shaking[3] = {0,0,0};
+        ImuFilter_Reset(&f);
+        ImuFilter_Update(&f,low_g,zero,25,10);
+        assert(f.attitude.calibration_reason == IMU_CAL_ACCEL);
+        assert(f.attitude.calibration_progress == 0);
+        ImuFilter_Reset(&f);
+        for(i=0;i<=200;i++) {
+            shaking[0] = i%2 ? 1.0f : -1.0f;
+            ImuFilter_Update(&f,level,shaking,25,i*10);
+        }
+        assert(!f.calibrated && f.attitude.calibration_reason == IMU_CAL_VARIANCE);
+        ImuFilter_Update(&f,level,zero,25,2200);
+        assert(f.attitude.calibration_reason == IMU_CAL_GAP);
+        ImuFilter_ReadError(&f);
+        assert(f.attitude.calibration_reason == IMU_CAL_IO);
+    }
     /* Millisecond wrap must not invalidate an otherwise fresh sample. */
     calibrate(&f,level,zero,0xfffff800U);
     assert(f.calibrated);
+    assert(f.attitude.calibration_progress == 100 && f.attitude.calibration_reason == IMU_CAL_NONE);
     ImuFilter_Update(&f,level,zero,25,0xfffff800U+2110U);
     assert(f.attitude.flags & IMU_VALID);
     attitude_encode_angle(bytes,-179.99f);

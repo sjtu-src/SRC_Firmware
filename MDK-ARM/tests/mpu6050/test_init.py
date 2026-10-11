@@ -4,6 +4,7 @@ Requires Python 3 and a host GCC on PATH. No board or Python packages required.
 """
 from pathlib import Path
 import subprocess
+import re
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -28,6 +29,7 @@ HARNESS = r'''
 #include <math.h>
 #include "i2c.h"
 #include "MPU6050_driver.h"
+#include "imu_attitude.h"
 I2C_HandleTypeDef hi2c2;
 static int lock_available=1, locked=0;
 int I2C2_Lock(uint32_t timeout) { (void)timeout; locked=lock_available; return locked; }
@@ -120,6 +122,32 @@ int main(void)
             assert(MPU6050_ReadMotion(a,g,&temp)==-1 && calls==n && !locked);
         }
         puts("PASS: coherent burst, signed sensor units, temperature, no-data, occupied bus, timeout unlock");
+        /* User's real stationary Z-up/down samples, including the large Z bias.
+         * Exercise the production driver and filter together, with unchanged
+         * stationarity thresholds. Author: COEX, Xuanting Liu.
+         */
+        {
+            const int16_t raw[2][3] = {{495,228,6626},{-504,-18,-10050}};
+            unsigned side, axis, sample;
+            for(side=0;side<2;side++) {
+                imu_filter_t filter;
+                setup(); regs[0x3a]=1;
+                for(axis=0;axis<3;axis++) {
+                    regs[0x3b+2*axis]=(uint16_t)raw[side][axis]>>8;
+                    regs[0x3c+2*axis]=(uint8_t)raw[side][axis];
+                }
+                ImuFilter_Reset(&filter);
+                for(sample=0;sample<=210;sample++) {
+                    assert(MPU6050_ReadMotion(a,g,&temp)==1);
+                    ImuFilter_Update(&filter,a,g,temp,sample*10U);
+                }
+                assert(fabsf(a[2]-(side?-1.0f:1.0f))<0.001f);
+                assert(fabsf(a[0]-raw[side][0]/8192.0f)<0.0001f);
+                assert(fabsf(a[1]-raw[side][1]/8192.0f)<0.0001f);
+                assert(filter.calibrated && (filter.attitude.flags & IMU_VALID));
+            }
+            puts("PASS: measured Z-up/down data completes stationary calibration after board correction");
+        }
     }
     return 0;
 }
@@ -130,12 +158,16 @@ def main():
     tmp.mkdir(exist_ok=True)
     (tmp / 'i2c.h').write_text(HAL)
     (tmp / 'cmsis_os.h').write_text('#include <stdint.h>\nvoid osDelay(uint32_t);\n')
+    # Use the real calibration values without pulling STM32 radio/HAL headers
+    # into a host test. Other driver configuration still comes from its header.
+    cfg = (ROOT / 'Core/Inc/cfg.h').read_text(encoding='utf-8')
+    (tmp / 'cfg.h').write_text('\n'.join(re.findall(r'^#define MPU6050_ACCEL_Z_.*', cfg, re.M))+'\n')
     (tmp / 'test.c').write_text(HARNESS)
     exe = tmp / 'test.exe'
     subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror',
                     '-I', str(tmp), '-I', str(ROOT / 'Core/Inc'),
-                    str(ROOT / 'Core/Src/MPU6050_driver.c'), str(tmp / 'test.c'),
-                    '-o', str(exe)], check=True)
+                    str(ROOT / 'Core/Src/MPU6050_driver.c'), str(ROOT / 'Core/Src/imu_attitude.c'), str(tmp / 'test.c'),
+                    '-lm', '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
 
 

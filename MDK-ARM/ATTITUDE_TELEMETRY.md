@@ -1,5 +1,27 @@
 # MPU6050 attitude telemetry
 
+## 2026-10-10: this board's Z accelerometer correction
+
+Author: COEX, Xuanting Liu. User measurements while stationary:
+
+- Face up: `(0.0604248047, 0.0278320312, 0.808837891)` g.
+- Face down: `(-0.0615234375, -0.00219726562, -1.22680664)` g.
+
+The Z midpoint is -0.208984375 g and the half-span is 1.017822266 g.
+`cfg.h` now sets `MPU6050_ACCEL_Z_BIAS_G=-0.208984375f` and
+`MPU6050_ACCEL_Z_SCALE=0.982489806f`. The driver applies
+`z_corrected = (z_measured - bias) * scale` before the attitude filter.
+The existing stationary-calibration and gravity-rejection thresholds stay intact.
+The production driver/filter host regression completes calibration with both
+measured input vectors after correction.
+
+These are approximate two-face coefficients for this board, not a six-face
+calibration or universal MPU6050 parameters. X/Y are unchanged. A replacement
+sensor needs its own measurements; bias=0 and scale=1 disable the correction.
+Watch `g_robot.attitude.accel_g` now shows corrected values. Flash the freshly
+built `SRC_Firmware/SRC_Firmware.hex` under MDK-ARM, not an older exported image,
+and verify stationary calibration on the board.
+
 Firmware branch: `test/mpu6050-bringup`.
 Cray source: `E:\SRC\Develop_Cray\Cray`, branch `test/mpu6050-attitude`.
 

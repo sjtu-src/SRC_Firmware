@@ -1,5 +1,6 @@
 /* coding: utf-8 */
 #include "MPU6050_driver.h"
+#include "cfg.h"
 #include "i2c.h"
 #include "cmsis_os.h"
 
@@ -86,6 +87,8 @@ int InitMPU6050(void)
 /*******************************************************************************
 * @brief Read one coherent acceleration/temperature/gyro sample from I2C2.
 * @note MPU6050 uses big-endian sensor registers; output is g, deg/s and Celsius.
+*       Apply this board's Z-axis correction before the attitude filter.
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 int MPU6050_ReadMotion(float accel[3], float gyro[3], float *temperature)
 {
@@ -108,6 +111,7 @@ int MPU6050_ReadMotion(float accel[3], float gyro[3], float *temperature)
         accel[i] = (float)raw_accel / 8192.0f;
         gyro[i] = (float)raw_gyro / 65.5f;
     }
+    accel[2] = (accel[2] - MPU6050_ACCEL_Z_BIAS_G) * MPU6050_ACCEL_Z_SCALE;
     *temperature = (float)(int16_t)(((uint16_t)data[6] << 8) | data[7]) / 340.0f + 36.53f;
     return 1;
 }

@@ -11,6 +11,18 @@
 #define ATTITUDE_VERSION 0xA0U
 #define ATTITUDE_OFFSET 15U
 
+/* Local calibration diagnostics for Keil Watch. Byte 4 on the wire remains
+ * infrared only (0 or 1); intermediate receiver compatibility is unverified.
+ * Author: COEX, Xuanting Liu
+ */
+#define IMU_CAL_NONE 0U
+#define IMU_CAL_ACCEL 1U
+#define IMU_CAL_GYRO 2U
+#define IMU_CAL_VARIANCE 3U
+#define IMU_CAL_GAP 4U
+#define IMU_CAL_IO 5U
+
+
 static inline void attitude_encode_angle(uint8_t *out, float degrees)
 {
     int32_t value;

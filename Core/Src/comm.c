@@ -158,6 +158,9 @@ static void build_game_telemetry_packet(uint8_t *out, uint8_t robot_id)
         attitude_encode_angle(out + 19, attitude.yaw_deg);
         out[21] = ATTITUDE_VERSION | (attitude.flags & 0x0FU);
         out[22] = attitude.sequence;
+        /* Keep byte 4 identical to the established protocol (infrared only).
+         * Calibration diagnostics remain in Watch. Author: COEX, Xuanting Liu
+         */
     }
 	out[GAME_TELEMETRY_FRAME_LEN - 1] = game_crc8_calc(out, (int)GAME_TELEMETRY_FRAME_LEN - 1);
 }
@@ -295,12 +298,20 @@ void do_comm_up(void)
 	g_do_set_receive_mode_flag = 1;
 }
 
+/* Watch diagnostics: submission is not an RF delivery acknowledgement.
+ * Author: COEX, Xuanting Liu
+ */
+volatile uint32_t g_game_telemetry_calls = 0U;
+volatile uint32_t g_game_telemetry_tx_count = 0U;
+
 void do_game_telemetry_up(void)
 {
 #if GAME_TELEMETRY_ENABLE
 	static uint32_t last_slot = 0xFFFFFFFFu;
 	const uint32_t tick = HAL_GetTick();
 	const uint32_t slot = (tick / GAME_TELEMETRY_SLOT_MS) % GAME_TELEMETRY_SLOT_COUNT;
+
+	g_game_telemetry_calls++;
 
 	if(slot == last_slot)
 	{
@@ -309,11 +320,10 @@ void do_game_telemetry_up(void)
     if (get_receive_flag() == 0) return;
 	last_slot = slot;
 
-	if(type != PACKET_Normal)
-	{
-		return;
-	}
-
+	/* Passive monitoring must not depend on the last received packet type.
+	 * Do_Comm already limits this service to NORMAL_MODE / CRAY_MODE.
+	 * Author: COEX, Xuanting Liu
+	 */
 	const uint8_t robot_id = (uint8_t)((g_robot.num - 1) & 0x0f);
 	if(slot != (uint32_t)(robot_id % GAME_TELEMETRY_SLOT_COUNT))
 	{
@@ -323,6 +333,7 @@ void do_game_telemetry_up(void)
 	nRF24L01_dev.buf.pos = PACKET_LEN_UP;
 	build_game_telemetry_packet((uint8_t*)nRF24L01_dev.buf.buf, robot_id);
 	nRF24L01_dev.send_packet(&nRF24L01_dev);
+	g_game_telemetry_tx_count++;
 	g_do_set_receive_mode_flag = 1;
 #endif
 }

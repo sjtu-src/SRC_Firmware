@@ -345,6 +345,10 @@ void Do_Display(void const * argument)
   }
   /* The startup MPU6050 check has released I2C2. */
   OLED_Display_Init();
+  /* Keep the startup logo visible before the first status refresh.
+   * I2C2 is unlocked while this task sleeps. Author: COEX, Xuanting Liu
+   */
+  osDelay(2000U);
   /* Infinite loop */
   for(;;)
   {

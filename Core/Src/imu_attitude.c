@@ -16,6 +16,7 @@ static float clamp_unit(float x)
 static void reset_calibration(imu_filter_t *f)
 {
     f->calibration_count = 0U;
+    f->attitude.calibration_progress = 0U;
     memset(f->mean, 0, sizeof(f->mean));
     memset(f->m2, 0, sizeof(f->m2));
     memset(f->accel_sum, 0, sizeof(f->accel_sum));
@@ -35,6 +36,7 @@ void ImuFilter_ReadError(imu_filter_t *f)
     ImuFilter_Reset(f);
     f->attitude.sequence = sequence;
     f->attitude.flags = IMU_READ_ERROR;
+    f->attitude.calibration_reason = IMU_CAL_IO;
 }
 
 static void update_euler(imu_attitude_t *a)
@@ -50,6 +52,7 @@ static void update_euler(imu_attitude_t *a)
 * @brief Fuse acceleration and angular velocity using a normalized quaternion.
 * @note Nominal 100 Hz; integrate using measured milliseconds, including wrap.
 *       Calibrate gyro bias only while stationary. Reject large linear acceleration.
+* @author COEX, Xuanting Liu
 *******************************************************************************/
 void ImuFilter_Update(imu_filter_t *f, const float accel[3],
                       const float gyro[3], float temperature, uint32_t tick)
@@ -61,7 +64,11 @@ void ImuFilter_Update(imu_filter_t *f, const float accel[3],
     unsigned int i;
 
     if (f->have_sample && elapsed == 0U) return;
-    if (f->have_sample && elapsed > 100U) ImuFilter_ReadError(f);
+    if (f->have_sample && elapsed > 100U)
+    {
+        ImuFilter_ReadError(f);
+        f->attitude.calibration_reason = IMU_CAL_GAP;
+    }
     f->previous_tick = tick;
     f->have_sample = 1U;
     a->sample_tick = tick;
@@ -73,14 +80,22 @@ void ImuFilter_Update(imu_filter_t *f, const float accel[3],
     if (!f->calibrated)
     {
         a->flags = IMU_CALIBRATING;
-        if (norm < 0.90f || norm > 1.10f ||
-            fabsf(gyro[0]) > 5.0f || fabsf(gyro[1]) > 5.0f || fabsf(gyro[2]) > 5.0f)
+        if (norm < 0.90f || norm > 1.10f)
         {
             reset_calibration(f);
+            a->calibration_reason = IMU_CAL_ACCEL;
+            return;
+        }
+        if (fabsf(gyro[0]) > 5.0f || fabsf(gyro[1]) > 5.0f || fabsf(gyro[2]) > 5.0f)
+        {
+            reset_calibration(f);
+            a->calibration_reason = IMU_CAL_GYRO;
             return;
         }
         if (f->calibration_count == 0U) f->calibration_start = tick;
         f->calibration_count++;
+        a->calibration_progress = (uint8_t)(f->calibration_count < CALIBRATION_SAMPLES ?
+            f->calibration_count * 100U / CALIBRATION_SAMPLES : 99U);
         for (i = 0U; i < 3U; i++)
         {
             float delta = gyro[i] - f->mean[i];
@@ -95,6 +110,7 @@ void ImuFilter_Update(imu_filter_t *f, const float accel[3],
             if (f->m2[i] / (float)(f->calibration_count - 1U) > 0.25f)
             {
                 reset_calibration(f);
+                a->calibration_reason = IMU_CAL_VARIANCE;
                 return;
             }
             f->bias[i] = f->mean[i];
@@ -113,6 +129,8 @@ void ImuFilter_Update(imu_filter_t *f, const float accel[3],
             a->quaternion[3] = -sr * sp;
         }
         f->calibrated = 1U;
+        a->calibration_reason = IMU_CAL_NONE;
+        a->calibration_progress = 100U;
         a->flags = IMU_VALID;
         update_euler(a);
         return;
