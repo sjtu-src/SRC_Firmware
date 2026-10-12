@@ -264,7 +264,7 @@ void do_robot_run(void)
 					}
 
 					do_dribbler(0);
-					// HeadingControl_Reset(&g_robot.heading_control);
+					HeadingControl_Reset(&g_robot.heading_control);
 					do_move(0,0,0,g_robot.PID_type);
 					do_shoot(0,0);
 					do_chip(0,0);
