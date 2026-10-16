@@ -316,7 +316,7 @@ void RobotTask(void const * argument)
   do_power_monitor();
 
 	/* start motor */
-	if(!board_is_shutdown()) start_motor();
+	if(!board_actuators_disabled()) start_motor();
   HAL_TIM_Base_Start_IT(&htim12);  // 启动TIM12中断
   startup_complete = 1U;
   /* Infinite loop */
@@ -338,8 +338,12 @@ void RobotTask(void const * argument)
 void Do_Display(void const * argument)
 {
   /* USER CODE BEGIN Do_Display */
-  osDelay(2000);
-  while (startup_complete == 0U)
+  uint32_t display_tick = HAL_GetTick();
+  /* Shutdown may interrupt startup; do not hide it behind the logo delay.
+   * Author: COEX, Xuanting Liu
+   */
+  while(HAL_GetTick() - display_tick < 2000U && !board_is_shutdown()) osDelay(10U);
+  while (startup_complete == 0U && !board_is_shutdown())
   {
     osDelay(10U);
   }
@@ -348,7 +352,8 @@ void Do_Display(void const * argument)
   /* Keep the startup logo visible before the first status refresh.
    * I2C2 is unlocked while this task sleeps. Author: COEX, Xuanting Liu
    */
-  osDelay(2000U);
+  display_tick = HAL_GetTick();
+  while(HAL_GetTick() - display_tick < 2000U && !board_is_shutdown()) osDelay(10U);
   /* Infinite loop */
   for(;;)
   {

@@ -34,7 +34,7 @@ void dribbler_set_target(int command)
 	if(command < -3 || command > 3) command = 0;
 	direction = (command > 0) - (command < 0);
 	taskENTER_CRITICAL();
-	if(board_is_shutdown()) direction = 0;
+	if(board_actuators_disabled()) direction = 0;
 	if(direction != dribbler_command || direction == 0)
 	{
 		dribbler_command = direction;
@@ -74,7 +74,7 @@ void dribbler_update(void)
 	if(edges) last_motion_tick = now;
 	if(dribbler_command && now - last_motion_tick >= DRIBBLER_FG_TIMEOUT_MS)
 		dribbler_status.stalled = 1;
-	if(!dribbler_command || dribbler_status.stalled || board_is_shutdown())
+	if(!dribbler_command || dribbler_status.stalled || board_actuators_disabled())
 	{
 		integral = 0.0f;
 		dribbler_status.duty = 0.0f;

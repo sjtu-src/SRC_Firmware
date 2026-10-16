@@ -80,6 +80,7 @@ int shooter_off(void);
 void set_dribbler(u16,u8);
 void shoot_on(u32);
 void chip_on(u32);
+int discharge_on(uint8_t,uint32_t);
 void set_buzzer(uint8_t);
 #define BEEP_OFF() set_buzzer(0)
 #define MOTOR_BALL_DIR_HI() ((void)0)
@@ -119,9 +120,12 @@ static int spi_error, i2c_error, bad_adc, no_ready;
 static int init_motor_calls, stops;
 static float cap=170.0f, temperature=25.0f;
 static int16_t shunt_raw=-800;
-static uint16_t bus_raw=12800;
+static uint16_t bus_raw=BATTERY_CELLS*3200;
 static int event_count;
 static uint32_t enabled_channels;
+static uint32_t pulse_end, pulse_starts[1024];
+static float coil_drop[2];
+static int pwm_error;
 
 uint32_t HAL_GetTick(void) {return tick;}
 void HAL_GPIO_WritePin(int port,uint16_t pin,GPIO_PinState value) {(void)port;pins[pin]=value;}
@@ -166,7 +170,15 @@ HAL_StatusTypeDef HAL_I2C_Mem_Write(I2C_HandleTypeDef *h,uint16_t addr,uint16_t 
 }
 HAL_StatusTypeDef HAL_TIM_PWM_Start(TIM_HandleTypeDef *h,uint32_t channel)
 {
-    if(h==&htim9) enabled_channels|=1U<<channel;
+    if(h==&htim9) {
+        if(pwm_error) return HAL_ERROR;
+        enabled_channels|=1U<<channel;
+        pulse_end=tick+13;
+        assert(event_count<1024);
+        pulse_starts[event_count]=tick;
+        cap-=coil_drop[channel];
+        if(cap<1)cap=1;
+    }
     h->Instance->CR1|=TIM_CR1_CEN;
     return HAL_OK;
 }
@@ -190,7 +202,11 @@ int shooter_off(void) {stops++;timer9.CR1=0;enabled_channels=0;return 0;}
 /* These functions are extracted verbatim from production files below. */
 @FUNCTIONS@
 
-static void update(unsigned elapsed) {tick+=elapsed;board_monitor_update();assert(critical_depth==0);}
+static void update(unsigned elapsed) {
+    tick+=elapsed;
+    if(enabled_channels && (int32_t)(tick-pulse_end)>=0) timer9.CR1=0; /* OPM rollover: output idle low. */
+    board_monitor_update();assert(critical_depth==0);
+}
 static board_status_t status(void) {board_status_t s;board_monitor_get(&s);return s;}
 static void warmup(void) {board_monitor_init();update(10);update(10);assert(status().battery_valid);}
 static void pulses(unsigned n) {while(n--) dribbler_fg_edge();}
@@ -201,8 +217,8 @@ static void power_test(void)
     board_status_t s=status();
     assert(s.kicker_valid && s.battery_valid && s.current_valid);
     assert(fabsf(s.cap_v-170)<0.1f && fabsf(s.temperature-25)<0.1f);
-    assert(fabsf(s.bat_v-16)<0.001f && fabsf(s.current_a+1)<0.001f);
-    assert(get_bat_v()==(uint8_t)(16.0f/BAT_V_ADC_GAIN+0.5f));
+    assert(fabsf(s.bat_v-4.0f*BATTERY_CELLS)<0.001f && fabsf(s.current_a+1)<0.001f);
+    assert(get_bat_v()==(uint8_t)(4.0f*BATTERY_CELLS/BAT_V_ADC_GAIN+0.5f));
     assert(get_cap_v()==(uint8_t)(s.cap_v/CAP_V_ADC_GAIN+0.5f));
     assert(s.charge_enabled && pins[CHG_EN_Pin] && pins[KICK_CS_Pin]);
     cap=181;update(10);assert(!status().charge_enabled);
@@ -304,16 +320,84 @@ static void shutdown_test(void)
     pins[PDN_Pin]=0;update(10);update(40);assert(!board_is_shutdown());
     pins[PDN_Pin]=1;update(10);assert(!board_is_shutdown());
     pins[PDN_Pin]=0;update(10);update(50);
-    assert(board_is_shutdown() && !pins[KILL_Pin] && !pins[CHG_EN_Pin]);
+    assert(board_is_shutdown() && pins[KILL_Pin] && !pins[CHG_EN_Pin]);
+    assert(status().shutdown_state==BOARD_SHUTDOWN_DISCHARGING && event_count==1);
     assert(init_motor_calls==1 && stops==1);
     set_dribbler(1000,1);assert(timer11.CCR[0]==0);
     set_motor_pwm(1000,1000,1000,1000);assert(timer1.CCR[0]==0 && timer1.CCR[3]==0);
-    dribbler_set_target(1);tick+=100;dribbler_update();assert(timer11.CCR[0]==0);
-    shoot_on(127);assert(event_count==0);
+    dribbler_set_target(1);dribbler_update();assert(timer11.CCR[0]==0);
+    shoot_on(127);assert(event_count==1);
     set_buzzer(1);assert(timer8.CCR[0]==0);
-    update(0);assert(pins[KILL_Pin]);
-    update(100);assert(!pins[KILL_Pin]);
+    cap=1;
+    update(20);update(10);update(10);assert(pins[KILL_Pin]);
+    update(460);assert(!pins[KILL_Pin] && status().shutdown_state==BOARD_SHUTDOWN_KILL);
+    update(99);assert(!pins[KILL_Pin]);
+    update(1);assert(pins[KILL_Pin]);
+    update(100);assert(pins[KILL_Pin]); /* USB alive: a single pulse, no restart. */
     assert(critical_depth==0);
+}
+static void enter_shutdown(void) {
+    pins[PDN_Pin]=0;update(10);update(50);
+    assert(board_is_shutdown() && pins[KILL_Pin]);
+}
+static void discharge_test(int fallback) {
+    cap=180;coil_drop[0]=fallback?0:5;coil_drop[1]=5;
+    warmup();enter_shutdown();
+    assert(timer9.CCR[0]==611); /* 500 us, rounded to 25 timer counts. */
+    for(unsigned i=0;i<1200 && status().shutdown_state==BOARD_SHUTDOWN_DISCHARGING;i++)update(10);
+    assert(status().shutdown_state==BOARD_SHUTDOWN_KILL && cap<2);
+    assert(status().discharge_fault==BOARD_DISCHARGE_OK);
+    assert(status().discharge_failed_coils==(fallback?1:0));
+    assert(!pins[CHG_EN_Pin]);
+    for(int i=2;i<=event_count;i++) assert(pulse_starts[i]-pulse_starts[i-1]>=90);
+    assert(critical_depth==0);
+}
+static void failure_test(void) {
+    cap=180;warmup();enter_shutdown();
+    for(unsigned i=0;i<600 && status().shutdown_state==BOARD_SHUTDOWN_DISCHARGING;i++)update(10);
+    assert(status().shutdown_state==BOARD_SHUTDOWN_FAILED && status().discharge_failed_coils==3);
+    assert(status().discharge_fault==BOARD_DISCHARGE_COILS && pins[KILL_Pin] && !enabled_channels);
+    int pulses=event_count;
+    update(3100);assert(pins[KILL_Pin] && event_count==pulses); /* Original held button is not force-off. */
+    pins[PDN_Pin]=1;update(10);pins[PDN_Pin]=0;update(10);update(2900);
+    assert(pins[KILL_Pin]);
+    pins[PDN_Pin]=1;update(10);pins[PDN_Pin]=0;update(10);update(2999);
+    assert(pins[KILL_Pin]);update(1);assert(!pins[KILL_Pin]);
+    assert(status().shutdown_state==BOARD_SHUTDOWN_KILL && event_count==pulses && cap>100);
+}
+static void sensor_test(void) {
+    warmup();enter_shutdown();spi_error=1;int pulses=event_count;
+    update(499);assert(status().shutdown_state==BOARD_SHUTDOWN_DISCHARGING && pins[KILL_Pin]);
+    update(1);assert(status().shutdown_state==BOARD_SHUTDOWN_FAILED && pins[KILL_Pin]);
+    assert(status().discharge_fault==BOARD_DISCHARGE_SENSOR && event_count==pulses);
+}
+static void output_test(void) {
+    warmup();pwm_error=1;enter_shutdown();
+    assert(status().shutdown_state==BOARD_SHUTDOWN_FAILED && pins[KILL_Pin] && !enabled_channels);
+    assert(status().discharge_fault==BOARD_DISCHARGE_OUTPUT);
+}
+static void timeout_test(void) {
+    cap=240;coil_drop[0]=0.05f;warmup();enter_shutdown();
+    for(unsigned i=0;i<6000 && status().shutdown_state==BOARD_SHUTDOWN_DISCHARGING;i++)update(10);
+    assert(status().shutdown_state==BOARD_SHUTDOWN_FAILED && pins[KILL_Pin]);
+    assert(status().discharge_fault==BOARD_DISCHARGE_TIMEOUT && status().discharge_failed_coils==0);
+}
+static void quiet_test(void) {
+    warmup();bus_raw=(uint16_t)(BATTERY_CELLS*3.2f/0.00125f);update(10);
+    update(4999);assert(!board_actuators_disabled());
+    update(1);assert(board_actuators_disabled() && !board_is_shutdown() && status().quiet);
+    assert(init_motor_calls==1 && !pins[CHG_EN_Pin]);
+    set_motor_pwm(1000,1000,1000,1000);set_dribbler(1000,1);shoot_on(127);set_buzzer(1);
+    assert(timer1.CCR[0]==0 && timer11.CCR[0]==0 && timer8.CCR[0]==0 && event_count==0);
+    bus_raw=BATTERY_CELLS*3200;update(10);assert(status().quiet && !pins[CHG_EN_Pin]);
+    /* Continue sensing in quiet; severe undervoltage takes the same discharge route. */
+    bus_raw=(uint16_t)(BATTERY_CELLS*2.9f/0.00125f);update(10);update(999);
+    assert(!board_is_shutdown());update(1);assert(board_is_discharging() && pins[KILL_Pin]);
+    update(10);assert(event_count==1);
+}
+static void missing_power_test(void) {
+    i2c_error=1;spi_error=1;board_monitor_init();
+    update(10);update(5000);assert(status().quiet && !board_is_shutdown() && pins[KILL_Pin]);
 }
 int main(int argc,char **argv)
 {
@@ -323,6 +407,14 @@ int main(int argc,char **argv)
     else if(!strcmp(argv[1],"pulse"))pulse_test();
     else if(!strcmp(argv[1],"fg"))fg_test();
     else if(!strcmp(argv[1],"shutdown"))shutdown_test();
+    else if(!strcmp(argv[1],"discharge"))discharge_test(0);
+    else if(!strcmp(argv[1],"fallback"))discharge_test(1);
+    else if(!strcmp(argv[1],"failure"))failure_test();
+    else if(!strcmp(argv[1],"sensor"))sensor_test();
+    else if(!strcmp(argv[1],"output"))output_test();
+    else if(!strcmp(argv[1],"timeout"))timeout_test();
+    else if(!strcmp(argv[1],"quiet"))quiet_test();
+    else if(!strcmp(argv[1],"missing"))missing_power_test();
     else assert(0);
     printf("PASS: %s\n",argv[1]);
     return 0;
@@ -337,7 +429,7 @@ for name in ('spi', 'i2c', 'tim', 'gpio', 'misc', 'motor', 'action', 'robot', 'F
 
 functions = []
 for filename, names in {
-    'misc.c': ['start_kick', 'shoot_on', 'chip_on', 'get_bat_v', 'get_cap_v', 'is_power_low'],
+    'misc.c': ['kick_pulse', 'start_kick', 'discharge_on', 'shoot_on', 'chip_on', 'get_bat_v', 'get_cap_v', 'is_power_low'],
     'action.c': ['do_dribbler', 'set_dribbler', 'set_shooter'],
     'motor.c': ['set_motor_pwm'],
     'gpio.c': ['set_buzzer'],
@@ -348,8 +440,9 @@ for filename, names in {
         assert match, name
         functions.append(match.group(0))
 (BUILD / 'test.c').write_text(HARNESS.replace('@FUNCTIONS@', '\n\n'.join(functions)), encoding='utf-8')
-exe = BUILD / 'test.exe'
-subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', '-I', str(BUILD), '-I', str(CORE/'Inc'),
-                str(BUILD/'test.c'), str(CORE/'Src/board_monitor.c'), str(CORE/'Src/dribbler_control.c'), '-lm', '-o', str(exe)], check=True)
-for case in ('power', 'charge', 'pulse', 'fg', 'shutdown'):
-    subprocess.run([str(exe), case], check=True)
+for cells in (4,6):
+    exe = BUILD / f'test_{cells}s.exe'
+    subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', f'-DBATTERY_CELLS={cells}', '-I', str(BUILD), '-I', str(CORE/'Inc'),
+                    str(BUILD/'test.c'), str(CORE/'Src/board_monitor.c'), str(CORE/'Src/dribbler_control.c'), '-lm', '-o', str(exe)], check=True)
+    for case in ('power', 'charge', 'pulse', 'fg', 'shutdown','discharge','fallback','failure','sensor','output','timeout','quiet','missing'):
+        subprocess.run([str(exe), case], check=True)

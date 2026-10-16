@@ -8,6 +8,7 @@
 #include "tim.h"
 #include "spi.h"
 #include "board_monitor.h"
+#include "action.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "cmsis_os.h"
@@ -67,12 +68,49 @@ void OLED_Display_Init(void)
 
 
 /*******************************************************************************
+* @brief Update shutdown text only when the state or 400 ms dots phase changes.
+* @author COEX, Xuanting Liu
+*******************************************************************************/
+static void shutdown_display(void)
+{
+	static uint8_t last_state = 0xffU, last_phase = 0xffU;
+	static char *dots[] = { "   ", ".  ", ".. ", "..." };
+	board_status_t status;
+	uint8_t phase = (HAL_GetTick() / 400U) % 4U;
+	board_monitor_get(&status);
+	if(status.shutdown_state == last_state &&
+		(status.shutdown_state != BOARD_SHUTDOWN_DISCHARGING || phase == last_phase)) return;
+	last_state = status.shutdown_state;
+	last_phase = phase;
+	OLED_Clear();
+	if(status.shutdown_state == BOARD_SHUTDOWN_FAILED)
+	{
+		OLED_ShowString(0, 8, "Discharge Fail", OLED_6X8);
+		OLED_ShowString(0, 26, "Press the button 3s", OLED_6X8);
+		OLED_ShowString(0, 38, "to shut down", OLED_6X8);
+	}
+	else if(status.shutdown_state == BOARD_SHUTDOWN_KILL)
+		OLED_ShowString(0, 24, "Powering off", OLED_6X8);
+	else
+	{
+		OLED_ShowString(0, 24, "Discharging", OLED_6X8);
+		OLED_ShowString(66, 24, dots[phase], OLED_6X8);
+	}
+	OLED_Update();
+}
+
+/*******************************************************************************
 * @brief 机器人状态显示
 * @author Xuanting Liu
 *******************************************************************************/
 void Robot_State_Display(void)
 {
 	int i;
+	if(board_is_shutdown())
+	{
+		shutdown_display();
+		return;
+	}
 	OLED_ClearArea(0, 0, 128, 51);
 
 	switch(g_robot.mode)
@@ -283,29 +321,55 @@ void chip_off(void)
 * @brief Arm one high-active pulse; PWM2/HIGH returns low at the OPM rollover.
 * @author COEX, Xuanting Liu
 *******************************************************************************/
-static void start_kick(uint32_t channel, u32 value)
+static int kick_pulse(uint32_t channel, uint32_t ticks)
 {
 	uint32_t period = __HAL_TIM_GET_AUTORELOAD(&htim9) + 1U;
-	if(value == 0) return;
-	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
-	taskENTER_CRITICAL();
-	if(!board_kicker_ready() || (TIM9->CR1 & TIM_CR1_CEN))
-	{
-		taskEXIT_CRITICAL();
-		return;
-	}
+	if(ticks == 0 || period < 2U) return 0;
+	if(ticks >= period) ticks = period - 1U;
 	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
 	HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_RESET);
-	/* 20 us/tick: strength 1..127 gives 100 us..12.7 ms, exactly. */
-	value *= 5U;
-	if(value >= period) value = period - 1U;
-	__HAL_TIM_SET_COMPARE(&htim9, channel, period - value);
-	/* Reset both CNT and the prescaler phase before enabling the selected output. */
+	__HAL_TIM_SET_COMPARE(&htim9, channel, period - ticks);
 	HAL_TIM_GenerateEvent(&htim9, TIM_EVENTSOURCE_UPDATE);
 	__HAL_TIM_CLEAR_FLAG(&htim9, TIM_FLAG_UPDATE);
-	HAL_TIM_PWM_Start(&htim9, channel);
+	if(HAL_TIM_PWM_Start(&htim9, channel) != HAL_OK)
+	{
+		shooter_off();
+		return 0;
+	}
+	return 1;
+}
+
+/*******************************************************************************
+* @brief Normal kick remains subject to battery, capacitor and shutdown interlocks.
+* @author COEX, Xuanting Liu
+*******************************************************************************/
+static void start_kick(uint32_t channel, u32 value)
+{
+	if(value == 0) return;
+	if(value > MAX_SHOT_STRENGTH) value = MAX_SHOT_STRENGTH;
+	taskENTER_CRITICAL();
+	if(board_kicker_ready() && !(TIM9->CR1 & TIM_CR1_CEN))
+		kick_pulse(channel, value * 5U);
 	taskEXIT_CRITICAL();
+}
+
+/*******************************************************************************
+* @brief Dedicated shutdown pulse; caller requires a fresh valid capacitor measurement.
+* @author COEX, Xuanting Liu
+*******************************************************************************/
+int discharge_on(uint8_t device, uint32_t duration_us)
+{
+	int result = 0;
+	if(device > 1U || duration_us == 0U) return 0;
+	taskENTER_CRITICAL();
+	if(board_is_discharging() && KICKER_CALIBRATION_CONFIRMED &&
+		!(TIM9->CR1 & TIM_CR1_CEN) &&
+		(TIM9->CCER & (TIM_CCER_CC1P | TIM_CCER_CC2P)) == 0)
+		result = kick_pulse(device ? TIM_CHANNEL_2 : TIM_CHANNEL_1,
+			(duration_us + KICKER_TIMER_TICK_US / 2U) / KICKER_TIMER_TICK_US);
+	taskEXIT_CRITICAL();
+	return result;
 }
 
 /*******************************************************************************

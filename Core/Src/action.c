@@ -99,7 +99,7 @@ void set_dribbler(u16 value, u8 dir)
 	}
 #endif
 	taskENTER_CRITICAL();
-	if(board_is_shutdown()) value = 0;
+	if(board_actuators_disabled()) value = 0;
 	if(value > __HAL_TIM_GET_AUTORELOAD(&htim11) + 1U)
 		value = __HAL_TIM_GET_AUTORELOAD(&htim11) + 1U;
 	__HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, value);

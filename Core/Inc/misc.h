@@ -17,6 +17,7 @@ void heart_led_spi_wr(u8 val);
 void heart_beat(void);
 void shoot_on(u32 value);
 void chip_on(u32 value);
+int discharge_on(uint8_t device, uint32_t duration_us);
 u8 get_cap_v(void);
 int is_power_low(void);
 u8 get_bat_v(void);

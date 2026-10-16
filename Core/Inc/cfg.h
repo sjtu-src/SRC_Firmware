@@ -24,8 +24,11 @@
 #define OLD_DIRB_MOTOR 0
 #define NEW_DIRB_MOTOR 1
 
+#define OLD_DIR 0
+#define NEW_DIR 1
+
 //机器人型号
-#define ROBOT_VERSION NEUMANN_S02
+#define ROBOT_VERSION TT_0
 // 吸球电机型号
 // #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
 
@@ -35,24 +38,35 @@
     #define ENCODER_TYPE OPTICAL_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
     #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
+    #define DRIB_DIR  OLD_DIR
 #elif (ROBOT_VERSION == NEUMANN_S01)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 500    //电机一圈编码器线数
     #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
+    #define DRIB_DIR  OLD_DIR
 #elif (ROBOT_VERSION == NEUMANN_S02)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE NEW_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 500    //电机一圈编码器线数
     #define DIRB_MOTOR_VERSION NEW_DIRB_MOTOR
+    #define DRIB_DIR  OLD_DIR
 #elif (ROBOT_VERSION == NEUMANN_OPTICAL)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE OPTICAL_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
     #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
+    #define DRIB_DIR  OLD_DIR
+#elif (ROBOT_VERSION == TT_0)
+    #define INFRA_TYPE NEW_INFRA
+    #define MOTOR_TYPE OLD_MOTOR
+    #define ENCODER_TYPE OPTICAL_ENCODER
+    #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
+    #define DIRB_MOTOR_VERSION NEW_DRIB_MOTOR
+    #define DRIB_DIR  NEW_DIR
 #else
     #error "Please select robot version"
 #endif
@@ -60,7 +74,7 @@
 /* Final scale applied to every wheel speed command. Keep heading reference
  * conversion tied to this value so command feedforward uses the same scale.
  */
-#if (ROBOT_VERSION == NEUMANN_S02)
+#if (MOTOR_TYPE == NEW_MOTOR)
     #define MOTION_COMMAND_GAIN 8.0f
 #else
     #define MOTION_COMMAND_GAIN 3.0f
@@ -201,7 +215,11 @@
 #define MOTOR_TORQUE_LIMIT	275.0f
 // #define MOTOR_TORQUE_LIMIT	97.1f
 
-#define BATTERY_V   13.0f /* measured in V, maybe detected while running */
+/* Set 4 while using the original pack, 6 for the new pack. COEX, Xuanting Liu */
+#ifndef BATTERY_CELLS
+#define BATTERY_CELLS 6U
+#endif
+#define BATTERY_V (3.7f * BATTERY_CELLS)
 
 #define MAX_SHOT_STRENGTH 127
 #define MAX_ACC 10	/* 限定车子的加速度 */
@@ -295,8 +313,23 @@
 #define IR_BALL_PWM_DUTY	20		//20%
 
 /* Low power limit define */
-#define WARNING_POWER_A 13.5f       //电池电压阈值1 单位v 蜂鸣器响
-#define FORCESTOP_POWER_A 13.2f     //电池电压阈值2  停止机器人
+/* Per-cell limits; no automatic cell-count detection. COEX, Xuanting Liu */
+#define WARNING_POWER_A (3.5f * BATTERY_CELLS)
+#define FORCESTOP_POWER_A (3.3f * BATTERY_CELLS)
+#define SHUTDOWN_POWER_A (3.0f * BATTERY_CELLS)
+#define BATTERY_QUIET_MS 5000U
+#define BATTERY_SHUTDOWN_MS 1000U
+
+/* Dedicated TIGERs-style discharge parameters. COEX, Xuanting Liu */
+#define SHUTDOWN_PDN_DEBOUNCE_MS 50U
+#define SHUTDOWN_FORCE_HOLD_MS 3000U
+#define KICKER_TIMER_TICK_US 20U
+#define KICKER_DISCHARGE_TARGET_V 2.0f
+#define KICKER_DISCHARGE_COOLDOWN_MS 80U
+#define KICKER_DISCHARGE_PROGRESS_MS 2000U
+#define KICKER_DISCHARGE_MIN_DROP_V 0.25f
+#define KICKER_DISCHARGE_SENSOR_TIMEOUT_MS 500U
+#define KICKER_DISCHARGE_TIMEOUT_MS 60000U
 
 #define WARNING_POWER_D 	(WARNING_POWER_A * 3.3f / (22 + 3.3f) / 3.3f * 256)
 #define FORCESTOP_POWER_D 	(FORCESTOP_POWER_A * 3.3f / (22 + 3.3f) / 3.3f * 256)

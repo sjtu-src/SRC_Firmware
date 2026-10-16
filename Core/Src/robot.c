@@ -17,6 +17,7 @@
 #include "cmsis_os.h"
 #include "simulate_i2c.h"
 #include "oled.h"
+#include "board_monitor.h"
 
 u32 cpuID[3];  //32bit cpuid
 u8  cpuid_data[12]; //12Byte couid
@@ -36,7 +37,6 @@ extern timer_t identify_cpuid_tim;   //cpuid认证超时时间 设置为10S
 extern timer_t shoot_interval_timer;
 extern packet_robot_t src_robot_packet;
 
-int forcestopcounter=0;
 
 int test_drib_speed = 0;
 int test_drib_stage = 0;
@@ -245,57 +245,18 @@ void  inc_receive_mode_flag(void)
 *******************************************************************************/
 void do_robot_run(void)
 {
-		/* check battery voltage */
-    #ifdef ENABLE_POWERMON 
+	/* BoardUpdate owns the time-based quiet/shutdown interlocks.
+	 * Keep this task and the radio alive. Author: COEX, Xuanting Liu
+	 */
+    #ifdef ENABLE_POWERMON
         if(check_timer(power_mon_timer))
         {
           power_mon_timer = get_one_timer(POWER_MON_TIME);
-          if(do_power_monitor() == 2)//电池电压降低到设定阈值1 则蜂鸣器报警 降到阈值2则停止机器人
-			{
-				/* battery voltage is too low, I will stop the robot */
-				forcestopcounter++;
-				if(forcestopcounter >= 5000)
-				{
-					for(int i = 0; i < CHANNEL_NUM; i++)
-					{
-					g_robot.wheels[i].set = 0;
-					g_robot.wheels[i].cur_position = 0;
-					g_robot.wheels[i].pid.set = 0;
-					}
-
-					do_dribbler(0);
-					HeadingControl_Reset(&g_robot.heading_control);
-					do_move(0,0,0,g_robot.PID_type);
-					do_shoot(0,0);
-					do_chip(0,0);
-					//Very important: clear the packet when communication timeout.
-					src_robot_packet.shoot = 0;
-					src_robot_packet.chip = 0;
-					src_robot_packet.dribbler = 0;
-					src_robot_packet.speed_x = 0;
-					src_robot_packet.speed_y = 0;
-					src_robot_packet.speed_rot = 0;
-					BEEP_OFF();
-				
-					while(1) /* stop robot */
-					{
-						set_heart_led(100, 0, 0, 0x1f);
-						set_heart_led(100, 0, 0, 0x1f);						
-						osDelay(100);
-						BEEP_OFF();
-						set_heart_led(0, 0, 0, 0x00);
-						set_heart_led(0, 0, 0, 0x00);
-						osDelay(1000);
-					}
-				}
-			}
-		  else
-			{
-				if(forcestopcounter > 0) forcestopcounter--;
-			}
+          do_power_monitor();
         }
     #endif
-		
+	if(board_actuators_disabled()) return;
+
     #ifdef ENABLE_HEARTBEAT
         /* heart led */
         if(check_timer(heart_led_timer))

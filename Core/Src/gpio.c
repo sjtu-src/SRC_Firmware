@@ -230,7 +230,7 @@ void set_buzzer(uint8_t enable)
 	uint32_t primask = __get_PRIMASK();
 	/* Also called before the scheduler: preserve the startup interrupt mask. */
 	__disable_irq();
-	duty = (enable && !board_is_shutdown()) ?
+	duty = (enable && !board_actuators_disabled()) ?
 		(__HAL_TIM_GET_AUTORELOAD(&htim8) + 1U) / 2U : 0U;
 	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, duty);
 	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);

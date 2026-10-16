@@ -109,7 +109,7 @@ void set_motor_pwm(u16 m1, u16 m2, u16 m3, u16 m4)
 	uint32_t primask = __get_PRIMASK();
 	/* init_motor() also runs before the scheduler. */
 	__disable_irq();
-	if(board_is_shutdown()) m1 = m2 = m3 = m4 = 0;
+	if(board_actuators_disabled()) m1 = m2 = m3 = m4 = 0;
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, m1);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, m2);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, m3);
@@ -132,7 +132,7 @@ void do_update_motor(void)
 	int cur_speed[CHANNEL_NUM]; //count/s
 	static u16 mismatch_cnt[CHANNEL_NUM] = {0};
 
-	if(is_motor_run == 0 || board_is_shutdown()) return;
+	if(is_motor_run == 0 || board_actuators_disabled()) return;
 	
 	/* update the speed */
 	update_encoder(cur_pos, cur_speed);
@@ -296,6 +296,7 @@ void start_encoder(void)
 void start_motor(void)
 {
 	u8 i;
+	if(board_actuators_disabled()) return;
 	
 	for(i = 0; i < CHANNEL_NUM; i++)
 	{
