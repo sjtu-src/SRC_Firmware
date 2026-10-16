@@ -1,2 +1,39 @@
 /tmp/
 /output/
+
+# Keil build output
+/SRC_Firmware/
+/Objects/
+/Listings/
+/SRC_Firmware.BAT
+*.o
+*.obj
+*.d
+*.dep
+*.axf
+*.elf
+*.hex
+*.bin
+*.map
+*.lst
+*.lnp
+*.crf
+*.iex
+*.build_log.htm
+*.__i
+*._ia
+
+# Build and debugger logs
+*.log
+/JLinkLog*.txt
+
+# Keil per-user settings and backups
+*.uvguix.*
+*.uvoptx
+*.uvprojx.bak
+*.uvoptx.bak
+*.bak
+
+# Python test cache
+__pycache__/
+*.pyc
