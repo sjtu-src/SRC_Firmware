@@ -20,6 +20,7 @@
 #define NEUMANN_S01 1
 #define NEUMANN_S02 2
 #define NEUMANN_OPTICAL 3
+#define TT_0 4
 
 #define OLD_DIRB_MOTOR 0
 #define NEW_DIRB_MOTOR 1

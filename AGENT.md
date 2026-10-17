@@ -300,3 +300,37 @@ P3：以每车参数与可复现数据维护能力包络，逐步引入摩擦补
 - 已知限制、待办与被取代的旧结论。
 
 优先级：用户当前明确要求 > 适用 AGENTS.md > 本文件已有结论；实时源码/实测证据优于旧说明。实物参数、引脚、控制增益、协议字段或上位机行为改变时，应更新相关专题文档和本文件。未经验证，不宣称“稳定吸球”“绝对航向无漂移”“实现了电流闭环”。
+
+
+## 11. 2026-10-17 MODE3 开机音乐
+
+- 基线：分支 TEST_TIGERs_Archetecture，提交 2245581e24d732d1969edf2b6c689e8e04b10931；开始时工作区干净。
+- 用户要求：将自检模式 MODE3 开机蜂鸣器改为所附《小猪佩奇》谱例，可独立使用 music.h。
+- 实际改动：新增 Core/Inc/music.h，按用户图片第一页片头第 1–12 小节制作单声部简化音符表（C 调、96 BPM、十六分音符时值，省略伴奏并简化密集装饰音）。并非整首六页曲谱或原声录音。
+- Core/Src/freertos.c：仅 SELFTEST_MODE=3 用 Play_Mode3Music 替换原四声模式提示，播放一次约 15.6 秒；其他模式保持原提示。音乐结束后继续原有 1 秒间隔、MPU6050 检测和检测结果提示，因此自检动作开始相应延后。
+- 沿用 PC6/TIM8 CH1、现有预分频和 50% PWM，由 APB2 时钟计算音符周期；结束/中断恢复原 ARR（当前 499，即 2 kHz）并静音。不修改引脚、车型、控制增益、协议、外设初始化或任务配置。
+- 继续经过 set_buzzer 的 board_actuators_disabled 保护，每个音符前也检查禁用状态，关机期间的 Board 任务仍可运行。
+- 验证：python tests/test_board_migration.py，4S/6S 全部通过；tmp/mode3_verify.py 提取实际播放函数，以 GCC -Wall -Wextra -Werror 编译模拟，验证 15600 ms / 73 个有声音符、恢复 ARR、最终静音和关机中断；git diff --check 通过。模拟文件位于忽略的 tmp 目录。
+- 限制：未烧录、未实机试听或示波器测频；图片为六页中的第一页，此实现是该页片头的蜂鸣器简化版，不宣称完整复现钢琴伴奏或所有装饰音。宿主模拟不替代硬件验证。
+- 完整构建：E:/Keil_v5/UV4/UV4.exe -b SRC_Firmware.uvprojx -o tmp/mode3_build.log，成功生成 AXF/HEX，0 Error(s)、0 Warning(s)；日志 MDK-ARM/tmp/mode3_build.log。Windows 沙箱初始化失败，本次授权源码/文档写入及验证使用沙箱外执行路径。
+
+
+## 12. 2026-10-17 MODE3 改用用户文字谱
+
+- 基线仍为 TEST_TIGERs_Archetecture / 2245581e24d732d1969edf2b6c689e8e04b10931；保留上一任务尚未提交的 freertos.c、music.h 和本文改动。
+- 按用户后续要求，Core/Inc/music.h 中原片头音符表原样保留并改名 pepa_pig；新文字谱命名 mode3_music，现有播放函数直接使用新表，无需修改播放逻辑。
+- 采用 C 调，保持原音区约定 1=C5（523 Hz），6=A5（880 Hz），高八度 1'=C6（1047 Hz）；每音 1/4 拍即一个十六分音符，沿用 96 BPM。末尾 7 - - - 为同一音延长四个单位，不重复触发，非休止。
+- 新谱 50 个发声音符，共 53 个十六分音符单位；现有整数毫秒播放累计 8269 ms（理论约 8.281 s，不含调度误差）。本节取代第 11 节“当前 MODE3 播放佩奇片头约 15.6 秒”的描述，旧表仅作为备用保留。
+- 验证：tmp/mode3_replace.py 独立按用户文字谱逐音检查频率与时值；GCC -Wall -Wextra -Werror 编译实际播放函数模拟，50 个音符 / 8269 ms、结束静音、恢复 ARR 和关机中断均通过。Keil 完整工程增量构建通过，生成 AXF/HEX，0 Error(s)、0 Warning(s)，日志 tmp/mode3_replace_build.log。git diff --check 通过。
+- 未烧录或实机试听；其他模式、后续 MPU6050 提示、硬件配置及保护逻辑沿用上一实现。
+
+
+## 13. 2026-10-17 增加 MODE3 单行选曲接口
+
+- 基线仍为 TEST_TIGERs_Archetecture / 2245581e24d732d1969edf2b6c689e8e04b10931，保留现有工作区及用户 cfg.h 修改。
+- 用户要求可直接指定曲目名称，免去交换数组名。Core/Inc/music.h 新增 `#define MODE3_MUSIC pepa_pig`，改为 `mode3_music` 即选用用户文字谱；两份音符数据及名称保持不变。
+- Core/Src/freertos.c 播放函数读取 MODE3_MUSIC，MODE3_MUSIC_COUNT 也由该宏的实际数组计算，当前已选佩奇。
+- 本轮读取时发现 COUNT 已改用 pepa_pig，但播放器仍读取 mode3_music，两者长度不一致会越界；本次统一曲目与长度来源，消除此隐患。此前建议交换数组名称不够方便，现以本接口为准。
+- tmp/music_select_edit.py 提取当前播放函数，GCC -Wall -Wextra -Werror 分别模拟两种选曲；佩奇 73 个有声音符 / 15600 ms，新谱 50 个 / 8269 ms，均验证结束静音、恢复频率和关机中断。git diff --check 通过。
+- 未烧录或实机试听。
+- Keil 工程构建通过，AXF/HEX 已生成，0 Error(s)、0 Warning(s)，日志 MDK-ARM/tmp/music_select_build.log。

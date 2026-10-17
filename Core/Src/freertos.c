@@ -39,6 +39,7 @@
 #include "i2c.h"
 #include "board_monitor.h"
 #include "dribbler_control.h"
+#include "music.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -84,6 +85,7 @@ osThreadId IdleHandle;
 /* USER CODE BEGIN FunctionPrototypes */
 static void Update_Imu(void const *argument);
 static void Update_Board(void const *argument);
+static void Play_Mode3Music(void);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -272,16 +274,22 @@ void RobotTask(void const * argument)
   /* USER CODE BEGIN RobotTask */
 	int i;
 	
-	i = g_robot.mode + 1;		
-
-	while(i != 0)
-	{
-			BEEP_ON();
-			osDelay(100);
-			BEEP_OFF();
-			osDelay(100);
-			i--;
-	}
+    if (g_robot.mode == SELFTEST_MODE)
+    {
+        Play_Mode3Music();
+    }
+    else
+    {
+        i = g_robot.mode + 1;
+        while (i != 0)
+        {
+            BEEP_ON();
+            osDelay(100);
+            BEEP_OFF();
+            osDelay(100);
+            i--;
+        }
+    }
 
     /* Separate the gyro result from the preceding mode beep sequence. */
     BEEP_OFF();
@@ -383,6 +391,42 @@ void Do_Default(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
+/* TIM8 is dedicated to PC6 buzzer. Keep the existing shutdown interlock
+ * in set_buzzer(), and restore its original pitch before any status beep.
+ */
+static void Play_Mode3Music(void)
+{
+    uint32_t saved_arr = __HAL_TIM_GET_AUTORELOAD(&htim8);
+    uint32_t timer_clock = HAL_RCC_GetPCLK2Freq();
+    uint32_t counter_clock;
+    uint32_t n;
+    if ((RCC->CFGR & RCC_CFGR_PPRE2) != 0U) timer_clock *= 2U;
+    counter_clock = timer_clock / (htim8.Instance->PSC + 1U);
+    for (n = 0U; n < MODE3_MUSIC_COUNT; ++n)
+    {
+        uint32_t duration = (60000U * MODE3_MUSIC[n].sixteenths) /
+                            (MUSIC_BPM * 4U);
+        uint32_t gap = duration / 10U;
+        uint32_t hz = MODE3_MUSIC[n].frequency_hz;
+        if (board_actuators_disabled()) break;
+        BEEP_OFF();
+        if (hz != 0U)
+        {
+            uint32_t period = (counter_clock + hz / 2U) / hz;
+            __HAL_TIM_SET_AUTORELOAD(&htim8, period - 1U);
+            __HAL_TIM_SET_COUNTER(&htim8, 0U);
+            BEEP_ON();
+        }
+        osDelay(duration - gap);
+        BEEP_OFF();
+        osDelay(gap);
+    }
+    BEEP_OFF();
+    __HAL_TIM_SET_AUTORELOAD(&htim8, saved_arr);
+    __HAL_TIM_SET_COUNTER(&htim8, 0U);
+}
+
 /*******************************************************************************
 * @brief Sample the IMU at nominal 100 Hz; publish a consistent robot snapshot.
 * @note Leave the board stationary for at least two seconds after startup.
