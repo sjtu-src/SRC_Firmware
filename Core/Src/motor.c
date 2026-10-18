@@ -37,6 +37,39 @@ static void motor_emergency_stop(void)
 TIM_TypeDef * encoder_tab[4] = {TIM5, TIM3, TIM4, TIM2};  //encoder1 encoder2 encoder3 encoder4 
 
 /*******************************************************************************
+* @brief Coast throughout boot with PWM pins held inactive high as GPIO.
+* @note Keep the original I2C/peripheral startup ordering; TIM1 starts later.
+*******************************************************************************/
+void motor_hold_startup(void)
+{
+    set_motor_break(1, 1, 1, 1);
+    set_motor_dir(0, 0, 0, 0);
+    set_motor_pwm(0, 0, 0, 0);
+    is_motor_run = 0;
+}
+
+/* Called once from start_motor(), at the original post-startup PWM time. */
+void motor_prepare_pwm(void)
+{
+    set_motor_break(1, 1, 1, 1);
+    set_motor_pwm(0, 0, 0, 0);
+    /* Transfer zero CCR/ARR preloads before enabling the active-low outputs. */
+    if (HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE) != HAL_OK)
+        Error_Handler();
+    __HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
+    if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK ||
+        HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2) != HAL_OK ||
+        HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3) != HAL_OK ||
+        HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4) != HAL_OK)
+        Error_Handler();
+    /* GPIO has kept ENABLE high while the internal channels were started.
+     * PWM1 + low polarity + CCR=0 is also high: hand over without driving.
+     * On any HAL failure above, pins remain GPIO high and motors coast.
+     */
+    HAL_TIM_MspPostInit(&htim1);
+}
+
+/*******************************************************************************
 *@author Xuanting Liu
 *@brief 电机初始化
 *******************************************************************************/
@@ -305,15 +338,23 @@ void start_motor(void)
 
 	start_encoder();
 
-	DIS_INT();
-	is_motor_run = 1;
-	EN_INT();
+    /* Register-only setup: keep the transition atomic with shutdown tasks. */
+    {
+        uint32_t primask = __get_PRIMASK();
+        __disable_irq();
+        if (!board_actuators_disabled())
+        {
+            motor_prepare_pwm();
+            if (!board_actuators_disabled())
+            {
+                set_motor_break(1, 1, 1, 1);
+                is_motor_run = 1;
+            }
+        }
+        __set_PRIMASK(primask);
+    }
+    if (is_motor_run) HAL_TIM_Base_Start_IT(&htim1);
 
-    HAL_TIM_Base_Start_IT(&htim1);
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);  
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 }
 
 

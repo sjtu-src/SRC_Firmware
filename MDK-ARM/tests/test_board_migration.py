@@ -58,6 +58,10 @@ extern SPI_HandleTypeDef hspi2;
 #define KICK_ERR_Pin 3
 #define PDN_Pin 4
 #define SMB_ALERT_Pin 5
+#define SMB_SCL_GPIO_Port 0
+#define SMB_SDA_GPIO_Port 0
+#define SMB_SCL_Pin 6
+#define SMB_SDA_Pin 7
 extern int critical_depth;
 extern uint32_t irq_mask;
 #define __get_PRIMASK() irq_mask
@@ -69,6 +73,7 @@ uint32_t HAL_GetTick(void);
 void HAL_GPIO_WritePin(int, uint16_t, GPIO_PinState);
 GPIO_PinState HAL_GPIO_ReadPin(int, uint16_t);
 HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef*,uint8_t*,uint8_t*,uint16_t,uint32_t);
+uint32_t HAL_I2C_GetError(I2C_HandleTypeDef*);
 HAL_StatusTypeDef HAL_I2C_Mem_Read(I2C_HandleTypeDef*,uint16_t,uint16_t,uint16_t,uint8_t*,uint16_t,uint32_t);
 HAL_StatusTypeDef HAL_I2C_Mem_Write(I2C_HandleTypeDef*,uint16_t,uint16_t,uint16_t,uint8_t*,uint16_t,uint32_t);
 HAL_StatusTypeDef HAL_TIM_PWM_Start(TIM_HandleTypeDef*,uint32_t);
@@ -115,7 +120,9 @@ char shooter;
 int critical_depth;
 uint32_t irq_mask;
 static uint32_t tick;
-static int pins[6] = {1,0,1,1,1,1};
+static int pins[8] = {1,0,1,1,1,1,1,1};
+static uint32_t mock_i2c_error=0x220;
+static int write_error_reg=-1;
 static int spi_error, i2c_error, bad_adc, no_ready;
 static int init_motor_calls, stops;
 static float cap=170.0f, temperature=25.0f;
@@ -128,6 +135,7 @@ static float coil_drop[2];
 static int pwm_error;
 
 uint32_t HAL_GetTick(void) {return tick;}
+uint32_t HAL_I2C_GetError(I2C_HandleTypeDef *h) {assert(h==&hi2c3);return mock_i2c_error;}
 void HAL_GPIO_WritePin(int port,uint16_t pin,GPIO_PinState value) {(void)port;pins[pin]=value;}
 GPIO_PinState HAL_GPIO_ReadPin(int port,uint16_t pin) {(void)port;return pins[pin];}
 HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *h,uint8_t *tx,uint8_t *rx,uint16_t n,uint32_t timeout)
@@ -166,7 +174,7 @@ HAL_StatusTypeDef HAL_I2C_Mem_Write(I2C_HandleTypeDef *h,uint16_t addr,uint16_t 
     assert(critical_depth==0);
     uint16_t value=((uint16_t)data[0]<<8)|data[1];
     assert((reg==0 && value==0x42df)||(reg==6 && value==0x400));
-    return i2c_error?HAL_ERROR:HAL_OK;
+    return (i2c_error || reg==write_error_reg)?HAL_ERROR:HAL_OK;
 }
 HAL_StatusTypeDef HAL_TIM_PWM_Start(TIM_HandleTypeDef *h,uint32_t channel)
 {
@@ -237,6 +245,26 @@ static void power_test(void)
     assert(get_bat_v()==0 && is_power_low()==2);
     i2c_error=0;update(1000);update(10);assert(status().battery_valid);
     no_ready=1;update(101);assert(!status().battery_valid);
+}
+static void battery_diag_test(int write)
+{
+    if(write) write_error_reg=0; else i2c_error=1;
+    board_monitor_init();update(10);
+    assert(g_battery_diag.failures==1 && !g_battery_diag.battery_valid);
+    assert(g_battery_diag.first_error==0x220 && g_battery_diag.first_hal_status==HAL_ERROR);
+    assert(g_battery_diag.first_register==(write?0:0xfe) && g_battery_diag.first_write==write);
+    assert(g_battery_diag.scl_high && g_battery_diag.sda_high);
+    uint32_t first=g_battery_diag.first_failure_ms;
+    mock_i2c_error=4;pins[SMB_SCL_Pin]=pins[SMB_SDA_Pin]=0;
+    update(1000);
+    assert(g_battery_diag.failures==2 && g_battery_diag.first_error==0x220);
+    assert(g_battery_diag.first_failure_ms==first && g_battery_diag.scl_high && g_battery_diag.sda_high);
+    i2c_error=0;write_error_reg=-1;update(1000);update(10);
+    assert(g_battery_diag.battery_valid && g_battery_diag.ina226_ready);
+    assert(g_battery_diag.manufacturer_id==0x5449 && g_battery_diag.device_id==0x2260);
+    assert(g_battery_diag.bat_v>0 && g_battery_diag.failures==2);
+    /* A missing capacitor board does not prevent independent battery reads. */
+    spi_error=1;update(10);assert(g_battery_diag.battery_valid && !status().kicker_valid);
 }
 static void charge_test(void)
 {
@@ -402,7 +430,9 @@ static void missing_power_test(void) {
 int main(int argc,char **argv)
 {
     assert(argc==2);
-    if(!strcmp(argv[1],"power"))power_test();
+    if(!strcmp(argv[1],"diag_read"))battery_diag_test(0);
+    else if(!strcmp(argv[1],"diag_write"))battery_diag_test(1);
+    else if(!strcmp(argv[1],"power"))power_test();
     else if(!strcmp(argv[1],"charge"))charge_test();
     else if(!strcmp(argv[1],"pulse"))pulse_test();
     else if(!strcmp(argv[1],"fg"))fg_test();
@@ -444,5 +474,5 @@ for cells in (4,6):
     exe = BUILD / f'test_{cells}s.exe'
     subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', f'-DBATTERY_CELLS={cells}', '-I', str(BUILD), '-I', str(CORE/'Inc'),
                     str(BUILD/'test.c'), str(CORE/'Src/board_monitor.c'), str(CORE/'Src/dribbler_control.c'), '-lm', '-o', str(exe)], check=True)
-    for case in ('power', 'charge', 'pulse', 'fg', 'shutdown','discharge','fallback','failure','sensor','output','timeout','quiet','missing'):
+    for case in ('diag_read', 'diag_write', 'power', 'charge', 'pulse', 'fg', 'shutdown','discharge','fallback','failure','sensor','output','timeout','quiet','missing'):
         subprocess.run([str(exe), case], check=True)

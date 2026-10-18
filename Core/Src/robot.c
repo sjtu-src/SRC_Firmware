@@ -51,7 +51,7 @@ void SRC_Robot_Init(void)
 	int delay;
 
 	init_gpio();
-	init_motor();
+	motor_hold_startup();
 	init_dribbler();
 	init_nrf24l01();
 	init_Power_Board();

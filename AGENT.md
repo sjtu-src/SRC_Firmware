@@ -1,6 +1,6 @@
-﻿# SRC RoboCup SSL 下位机：项目背景、TIGERs 对比与持续工作记录
+# SRC RoboCup SSL 下位机：项目背景、TIGERs 对比与持续工作记录
 
-更新日期：2026-10-16（Asia/Shanghai）。本文件是项目长期知识入口；自动化协作入口见同目录 AGENTS.md。
+更新日期：2026-10-18（Asia/Shanghai）。本文件是项目长期知识入口；自动化协作入口见同目录 AGENTS.md。
 
 ## 1. 项目背景与证据范围
 
@@ -50,7 +50,9 @@
 
 ## 3. 必须优先核验的具体问题
 
-### P0：当前车型宏存在确定的预处理问题
+### P0：2026-10-16 基线的车型宏问题（当前状态见下）
+
+2026-10-18 复核：当前 d76a6f1 工作树已定义 `TT_0=4`，因此“不定义 TT_0 导致落入 LEBO”不再适用于当前源码；下文保留为旧基线证据。TT 分支仍写 `NEW_DRIB_MOTOR`，与已定义的 `NEW_DIRB_MOTOR` 不同，需单独核对，本次未修改车型配置。
 
 证据：Core/Inc/cfg.h:31 写 ROBOT_VERSION TT_0；TT_0 在所查源码及 Keil Define 中未定义。LEBO_ROBOT=0，且该分支出现在 TT_0 分支之前。
 
@@ -334,3 +336,247 @@ P3：以每车参数与可复现数据维护能力包络，逐步引入摩擦补
 - tmp/music_select_edit.py 提取当前播放函数，GCC -Wall -Wextra -Werror 分别模拟两种选曲；佩奇 73 个有声音符 / 15600 ms，新谱 50 个 / 8269 ms，均验证结束静音、恢复频率和关机中断。git diff --check 通过。
 - 未烧录或实机试听。
 - Keil 工程构建通过，AXF/HEX 已生成，0 Error(s)、0 Warning(s)，日志 MDK-ARM/tmp/music_select_build.log。
+
+
+## 14. 2026-10-17 新增 valorant 开机曲
+
+- 当前基线：TEST_TIGERs_Archetecture / d76a6f1；开始时 music.h 已有工作区修改，保留其内容。
+- 用户要求新增 `3 3 - 3 6`，命名 valorant，开机只播一遍。Core/Inc/music.h 新增 valorant[]，频率/时值为 {659,1}, {659,2}, {659,1}, {880,1}；沿用 C5 基准和 96 BPM、每单位 1/4 拍，横线延长第二个 3，合计四次发声、五单位时值。
+- MODE3_MUSIC 已选择 valorant，原 pepa_pig 与 mode3_music 均保留。播放器已有 MODE3 启动单次调用，无循环重播，随后仍继续原 MPU6050 自检及其提示音。
+- tmp/valorant_edit.py 提取当前播放函数并用 GCC -Wall -Wextra -Werror 编译模拟，通过 4 个音符 / 780 ms、结束静音、恢复原频率和关机中断；git diff --check 通过。未烧录、未实机试听。
+- Keil 工程构建通过，生成 AXF/HEX，0 Error(s)、0 Warning(s)，日志 MDK-ARM/tmp/valorant_build.log。
+
+
+## 15. 2026-10-17 修正 valorant 横线为间隔
+
+- 基线 TEST_TIGERs_Archetecture / d76a6f1，保留现有未提交修改。
+- 用户明确 `3 3 - 3 6` 中横线表示间隔，纠正第 14 节的延音解释。Core/Inc/music.h 中 valorant 改为 {659,1}, {659,1}, {0,1}, {659,1}, {880,1}，频率零表示静音；五段各 1/4 拍，96 BPM 下整数时长仍为 780 ms。
+- 继续选择 valorant，MODE3 开机只播放一次；其余曲目保持现状。本次解释修正针对用户当前 valorant 谱。
+- 验证：Keil 增量构建通过，生成 AXF/HEX，0 Error(s)、0 Warning(s)，日志 tmp/valorant_rest_build.log；git diff --check 通过。未烧录或实机试听。
+
+
+## 16. 2026-10-18 音乐修订与开机轮动、功率板不升压分析
+
+### 本次基线与实机反馈
+
+- 分支 TEST_TIGERs_Archetecture，HEAD d76a6f1（Add music）。开始时 AGENT.md、Core/Inc/music.h、MDK-ARM/SRC_Firmware.uvprojx 已有改动；保留工程中的 ARMCC 5.05 工具链选择，不覆盖用户修改。
+- 用户实机反馈：右前轮在刚上电、音乐之前突然动一下，其他轮子不动；使用一块 6S 电池，显示 BAT=22.2 V、CAP=0.1 V，界面没有温度显示。以上是用户观测，不是本次连接硬件测得。
+- 本地 TIGERs 仍是 E:/SRC/Tigers/Firmware-master/Firmware-master 的 main2019 / README v2020 参考，未取得可靠提交号，不代表现役比赛固件。本次比较直接读取本地源码，未构建 TIGERs。
+
+### 当前音乐接口与实际改动
+
+- Core/Inc/music.h 中保留 pepa_pig、mode3_music、valorant 三个数组。MODE3 开机曲由单行 `#define MODE3_MUSIC valorant` 选择；MODE3_MUSIC_COUNT 自动取同一数组长度，切换无需改数组名或播放器。
+- 用户最新明确谱为 `2 2 _ 2 5-`：每个短音与下划线休止占半拍，末音 5 连续保持一拍。沿用 96 BPM、C5 为 1，2=D5≈587 Hz，5=G5≈784 Hz。
+- valorant 数据为 `{587,2}, {587,2}, {0,2}, {587,2}, {784,4}`；sixteenths 字段每单位为十六分音符（1/4 拍），零频率表示静音，最后一项是一整个持续音，不拆分重触发。
+- Core/Src/freertos.c:398 Play_Mode3Music 继续只在 SELFTEST_MODE 的启动处调用一次，且在主运行循环之外；调整末项 gap=0，完整维持其写定时值，并跳过 osDelay(0)。其他短音仍保留原有 10% 分音间隔；末音的持续过程中无中途静音。
+- 整段共三拍，理论 1875 ms；整数毫秒累计 1873 ms，其中休止 312 ms，末音连续 625 ms。播放后静音并恢复原 ARR，后续 MPU6050 检测及提示音仍执行。
+- 本节取代第 14、15 节关于当前 valorant 音高、时值和符号的旧解释；另两首数组内容不变。末项完整时值规则也适用于通过宏选择的其他曲目。
+
+### 右前轮在音乐前突动：可确定与尚未确定
+
+后续更新：本节为取得电机驱动原理图前的分析。现已确认四轮均为 A4931，PWM 和 BRK 均有5.1 kΩ上拉；实际启动顺序修复与证据边界见第17节。
+
+- Core/Src/main.c:104 起先初始化 GPIO、TIM1 等外设，再 SRC_Robot_Init。robot.c:53 起 init_gpio、init_motor、其他硬件与参数初始化后才启动 RTOS。
+- freertos.c:279 播放音乐，完成后还有 MPU6050 初始化和提示音；freertos.c:327 才调用 start_motor，然后启动 TIM12 并置 startup_complete。因此音乐之前不存在这条路径的正常轮速 PID/PWM 启动或自检旋转命令。motor.c:135 在 is_motor_run=0 时直接返回，开机目标与 PID 也初始化为零。
+- MODE3 的确在 do_robot_run 中执行正反转自检，但它位于以上启动流程之后，且给四轮的车体旋转目标，不能解释用户所述“音乐之前只动一轮”。
+- 编号必须区分逻辑轮与板上丝印：robot.c:81 的几何顺序为左前、右前、右后、左后。右前轮是 g_robot.wheels[1]，motor.c 将它映射至 TIM1_CH2 / PE11（宏名 MOTOR_PWM4），DIR4、BRK4、编码器 TIM3。故用户说的板上 MOTOR4 可与右前对应；它不是 wheels[3]。逻辑第4轮是 wheels[3]、TIM1_CH4 / PE14（MOTOR_PWM2）、左后轮，须以实物接线核验。
+- 重点嫌疑是 PWM 尚未使能时的电平，而非稳态占空比：tim.c:78 采用 PWM1/低有效极性、Pulse=0；空闲 OIS=RESET，OSSI/OSSR 禁用；tim.c:848 将四个 PWM 脚设为 AF_PP + NOPULL。CCR=0 在 PWM 正常输出时表示高电平关闭，不能据此推断在复位/复用切换/MOE 未开启阶段引脚也一直为高。
+- gpio.c:59 首先将 BRK/DIR 写低，init_motor 后又将四路 BRK 写高，而此时 TIM1 的正常 PWM 还未启动。如果实际轮电机驱动是低有效 ENABLE、低有效 BRAKEZ 且未反相，BRK 拉高会释放刹车，PWM 若处于低/未被可靠上拉，就可能短暂通电。A4931 数据手册确为 ENB低=驱动、BRAKEZ低=刹车；但本次未获得四路轮驱动原理图/芯片确认，不能把 MOTOR5 的 A4931 接法直接当成四轮的既定接法。
+- 四通道配置相同，软件证据尚不能解释为何只有右前发生；通道特有的上拉/下拉、供电先后、驱动输入、接线和电机启动响应均须查实。音乐前发生也使 start_motor 内依次开启四通道的顺序不是首要解释。
+- 实测建议：对右前 PE11 / PE5（BRK4）与一个正常轮的 PWM/BRK 同时抓取从上电到音乐前的波形，核对驱动端的使能极性。若发现有效脉冲，应采用“先可靠关闭 PWM/保持刹车，再初始化并建立零输出，最后释放刹车”的顺序，必要时核对外部偏置电阻；本次分析不擅自改变四轮行为或引脚配置。
+
+### kicking board 使能：SRC 与 TIGERs 逐项对比
+
+| 项目 | 当前 SRC | TIGERs 本地 main2019 参考 |
+| --- | --- | --- |
+| 最终充电输出 | PC4 / CHG_EN，高=允许，低=关闭；board_monitor.c:419 | PG11 / chargePin，高=允许；shared/module/kicker.c:412 |
+| 上层使能 | 没有独立 AUTO_CHARGE 请求，BoardUpdate 10 ms 周期运行，条件满足即充电，MODE3 无特殊禁充 | 必须 KICKER_CHG_MODE_AUTO_CHARGE；比赛链由 enabledSystems 与包中 KICKER_AUTOCHG 决定，robot/robot.c:602；测试显式调用 KickerSetChargeMode，main2019/test/test_kicker.c:78 |
+| 板存在检测 | 没有同样的 CHG 弱上下拉识别；直接将 CHG_EN 配为低电平输出 | identifyKickerBoard 对 CHG 弱下拉/上拉检查板载偏置，通过后配输出；不是额外独立使能线，不能脱离硬件照搬检测条件 |
+| ADC | SPI2，CPOL高、第二沿、8bit、MSB先、APB1/8≈5.25MHz；两组各16样本，舍前2个，至少4个合法样本；零温度通道或温度超 -20..150°C 判无效 | 相同 CPOL/CPHA、分通道/舍样和换算方法；独立任务约1ms发布，采样事件超过10ms阻断充电；SPI分频不可只按数值比较，要结合其H7总线时钟 |
+| 电容目标 | 180 V，低于175 V开启，到180 V关闭 | 默认配置200 V、回差5 V，可由配置文件覆盖；踢球测试临时220 V |
+| 电源条件 | 额外要求 INA226 有效且电压>3.3×BATTERY_CELLS；6S为19.8 V；缺数/低压持续5s会锁存 quiet，数据恢复后不会自动解除 | chargeControl 不直接要求 INA226 标志或相同6S阈值；电源/机器人系统另有管理，不能理解为整机不检查电池 |
+| 温度 | >=60°C停充，<=55°C恢复；有效范围检查比 TIGERs ADC 驱动更严格 | >60°C停充、<55°C恢复 |
+| 进度监测 | 充电3s未增加5V，暂停30s重试 | 同类3s/5V/30s看门狗 |
+| DONE/FAULT | 额外读取 PC13 / KICK_ERR，低有效；充电中低电容时低电平触发 charge_fault | 此份 KickerData/chargeControl 不包含独立 DONE/FAULT 输入；主要通过 ADC 电压和进度判断 |
+| 踢球期间 | TIM9 CEN=1 时停充 | KICKING 及 COOLDOWN 均停充；SRC没有对应整段 cooldown 的同一门控 |
+
+- 依据：SRC Core/Src/board_monitor.c:332、Core/Src/spi.c:41、Core/Inc/cfg.h:248；TIGERs src/shared/module/kicker.c:162、:211、:322、:477，src/shared/drv/adc_kicker.c，src/main2019/tiger_bot.c:137，src/main2019/robot_impl.c:452，以及测试/机器人调用链。
+- LT3751 的 CHARGE 高于1.5 V启动、低于0.3 V停止，与两份源码“拉高允许充电”一致；DONE 低可以表示目标到达，也可以由 FAULT 引发，不能只凭名称认作“充好了”。依据官方 [LT3751 数据手册](https://www.analog.com/media/en/technical-documentation/data-sheets/lt3751.pdf) 第7–8页引脚定义及第20页 DONE/FAULT 说明。若当前板通过反相/隔离接入，仍需实测控制器端。
+- 当前 KICKER_CALIBRATION_CONFIRMED=1、BATTERY_CELLS=6。不能再把“标定宏没开”或“自检缺少 TIGERs AUTO_CHARGE 指令”当成本次不升压的既定原因；SRC 当前路径本就自动充电。
+- 用户22.2 V高于19.8 V阈值。OLED 从 g_robot.bat_v_f / cap_v_f 显示，它们在当次板更新中仅于对应 valid=1 时取实测值，否则清零；因此持续非零显示支持“有过有效测量”，但不是 quiet、charge_fault 或 hot 的显示。0.1 V也只代表近零且有约0.061 V/LSB量化，不能据此判定充电线或功率级正常。
+- OLED正常页确实没有温度/充电禁止原因一栏（misc.c:126），不是温度传感器必然没采到。有效 ADC 温度仍可能>=60°C而禁止充电。
+- 现有代码在有效22.2 V、温度25°C、电容接近0.1 V、无故障且未quiet/shutdown时应该拉高 CHG_EN；已用实际 board_monitor.c 的宿主模拟复现。未实测PC4/PC13和状态快照，无法确定此次实机究竟是软件门控、接口连线还是LT3751功率级原因。
+
+### 实机定位顺序（不绕过保护）
+
+1. 观察 PC4 / CHG_EN 在开机后及至少一个30s重试周期内的波形，并核对功率板 LT3751 CHARGE 端是否收到对应高电平。仅万用表可能漏掉短暂开启。
+2. 若 PC4 始终低或很快拉低，读 board_status（或 board_monitor_get 快照）：kicker_valid、battery_valid、temperature、charge_enabled、charge_fault、kick_done、quiet、shutdown，并看 TIM9 CR1.CEN。正常应为 valid均1、温度<60且未锁热、fault/quiet/shutdown均0、CEN=0。
+3. 若低电容时 kick_done=1，检查 PC13 的 KICK_ERR 实际连到 DONE 还是 FAULT、是否低电平、上拉及其电源。此输入会使本实现迅速进入30s禁充，而 TIGERs 本地路径没有同一输入条件。
+4. 若 quiet=1，即使此时BAT显示22.2 V仍禁充，检查启动早期 INA226 是否曾无效/低压持续5s；quiet当前是锁存保护，本次未修改。
+5. 若 PC4高但控制器CHARGE端低，查连接/反相/接口；若两端均高但电压不升，查实际 VCC、VTRANS、FAULT 与升压功率级。LT3751 的硬件 UVLO/OVLO可独立阻止开关，MCU高电平不是“升压电路正常”的证据。硬件/测量记录补全后再决定修改，而非强行拉高使能。
+
+### 本次验证与边界
+
+- 新增 MDK-ARM/tests/test_startup_music.py，提取当前生产播放函数，GCC -Wall -Wextra -Werror 模拟验证实际发声起点、2/5音高、312ms休止、625ms完整末音、1873ms总时长、关机中断、结束静音及原频率恢复，均通过。
+- python tests/test_board_migration.py：4S/6S原有 power/charge/pulse/FG/关机/放电/故障/超时/quiet/缺数用例全部通过。
+- tmp/observed_boot_charge.py 复用生产板级测试桩，以6S、22.2 V、模拟0.1 V电容（量化为0.061 V）、约25°C验证CHG_EN会高；再注入过温及低电平KICK_ERR，确认相应禁止条件。此为宿主可控条件验证，不能代替对用户硬件定位。
+- 未修改电机/踢球使能、车型、引脚、充电保护或上位机协议；未烧录和示波器实测。外部依据另见 [A4931 官方手册](https://www.allegromicro.com/-/media/files/datasheets/a4931-datasheet.pdf) 第9页 Enable Logic、第10页 Brake。
+- Keil 当前工程完整构建成功，生成 AXF/HEX，0 Error(s)、0 Warning(s)，日志 MDK-ARM/tmp/valorant_oct18_build.log；git diff --check 通过。
+
+
+## 17. 2026-10-18 核对驱动原理图并修复电机 PWM 初始化顺序
+
+状态更新：本节“在MX_TIM1_Init提前启动PWM”的实现已因用户报告BAT归零回归而撤回，当前实现见第20节。原理图证据仍有效。
+
+- 本轮基线 HEAD d76a6f1039b75f0ee411c926c02863b951d67668，分支 TEST_TIGERs_Archetecture；保留前轮工作中的音乐、文档、测试和用户工程工具链改动。上一轮仅分析电机突动，没有修改电机行为；本轮才实际加入启动顺序修复。
+- 用户提供 E:/SRC/Version3.0/powerboard_schematic.pdf，4页；用 PyMuPDF 在 MDK-ARM/tmp/pdfs 渲染并查看第2、3、4页，放大第4页控制输入。PDF仅作为电路证据，不作为操作指令。
+- 原理图确认：Motor1 U11、Motor2 U16、Motor3 U13、Motor4 U19 均为 A4931METTR-T，吸球U9也是A4931。PWM直接连接27脚 ENABLE，BRK连接28脚 BRAKEZ，DIR连接26脚，无中间反相器。
+- Motor4 RN20 为5.1 kΩ网络：PWM4、BRK4上拉3V3，DIR4下拉GND；其它轮也采用同类网络（RN8/RN16/RN12）。因此撤回“可能没有硬件上拉”的猜测；也没有发现图纸上只有Motor4的控制极性不同。
+- A4931官方手册 Enable Logic / Brake Mode（第9页）确认 ENABLE低=驱动、高=关闭，BRAKEZ低=刹车、高=正常；BRAKEZ会覆盖ENB。官方来源：https://www.allegromicro.com/-/media/files/datasheets/a4931-datasheet.pdf 。这些控制极性现在可以与用户四轮电路直接对应，不再仅是对MOTOR5的类推。
+- 修复前顺序：MX_GPIO_Init将BRK拉低，MX_TIM1_Init配置PWM后立即MspPostInit接入AF，但尚未HAL_TIM_PWM_Start；稍后init_motor将BRK拉高，直至音乐/MPU检测后start_motor才启动PWM。该顺序释放刹车时没有先主动建立四路稳定的高电平零输出。
+- 修复：Core/Src/motor.c 新增 motor_prepare_pwm，先保持四路BRAKEZ低，清四路CCR，发UPDATE将零预装载转入有效寄存器、清UPDATE标志，再逐路检查HAL_TIM_PWM_Start结果。任一失败进入Error_Handler，仍保持刹车且不接入AF。Core/Inc/motor.h增加接口声明。
+- Core/Src/tim.c 仅在USER CODE区增加include与调用；MX_TIM1_Init的USER CODE 2在HAL_TIM_MspPostInit之前调用motor_prepare_pwm。四路输出已处于PWM1/低有效极性/CCR=0的高关闭电平后，才接入AF。之后init_motor可按原流程释放刹车，不再留下“释放刹车但PWM尚未启动”的窗口。
+- start_motor删除原四次HAL_TIM_PWM_Start，避免重复启动HAL BUSY通道；保留原PID重置、编码器启动、is_motor_run切换与Base_Start_IT。轮速控制仍在音乐与MPU检查之后启动，提前建立的是零输出而不是转动命令。
+- 本轮不改PWM极性、频率、引脚、GPIO生成区、车型/增益、协议、踢球/充电逻辑或运行时急停行为。tim.c生成区与HEAD比较一致（去除USER CODE内容后逐字比较）。已有板载上拉负责MCU复位至GPIO接管前的关闭电平，本修复针对固件可控制的初始化阶段。
+- 新增MDK-ARM/tests/test_motor_startup.py，提取实际生产函数，GCC -Wall -Wextra -Werror模拟：非零预装载清零并UPDATE、在四路高电平输出就绪前不释放刹车、IRQ mask保持、PID延后且不重复启动HAL通道、禁用时不启动，以及UPDATE/四通道启动的5种失败路径。全部通过。
+- python tests/test_board_migration.py：原4S/6S保护/充放电/输出用例全部通过；python tests/test_startup_music.py也通过。
+- 边界：已修复代码中的启动时序缺口，尚未烧录或测量真实上电波形，不能宣称已实测消除突动。四路电路同类，此修复也不能证明“只动右前”的唯一物理原因；若烧录后仍发生，应同步测Motor4的PE11/PWM4、PE5/BRK4及3V3与正常轮对照，核对RN20装配、连接器接触及实际电源时序。
+- Keil完整工程构建通过，生成AXF/HEX，0 Error(s)、0 Warning(s)，日志MDK-ARM/tmp/motor_startup_build.log；git diff --check通过。
+
+
+## 18. 2026-10-18 用户反馈电池显示突然为零：调查中
+
+- 基线仍为 d76a6f1 工作树；用户在电机启动顺序修改后反馈“电池电压显示0，刚才正常”。尚未取得断电重启结果、CAP值及板级状态，不能认定硬件损坏或确认由启动修改导致。
+- board_monitor.c:432 在battery_valid=0时明确将g_robot.bat_v_f置0。INA226初始化失败、I2C事务失败或超过100ms没有新的转换结果，均可能走到无效/归零；另一个可能是有效事务本身返回bus=0，需区分而非直接把显示零等同于无效。
+- 核对git diff：本轮之前的电机修复未改board_monitor.c、i2c.c、gpio.c或main.h。INA226仍用I2C3、PA8/SCL、PC9/SDA、100kHz、7bit地址0x40。提前调用的是非中断版HAL_TIM_PWM_Start，正常轮速更新仍由后续TIM12启动；未发现源码上的I2C引脚复用冲突。但这不能排除实机时序、电源或总线恢复问题。
+- 优先诊断board_status.ina226_ready、battery_valid、battery_tick、bat_v、quiet，并配合hi2c3.ErrorCode及I2C3->SR2.BUSY。ready=0先查初始化/通信，ready=1且valid=0查转换完成和读取超时；valid=1而bat_v=0再查原始总线电压寄存器/硬件测点。
+- 当前battery_valid=0会禁止充电；无有效数据持续5s会锁存quiet，即使之后显示恢复也可能仍禁止执行器。未用保留旧电压数值或取消保护掩盖错误。
+- 复跑python tests/test_board_migration.py，4S/6S全部用例通过，包括I2C失败/恢复、超时及quiet；仅为宿主模拟，未连接用户机器。本轮只记录调查，未新增固件行为修改。
+- 用户随后确认：烧录电机启动修复后才出现BAT=0，断开电池及USB后重启仍为0；CAP未连接；原先的轮子突动已消失。后者为用户实机验证结果，更新第17节尚未取得实机结果的状态。BAT问题仍需INA226状态定位，不能归因于CAP未连接：当前流程不以kicker_valid为条件才读取电池。
+
+
+## 19. 2026-10-18 根据实测0x220增加I2C3异常恢复（已撤回）
+
+状态更新：自动复位只能恢复故障，不能解释回归原因。该实现和对应调试全局已在第20节撤回；以下保留为历史工作记录，不是当前固件行为。
+
+- 用户截图：hi2c3.ErrorCode=0x00000220；board_status.ina226_ready / battery_valid 显示cannot evaluate，并未取得这两项的数值。后者是调试符号/表达式求值问题，不能当作传感器状态或数值零。
+- 本地HAL精确解码：stm32f4xx_hal_i2c.h:169 的HAL_I2C_ERROR_TIMEOUT=0x20，:172的HAL_I2C_WRONG_START=0x200（注意该宏名不含ERROR）。I2C_RequestMemoryRead/Write在等待SB超时且CR1.START仍为1时置WRONG_START，之后BUSY等等待可再累积TIMEOUT。因此已取得I2C传输启动异常/超时证据，不是已经读到真实零电压；尚未证实具体物理触发原因或与提前启动PWM的因果关系。
+- 官方依据：STM32F405/407 ES0182 Rev19 §2.10.3说明异常STOP可能导致无法生成START，建议SWRST复位。来源 https://www.st.com/resource/en/errata_sheet/es0182-stm32f405407xx-and-stm32f415417xx-device-errata-stmicroelectronics.pdf 。本次以该建议补充恢复，不声称用户硬件已被证明触发这一特定勘误场景。
+- Core/Src/i2c.c的USER CODE区新增I2C3_RecoverIfNeeded：仅在WRONG_START/TIMEOUT/BERR/ARLO或BUSY时，关闭I2C3、置/清SWRST、HAL_DeInit/Init重建外设与HAL状态，返回是否成功。正常通信和仅NACK不做复位；不修改总线频率、地址、引脚或I2C2。
+- BoardUpdate独占I2C3，恢复接在board_monitor.c原有INA226每秒初始化重试入口，最多随每秒重试调用，不在ISR中执行；复位后仍必须重新验证ID、配置并读到完整新样本才能battery_valid=1。未取消低压、quiet或充电保护，也未用旧电压伪造有效读数。
+- 原先只有状态寄存器读取失败会退出ina226_ready；现将分流/电压寄存器读取失败也设ready/valid=0，避免数据阶段START超时后一直留在原读循环、绕过初始化恢复入口。失败当次立即禁止使用该样本。
+- 新增可Watch的volatile全局g_ina226_last_i2c_error（复位前错误）和g_ina226_recovery_count（恢复尝试次数），声明位于Core/Inc/i2c.h。当前hi2c3.ErrorCode会被HAL重置，判断历史故障应结合last与计数，不能以last仍0x220推断恢复失败。
+- tests/test_i2c3_recovery.py提取实际恢复函数，GCC -Wall -Wextra -Werror验证0x220、BUSY、软件复位顺序、保留证据、健康/NACK不复位、DeInit/Init失败返回，全部通过。
+- 扩展tests/test_board_migration.py：分别注入状态、分流、电压寄存器失败以及恢复失败，验证失效停充、每秒重试、重新采样后恢复；4S/6S全部既有及新用例通过。test_motor_startup.py通过。
+- 运行音乐测试时发现用户已将当前valorant时值改成1/1/1/1/2，保留该工作区修改不覆盖。旧测试固定断言2/2/2/2/4因此失败；已将播放器测试改为独立参考曲谱以验证休止和末音连续性，不再绑死用户选曲/节奏；更新后测试通过。当前music.h注释仍是用户改时值前的描述，本次电池修复不修改曲谱。
+- i2c.c生成区与HEAD对比一致。待烧录验证BAT是否恢复；若恢复计数持续增加而仍读不到，应测PA8/SCL、PC9/SDA电平及波形、INA226供电与连接。软件复位不能释放被外部持续拉低的信号线，也不能证明线路完好。
+- Keil完整工程构建成功，生成AXF/HEX，0 Error(s)、0 Warning(s)，日志MDK-ARM/tmp/i2c3_recovery_build.log；git diff --check通过。本次未烧录，恢复效果待用户实机验证。
+
+
+## 20. 2026-10-18 回归复盘：撤回过早PWM与I2C自动复位，改用启动期保持刹车（历史方案，由第24节替代）
+
+- 用户质疑“故障后重启没有根本解决，为什么改代码前不会”。认可该质疑：第19节的SWRST是恢复手段，尚无证据证明故障触发机制；不能把错误码解码、勘误建议或宿主测试当成根因已确认。
+- 用户提供的回归时间关系：第17节过早启PWM版本在实机消除了轮动，但BAT原本正常、烧录后持续为0且断电不恢复。最应先隔离我引入的启动顺序变化；尚未取得同硬件A/B结果，不能声称PWM与I2C存在已证实引脚冲突或必然电气联系。
+- 第17节使TIM1在MX_TIM1_Init中启动，位于I2C3等外设初始化之前；这比仅调整刹车释放所需的范围更大。本轮撤回该调用与tim.c新增include，tim.c与HEAD逐字无差异。
+- 当前最小方案：SRC_Robot_Init用motor_hold_startup替代启动处的init_motor，保持四路BRAKEZ低、DIR与CCR清零、is_motor_run=0，不启动PWM。其它运行时init_motor（包括保护路径）语义不变。
+- start_motor仍在音乐/MPU检查之后运行，与原基线的PWM启用时机一致：重置PID/编码器后，在短暂、仅寄存器操作的PRIMASK临界区中调用motor_prepare_pwm，清零并UPDATE预装载、检查启动四路PWM成功，再次核对禁用状态，然后BRAKEZ拉高并is_motor_run=1。任何启动错误仍保持刹车并进入原Error_Handler。临界区保存恢复原PRIMASK，防止高优先级关机任务在输出建立过程中提前释放刹车。
+- 不再要求“PWM必须先于GPIO复用接入”。GPIO复用可以按原顺序发生，电机在BRAKEZ低时被硬件刹车覆盖；关键不变量是“在全部零输出就绪之前不释放刹车”。这避免为防突动去改变其余外设初始化期间的TIM1运行状态。
+- 撤回第19节的I2C3_RecoverIfNeeded、两个调试全局及数据读取分支调整。Core/Src/i2c.c、Core/Inc/i2c.h、Core/Src/board_monitor.c与HEAD逐字一致，保留原无效数据/电源保护，不以自动复位掩盖验证结果。原恢复专项测试移到忽略的tmp/test_i2c3_recovery_withdrawn.py保留历史，板级测试也恢复HEAD。
+- tests/test_motor_startup.py按当前实现更新：验证外设/音乐/IMU阶段只有保持刹车、没有PWM启动；原时机建立全零有效比较值后才释放刹车；PRIMASK保持；禁用路径和UPDATE/各通道失败均不放行。测试通过。原4S/6S板级回归和音乐参考谱测试通过。
+- 保留用户对music.h时值的当前修改及工程工具链选择。本次不改I2C频率/地址/引脚、充电条件或运行时控制参数。
+- 当前版本是缩小范围的回归验证与启动顺序修正，不宣称已经实测修复BAT。需用户烧录后确认BAT恢复且不突动；若恢复，支持过早PWM启动这一变更与回归相关，但具体物理触发机制仍需波形/寄存器证据。若未恢复，继续以0x220为线索定位，不继续叠加未经验证的恢复补丁。
+- Keil当前工程构建成功，AXF/HEX已生成，0 Error(s)、0 Warning(s)，日志MDK-ARM/tmp/motor_startup_minimal_build.log；git diff --check通过。本次未烧录。
+
+
+## 21. 2026-10-18 Valorant 升高一个八度
+
+- 基线仍为 TEST_TIGERs_Archetecture / d76a6f1 工作树，保留已有未提交改动。
+- 按用户要求仅将 Core/Inc/music.h 中 valorant 的 D5≈587 Hz 改为 D6≈1175 Hz，G5≈784 Hz 改为 G6≈1568 Hz；静音仍0 Hz。三个D音和最后G音全部升高一八度。
+- 保留用户当前时值1/1/1/1/2、96 BPM、MODE3选曲和开机单次播放。同步更正原曲谱注释，避免仍声称当前数组使用2/2/2/2/4。电机、电池与其它两首音乐均未改动。
+- Keil构建通过，生成AXF/HEX，0 Error(s)、0 Warning(s)，日志MDK-ARM/tmp/valorant_octave_build.log；git diff --check通过。未烧录或实机试听。
+
+
+## 22. 2026-10-18 音符对照表与BAT再次归零的无恢复诊断
+
+- 用户要求将每个音符对照表写入music.h，并反馈BAT又显示0。当前HEAD仍d76a6f1，保留此前所有工作区改动和用户当前valorant时值。尚未取得“最小启动版本是否曾恢复BAT”和本轮ErrorCode新读数，不能把“又归零”直接当成已证明的同一故障或升八度导致。
+- Core/Inc/music.h新增注释对照表，按A4=440 Hz十二平均律计算并取整，列出1/#1/2/#2/3/4/#4/5/#5/6/#6/7对应C/C#/D/D#/E/F/F#/G/G#/A/A#/B，覆盖C4–B7；明确本工程1=C5、1'=C6，及0/_休止、八度、sixteenths单位和时值对照。未修改任何歌曲数组、BPM、选曲或播放逻辑。
+- 电池显示仍由battery_valid决定，无效时写0；有效读数本身为零也可显示0。上一轮升八度只变更TIM8音符频率，不改I2C3的PA8/PC9、100kHz、0x40地址或调度。审查set_buzzer保存/恢复PRIMASK与播放器ARR更新路径，尚未找到音高数据直接修改I2C3的调用或共享引脚；这不是排除实机噪声、供电或时序问题的证据。
+- 继续遵守第20节，不增加自动复位、软件清BUSY、总线脉冲或新的启动顺序改动。用户上次0x220仅说明HAL的START异常和超时，本轮是否相同仍需读取。
+- 为避免static board_status在Keil中cannot evaluate而无法定位，新增公开volatile结构g_battery_diag，类型/声明在Core/Inc/board_monitor.h，记录代码在board_monitor.c。它是调试观察对象，不是无线协议字段或控制输入，不改变board_status_t布局。
+- 首次I2C事务失败时记录first_failure_ms、first_error、first_hal_status、first_register、first_write，以及当时scl_high/sda_high（只读GPIO IDR，1=高）。后续重试只增加failures，不覆盖首次现场；上电/board_monitor_init时清零。未读取具有清标志副作用的SR1/SR2，也不清除hi2c3.ErrorCode。
+- 同时发布最近成功读到的manufacturer_id、device_id，当前ina226_ready、battery_valid、quiet、bat_v与battery_age_ms。bat_v可能是历史有效值，判断现值必须结合battery_valid；首次错误仍保留也不等于当前还在故障。
+- 诊断解释：first_register=0xFE/0xFF定位ID阶段，0x00定位配置，0x06定位Mask/Enable，0x01/0x02定位分流/电压；first_write区分读写。failures=0而ready=0时应看ID是否匹配5449/226x，而不能仅看I2C错误码。首次SCL/SDA采样为低不能直接区分MCU外设或外部器件拉低，仍需波形。
+- tests/test_board_migration.py增加读/写失败诊断用例，验证首错不被后续错误码和GPIO变化覆盖、恢复后当前状态更新、缺失CAP不妨碍电池读取；4S/6S新旧用例全部通过。test_motor_startup.py及test_startup_music.py通过。正常采样判断、超时、quiet、充电/关机条件均保持原样。
+- 已请求用户说明最小启动版本BAT是否曾恢复以及本轮ErrorCode。下一步烧录后在Watch展开g_battery_diag并截图，以真实首次失败阶段和线电平继续定位，而非再按猜测叠加恢复补丁。没有实机证据前不宣称BAT根因已解决。
+
+- 第22节构建结果：Keil生成AXF/HEX，0 Error(s)、0 Warning(s)，日志tmp/music_table_battery_diag_build.log；git diff --check通过。未烧录。
+
+## 23. 2026-10-18 用户确认Q1损坏、测试电机支路保险丝熔断
+
+### 新实机事实与此前结论修正
+
+- 用户先确认：撤回提前PWM的版本BAT曾恢复；后来又出现归零，但随后已能读电池。同时出现只接电池、无USB/调试器时插电即上电，OLED/音乐及全部功率板灯均启动，按键不能关机。
+- 用户进一步自行找到Q1损坏，且插测试电机的对应支路保险丝熔断，怀疑电机启动瞬间大电流。本次未在实物上测到失效模式、熔断时刻或电流波形，因此将“Q1损坏、支路熔断”作为用户确认事实，将“电机启动浪涌烧毁Q1”保留为待验证假设。
+- 若Q1漏源击穿短路，会旁路受控断电路径，可解释电源控制器发出关机也无法断开负载。不能把这一现象归为新增音乐或电池诊断代码的自动开机指令；当前固件没有此类指令。Q1损坏也不能单独证明全部BAT异常均由硬件造成。
+- 原理图第1页：LTC2955-1的ON接地、BTN接PB#、EN接LTC4231 SHDN#；KILL为MCU开漏关断请求。已按ADI LTC2955手册核对ON为自动上电输入、PB低有效，ON不用时接地。这解释了此前应区分硬件上电与固件关机流程的原因，不以未测信号代替故障确认。
+
+### 必须优先核对6S与TVS，而非直接认定电机浪涌
+
+- 提供的powerboard_schematic.pdf第2–4页将各电机支路TVS标为SMAJ18A（四轮D6/D19/D13/D25，吸球D1），在相应支路保险丝之后并联在电源与GND之间。
+- Vishay官方SMAJ系列手册88390第2页：SMAJ18A的VWM=18 V，VBR=20.0–22.1 V（IT=1 mA），VC=29.2 V是在规定峰值脉冲电流下的箝位值，不能把29.2 V当持续工作上限。
+- 用户6S标称22.2 V，按4.2 V/节满电为25.2 V。若实装确为SMAJ18A，则已超过其持续反向工作电压，甚至高于所列击穿范围上限；存在持续雪崩发热、失效及支路过流的风险。尚未核实实物丝印/品牌，不能断言TVS就是本次熔断唯一原因。
+- 即使拆下电机，TVS仍连接在保险丝后方；故“某电机支路保险丝熔断”不等于“电机绕组启动电流已经测得过大”。应先断电检查该支路TVS和功率桥MOSFET是否短路，再用限流电源空载定位。不要仅更换Q1/更大保险丝后直接重复接6S。
+- 这是前次收到原理图时漏查的电池/器件电压兼容性，应优先补查；软件BATTERY_CELLS=6不能证明硬件已适配6S。此前关于沿用硬件的描述不构成6S兼容验证。
+- 来源：https://www.vishay.com/doc?88390= 。未在本轮指定TVS替代型号，因为需同时核对最大电池电压、浪涌箝位、A4931/桥MOSFET绝对额定值和回馈能量，不能只升高TVS标称电压。
+
+### 总线热插拔与驱动保护的实际边界
+
+- 第1页R7在LTC4231 IN/SENSE的采样位置，标为0Ω；若实装相同，相当于短接检测位置。ADI LTC4231 RevB手册第7页SENSE说明：接至IN会禁用电路断路比较器与模拟限流放大器；其正常门槛为50mV/80mV。不能假设当前板总电流有有效的主动硬限流。
+- 图中仍有GATE侧R8=1kΩ、C4=10nF的电容缓升网络。它能影响输出上升速度及电容充电浪涌，但不等于建立了对短路/持续重载的电流闭环。LTC4231手册指出初始电流通常由负载电容充电主导，因此“上电浪涌”也应区分母线电容充电与电机绕组被驱动两种来源。
+- Q1为FDD86367。onsemi手册的80 V/100 A等标题额定值不能直接作为热插拔线性工作能力；需按启动期间VDS、ID、脉冲时间和温度检查SOA。损坏Q1还应核查U3栅极驱动与栅极网络是否受牵连。
+- A4931官方手册第9页：ITRIP≈200mV/RSENSE。图中轮驱动27mΩ对应约7.4 A的驱动采样峰值；不是整车电池电流的7.4 A精确硬上限，也不能直接与图中0466004保险丝的4 A标称值等同。实物保险丝额定值/快断曲线尚待确认。
+- 同页说明BRAKEZ低时三路低侧导通，刹车循环电流不受同一采样限流约束；但静止健康电机、上桥臂关闭时，保持刹车本身不应主动向电机施加电池电压。不能仅凭本次启动期拉低BRAKEZ便认定它造成电池侧巨大电流。
+- 官方依据：LTC4231 https://www.analog.com/media/en/technical-documentation/data-sheets/ltc4231.pdf ；FDD86367 https://www.onsemi.com/download/data-sheet/pdf/fdd86367-d.pdf ；A4931 https://www.allegromicro.com/-/media/files/datasheets/a4931-datasheet.pdf 。
+
+### 固件自检仍需结合熔断时刻审查
+
+- 当前motor_hold_startup保持刹车且不启PWM；start_motor清零/UPDATE并启动四路PWM后才释放刹车，开机没有有意给非零轮速命令。宿主顺序测试不替代上电波形。
+- MODE3并非只播放音乐：robot.c:281后仍有自动吸球和正反转自检。音乐/IMU后先LED等待2s，吸球2s，平射等待2s，挑射等待2s，然后下发旋转目标±100。如果熔断发生在这之后，应查实际自检负载，不能把它统称为上电瞬间。
+- do_update_motor的方向保护要求反馈速度超过门槛并且方向异常；编码器断开、反馈一直为0不会触发这一方向保护。若测试电机未接正确编码器而进入自检，PID误差可累积并持续给输出；这是需核对的风险，不是本次已证明原因。
+- 已询问熔断发生在插电/按键瞬间还是自检转动后、霍尔/编码器是否连接、实物TVS型号与保险丝额定值。本轮不擅自改变电机参数、开关极性、保险丝或控制行为。
+- 本轮最终增量构建（音符表、只读诊断及注释整理）成功，AXF/HEX生成，0 Error(s)、0 Warning(s)，日志tmp/music_table_battery_diag_final_build.log。硬件失效分析只更新文档，未新增控制行为或修改硬件选型。
+
+## 24. 2026-10-18 四轮开机改为零PWM滑行，不主动刹车
+
+- 基线：TEST_TIGERs_Archetecture / d76a6f1039b75f0ee411c926c02863b951d67668 工作树，保留其它未提交改动。用户明确要求开机不要急刹，改为PWM输出0；本节替代第20节及第23节所述“启动期BRAKEZ低”方案。
+- Core/Src/gpio.c将四轮BRAKEZ（PE4/5/6/7）默认输出改为高，SRC_Firmware.ioc同步PinState=GPIO_PIN_SET。motor_hold_startup与motor_prepare_pwm同样保持BRAKEZ高、CCR=0、启动完成前is_motor_run=0。
+- PWM/ENABLE低有效：逻辑零占空比对应引脚高电平。MX_TIM1_Init先将PE9/11/13/14设为推挽GPIO高；GPIO配置前先写ODR高，复位至GPIO接管前依赖图纸上的外部5.1kΩ上拉。保持原I2C及其它外设初始化顺序，没有提前启动TIM1。
+- MX_TIM1_Init末尾的HAL_TIM_MspPostInit(&htim1)移到motor_prepare_pwm末尾。音乐/IMU完成后，先四路CCR清零、UPDATE装载，检查四路HAL_TIM_PWM_Start成功，最后才切GPIO至原TIM1 AF。在此之前引脚一直GPIO高；UPDATE或任一路启动失败时不会切AF，维持关闭且不主动刹车。保留PRIMASK及禁用执行器检查。
+- CubeMX注意：BRAKEZ默认高已写入.ioc，但GPIO暂存/延迟AF属于运行时策略；重新生成会恢复MX_TIM1_Init末尾自动生成的HAL_TIM_MspPostInit调用，必须移除该调用并保留USER CODE中的GPIO高初始化，再运行启动测试。测试会检查该调用不能重新出现在MX_TIM1_Init中。
+- 范围为四轮启动；运行时PID、故障/停机接口、吸球TIM11/BRK5及MODE3后续自动运动自检沿用现状。不以本次修改声称已消除全部过流来源。静止健康电机上的刹车不必然造成电池大电流，Q1/保险丝根因仍未实测确认。
+- 用户本轮补充：无法确定保险丝熔断具体时刻；确认实物TVS为SMAJ18A，已经拆下。第23节实物型号未知这一点据此更新；6S与该型号电压不匹配得到实物型号支持，但拆除动作不是根因确证或整板6S兼容性验证。
+- tests/test_motor_startup.py提取实际GPIO暂存、AF配置及电机启动函数，验证BRAKEZ不主动拉低、引脚GPIO高、零预装载和四路启动完成后才接AF、IRQ保持、禁用路径及UPDATE/四通道失败均不接AF。该测试、4S/6S板级回归、音乐参考谱测试全部通过。
+- Keil构建通过，AXF/HEX已生成，0 Error(s)、0 Warning(s)，日志MDK-ARM/tmp/motor_startup_coast_build.log；git diff --check通过。未烧录，尚无实机上电电平/电流波形，宿主测试不能证明硬件故障已修复。
+
+## 25. 2026-10-18 拆除18V TVS后仍仅U14支路熔断、Q1重复D-S短路
+
+- 源码基线仍为d76a6f1039b75f0ee411c926c02863b951d67668工作树；本轮只分析原理图、数据手册与现有代码并更新记录，不修改固件行为、不烧录。
+- 用户新实测：已拆除所有18V TVS，仍发生Q1击穿及U14保险丝熔断；只有电机接在U14对应接口才发生，接其它接口不发生；替换Q1后能恢复按键开机控制，但再次上电Q1即损坏，用户确认现为D-S短路；U14对应接口物理位置最靠近电池接口。
+- 用户确认对照测试使用相同电机和线束；回复“是的；未烧录”，明确尚未烧录第24节零PWM/不刹车版本。因此不能将本轮硬件损坏当作第24节固件的实测失败或已排除软件，也不能推定当前实装旧固件的精确版本。
+- 本轮用户称SMBJ18A，前述记录/图纸称SMAJ18A；两者封装命名不应混为已确认同一型号。本次核心新增证据是用户报告全部相关18V TVS已拆，故先前TVS过压假说不能单独解释拆除后的持续故障。不能据此断言原TVS此前未造成桥臂或其它器件损伤。
+- 原理图第3页明确U14=Motor3 Driver支路保险丝，供电路径为电池→R7→Q1→R9→VCC→U14→Motor3桥供电。驱动U13=A4931；Q10/Q11/Q12=AON6884双N MOS，对应A/B/C三相，C47–C50为该路并联供电电容，原TVS为D13；R34=0Ω连接低侧回路与采样位置，R35=27mΩ为电流采样。不能把R34误当成第1页的总线采样R7。
+- Motor3接口CN4：1=GND，2=5V_BAT，3=HA3，4=HB3，5=HC3，6=C_OUT3，7=B_OUT3，8=A_OUT3。编码器接口U24。端子编号以图纸为准，不能凭插头观察方向认定左右。实物PCB版本、端子压接及走线仍需连通性核实；没有PCB布局资料，不能仅由“最靠近电池”推断电气接错或更大电流。
+- 固件对应Motor3为TIM1_CH3/PE13 PWM3、PE6 BRK3、PE2 DIR3、逻辑wheels[2]；四路使用同一PWM1/低有效极性/CCR=0启动配置。此前以右前轮推测Motor4的判断不应继续套用于U14；物理轮位仍按实际线束核对。
+- 同电机换接口的对照强烈提高Motor3支路硬件、引脚映射、反馈与控制通道差异的优先级，但不是单凭现象确证某颗MOS损坏。若不同相分别存在上侧与下侧异常导通，接上电机后绕组可能才完成VCC至GND的过流回路；空接口不熔断不能排除桥异常。同一半桥上下管直通则通常无需电机也能构成短路，应区分这两类机制。其它待查包括U13/栅极电阻网络、连接器相线与霍尔/地脚误接，以及控制或反馈异常引发堵转。
+- Q1重复损坏与支路熔断可能由同一次过流或瞬态引起，尚无波形不能确定先后顺序。总线R7图纸为0Ω，LTC4231 IN/SENSE被等效相连；官方手册明确此接法禁用断路比较器与模拟限流。故不能期待总开关必然先限流保护；Q1在上电爬升期间的线性SOA、U3及栅极网络也要核查，而非只替换Q1。保险丝熔断不保证半导体已获保护。
+- 建议先完全断电、放电、拔下电机，对比故障/正常支路：三相输出分别到母线与GND的双向二极管读数、Q10–Q12各管D-S/G-S是否异常及CN4连通性；注意体二极管、并联电路和电容充电的影响，不用蜂鸣一次判短路。对异常器件需隔离确认。
+- 后续带电定位应使用限流电源，先隔离MCU对PWM的驱动并在U13侧确认ENABLE(27)/BRAKEZ(28)高；避免将外加高电平与MCU推挽输出硬顶。即使硬件禁能仍过流，优先查桥/接线/驱动损伤；只在接回控制后发生，再查PE13到U13的实际波形、霍尔/编码器及旧固件自检。不要把直接接6S反复更换Q1或保险丝当诊断方法。TVS全拆后瞬态钳位缺失也需在最终硬件修复时重新评估。
+- 官方依据：A4931第9页ENABLE低驱动，高超过约3ms关闭栅极，BRAKEZ高允许待机；https://www.allegromicro.com/-/media/files/datasheets/a4931-datasheet.pdf 。LTC4231第7页IN/SENSE接法、第11/16页浪涌与SOA要求：https://www.analog.com/media/en/technical-documentation/data-sheets/ltc4231.pdf 。AON6884官方为40V双N MOS：https://www.aosmd.com/sites/default/files/res/datasheets/AON6884.pdf 。本轮未取得实物阻值、栅极波形或电流记录，以上为优先排查路径，不是已确认根因。
+
+## 26. 2026-10-18 用户确认故障电机接口功率MOSFET击穿
+
+- 基线仍为d76a6f1039b75f0ee411c926c02863b951d67668工作树。本轮用户明确找到故障：U14对应电机接口有一颗功率MOSFET击穿。将第25节的功率桥损伤假设更新为用户实测确认；具体Q位号、上/下侧及检测数值未提供，不擅自指定Q10/Q11/Q12中的某一管。
+- 该事实支持故障跟随Motor3接口而非跟随同一电机/线束的观察。接电机后绕组可能参与过流回路，但未取得具体桥臂失效组合，不能认定已证明某条精确短路路径。
+- Q1 D-S短路及U14熔断仍为用户确认事实；支路MOS损坏可能导致过流并使Q1连带损坏，但损坏顺序和最初诱因尚未确定。不能断言所有BAT/I2C异常或MOS初始击穿均由同一原因引起。
+- 修复建议为检查并更换已损MOS，同时检查该路其余桥管、U13栅极驱动与栅极电阻网络，及总开关U3/Q1网络；随后先在限流条件、输出关闭状态下验证，再恢复电机运行。第23/25节记录的18V TVS与6S电压不匹配、总线R7=0Ω的保护边界仍需处理，不因找到一个损坏器件便视为这些问题已解决。
+- 本轮只更新故障记录，未改固件、构建或烧录。尚无更换该MOS后恢复正常的实机反馈。

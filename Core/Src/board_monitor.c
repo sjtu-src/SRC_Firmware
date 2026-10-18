@@ -20,6 +20,7 @@
 #define INA226_ADDRESS (0x40U << 1)
 
 static board_status_t board_status;
+volatile board_battery_diag_t g_battery_diag;
 static volatile uint8_t shutdown_requested;
 static volatile uint8_t power_quiet;
 static volatile uint8_t shutdown_state;
@@ -38,6 +39,24 @@ static volatile uint8_t battery_alert;
 static uint8_t kicker_tx[KICKER_SAMPLES * 4U];
 static uint8_t kicker_rx[KICKER_SAMPLES * 4U];
 
+/* Capture the first failed transfer without clearing I2C flags or resetting
+ * the peripheral. GPIO input reads do not alter the bus transaction state.
+ */
+static void battery_capture_failure(uint8_t reg, uint8_t write, HAL_StatusTypeDef result)
+{
+    if (g_battery_diag.failures == 0U)
+    {
+        g_battery_diag.first_failure_ms = HAL_GetTick();
+        g_battery_diag.first_error = HAL_I2C_GetError(&hi2c3);
+        g_battery_diag.first_hal_status = result;
+        g_battery_diag.first_register = reg;
+        g_battery_diag.first_write = write;
+        g_battery_diag.scl_high = HAL_GPIO_ReadPin(SMB_SCL_GPIO_Port, SMB_SCL_Pin) == GPIO_PIN_SET;
+        g_battery_diag.sda_high = HAL_GPIO_ReadPin(SMB_SDA_GPIO_Port, SMB_SDA_Pin) == GPIO_PIN_SET;
+    }
+    g_battery_diag.failures++;
+}
+
 /*******************************************************************************
 * @brief Read one INA226 register, MSB first; I2C3 belongs to the monitor task.
 * @author COEX, Xuanting Liu
@@ -45,8 +64,13 @@ static uint8_t kicker_rx[KICKER_SAMPLES * 4U];
 static int ina226_read(uint8_t reg, uint16_t *value)
 {
 	uint8_t data[2];
-	if(HAL_I2C_Mem_Read(&hi2c3, INA226_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT,
-		data, sizeof(data), BOARD_IO_TIMEOUT) != HAL_OK) return 0;
+    HAL_StatusTypeDef result = HAL_I2C_Mem_Read(&hi2c3, INA226_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT,
+        data, sizeof(data), BOARD_IO_TIMEOUT);
+    if (result != HAL_OK)
+    {
+        battery_capture_failure(reg, 0U, result);
+        return 0;
+    }
 	*value = ((uint16_t)data[0] << 8) | data[1];
 	return 1;
 }
@@ -58,10 +82,13 @@ static int ina226_read(uint8_t reg, uint16_t *value)
 static int ina226_write(uint8_t reg, uint16_t value)
 {
 	uint8_t data[2];
+    HAL_StatusTypeDef result;
 	data[0] = (uint8_t)(value >> 8);
 	data[1] = (uint8_t)value;
-	return HAL_I2C_Mem_Write(&hi2c3, INA226_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT,
-		data, sizeof(data), BOARD_IO_TIMEOUT) == HAL_OK;
+    result = HAL_I2C_Mem_Write(&hi2c3, INA226_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT,
+        data, sizeof(data), BOARD_IO_TIMEOUT);
+    if (result != HAL_OK) battery_capture_failure(reg, 1U, result);
+    return result == HAL_OK;
 }
 
 /*******************************************************************************
@@ -72,8 +99,12 @@ static int ina226_write(uint8_t reg, uint16_t value)
 static int ina226_init(void)
 {
 	uint16_t manufacturer, device;
-	if(!ina226_read(0xfe, &manufacturer) || manufacturer != 0x5449U) return 0;
-	if(!ina226_read(0xff, &device) || (device & 0xfff0U) != 0x2260U) return 0;
+	if(!ina226_read(0xfe, &manufacturer)) return 0;
+    g_battery_diag.manufacturer_id = manufacturer;
+    if(manufacturer != 0x5449U) return 0;
+	if(!ina226_read(0xff, &device)) return 0;
+    g_battery_diag.device_id = device;
+    if((device & 0xfff0U) != 0x2260U) return 0;
 	return ina226_write(0x00, 0x42dfU) && ina226_write(0x06, 0x0400U);
 }
 
@@ -122,6 +153,7 @@ void board_monitor_init(void)
 {
 	uint32_t i;
 	memset(&board_status, 0, sizeof(board_status));
+    memset((void *)&g_battery_diag, 0, sizeof(g_battery_diag));
 	memset(kicker_tx, 0, sizeof(kicker_tx));
 	for(i = KICKER_SAMPLES; i < 2 * KICKER_SAMPLES; i++) kicker_tx[i * 2] = 1U << 3;
 	HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_RESET);
@@ -427,6 +459,11 @@ void board_monitor_update(void)
 	status.discharge_fault = discharge.fault;
 	status.discharge_failed_coils = discharge.failed_coils;
 	status.discharge_pulses = discharge.pulses;
+    g_battery_diag.ina226_ready = status.ina226_ready;
+    g_battery_diag.battery_valid = status.battery_valid;
+    g_battery_diag.quiet = power_quiet;
+    g_battery_diag.bat_v = status.bat_v;
+    g_battery_diag.battery_age_ms = HAL_GetTick() - status.battery_tick;
 	board_status = status;
 	g_robot.cap_v_f = status.kicker_valid ? status.cap_v : 0.0f;
 	g_robot.bat_v_f = status.battery_valid ? status.bat_v : 0.0f;

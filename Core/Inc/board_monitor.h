@@ -47,6 +47,29 @@ typedef struct
 	uint32_t discharge_pulses;
 } board_status_t;
 
+/* Read-only debugger evidence. First failure is retained until reset;
+ * current validity fields continue updating. This is not a recovery mechanism.
+ */
+typedef struct
+{
+    uint32_t first_failure_ms;
+    uint32_t first_error;
+    uint32_t first_hal_status;
+    uint32_t failures;
+    uint32_t battery_age_ms;
+    float bat_v;
+    uint16_t manufacturer_id;
+    uint16_t device_id;
+    uint8_t first_register;
+    uint8_t first_write;
+    uint8_t scl_high;
+    uint8_t sda_high;
+    uint8_t ina226_ready;
+    uint8_t battery_valid;
+    uint8_t quiet;
+} board_battery_diag_t;
+extern volatile board_battery_diag_t g_battery_diag;
+
 void board_monitor_init(void);
 void board_monitor_update(void);
 void board_monitor_get(board_status_t *status);

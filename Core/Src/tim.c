@@ -108,9 +108,21 @@ void MX_TIM1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM1_Init 2 */
-
+  /* A4931 ENABLE is active low. Hold pins high as GPIO while TIM1 is off.
+   * motor_prepare_pwm() connects AF only after all zero-duty channels run.
+   * Do not restore CubeMX's unconditional HAL_TIM_MspPostInit here.
+   */
+  {
+    GPIO_InitTypeDef gpio = {0};
+    __HAL_RCC_GPIOE_CLK_ENABLE();
+    gpio.Pin = MOTOR_PWM1_Pin|MOTOR_PWM4_Pin|MOTOR_PWM3_Pin|MOTOR_PWM2_Pin;
+    HAL_GPIO_WritePin(GPIOE, gpio.Pin, GPIO_PIN_SET);
+    gpio.Mode = GPIO_MODE_OUTPUT_PP;
+    gpio.Pull = GPIO_NOPULL;
+    gpio.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOE, &gpio);
+  }
   /* USER CODE END TIM1_Init 2 */
-  HAL_TIM_MspPostInit(&htim1);
 
 }
 /* TIM2 init function */

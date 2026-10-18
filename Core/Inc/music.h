@@ -13,6 +13,31 @@ typedef struct {
     uint8_t sixteenths;
 } music_note_t;
 
+/* 音符对照表：十二平均律，A4=440 Hz；频率四舍五入为整数 Hz。
+ * 本文件以 1=C5 为基准：低八度为 C4，高八度 1'=C6，再高八度为 C7。
+ * 简谱     音名       第4组Hz   第5组Hz   第6组Hz   第7组Hz
+ * ----------------------------------------------------------------
+ * 1      C            262       523      1047      2093
+ * #1     C#           277       554      1109      2217
+ * 2      D            294       587      1175      2349
+ * #2     D#           311       622      1245      2489
+ * 3      E            330       659      1319      2637
+ * 4      F            349       698      1397      2794
+ * #4     F#           370       740      1480      2960
+ * 5      G            392       784      1568      3136
+ * #5     G#           415       831      1661      3322
+ * 6      A            440       880      1760      3520
+ * #6     A#           466       932      1865      3729
+ * 7      B            494       988      1976      3951
+ *
+ * 0 / _：休止，frequency_hz=0；不发声，但保留该项时值。
+ * 升八度：音名相同、组数加1、频率约翻倍；整数取整可能相差1 Hz。
+ * 数组格式：{frequency_hz, sixteenths}；sixteenths 的单位是1/4拍。
+ * 时值对照：1=1/4拍，2=1/2拍，4=1拍，8=2拍，16=4拍。
+ * 96 BPM时：每拍625ms；延音增加同一项时值，不拆成重复触发的音。
+ * 当前valorant：D6(1175)、D6(1175)、休止、D6(1175)、G6(1568)。
+ */
+
 #define MUSIC_BPM 96U
 static const music_note_t pepa_pig[] = {
     /* 1-2: 5 3 1 2 5 | 5 7 2 4 3 1 */
@@ -59,7 +84,16 @@ static const music_note_t mode3_music[] = {
     {988,4}
 };
 
-#define MODE3_MUSIC mode3_music
+/* Valorant: 2 2 _ 2 5-, raised one octave (D6/G6), 96 BPM.
+ * Durations use sixteenths and retain the current selected rhythm.
+ * '_' is silence; final 5 is one uninterrupted sustained note.
+ */
+static const music_note_t valorant[] = {
+    {661,1}, {661,1}, {0,1}, {661,1}, {832,2}
+};
+
+/* Select one startup song: pepa_pig, mode3_music, or valorant. */
+#define MODE3_MUSIC valorant
 #define MODE3_MUSIC_COUNT (sizeof(MODE3_MUSIC) / sizeof(MODE3_MUSIC[0]))
 
 #endif

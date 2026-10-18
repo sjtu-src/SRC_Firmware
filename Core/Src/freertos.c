@@ -407,7 +407,9 @@ static void Play_Mode3Music(void)
     {
         uint32_t duration = (60000U * MODE3_MUSIC[n].sixteenths) /
                             (MUSIC_BPM * 4U);
-        uint32_t gap = duration / 10U;
+        /* Articulate consecutive notes, but sustain the final note for its
+         * full written duration before stopping playback. */
+        uint32_t gap = (n + 1U < MODE3_MUSIC_COUNT) ? duration / 10U : 0U;
         uint32_t hz = MODE3_MUSIC[n].frequency_hz;
         if (board_actuators_disabled()) break;
         BEEP_OFF();
@@ -420,7 +422,7 @@ static void Play_Mode3Music(void)
         }
         osDelay(duration - gap);
         BEEP_OFF();
-        osDelay(gap);
+        if (gap != 0U) osDelay(gap);
     }
     BEEP_OFF();
     __HAL_TIM_SET_AUTORELOAD(&htim8, saved_arr);

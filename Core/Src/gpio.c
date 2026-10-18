@@ -56,9 +56,12 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, MOTOR_DIR3_Pin|MOTOR_DIR2_Pin|MOTOR_BRK1_Pin|MOTOR_BRK4_Pin
-                          |MOTOR_BRK3_Pin|MOTOR_BRK2_Pin|MOTOR_BRK5_Pin|MOTOR_DIR5_Pin
+  HAL_GPIO_WritePin(GPIOE, MOTOR_DIR3_Pin|MOTOR_DIR2_Pin|MOTOR_BRK5_Pin|MOTOR_DIR5_Pin
                           |MOTOR_DIR1_Pin|MOTOR_DIR4_Pin, GPIO_PIN_RESET);
+
+  /* Four drive wheels coast at startup: BRAKEZ is active low. */
+  HAL_GPIO_WritePin(GPIOE, MOTOR_BRK1_Pin|MOTOR_BRK4_Pin
+                          |MOTOR_BRK3_Pin|MOTOR_BRK2_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LED_CLK_Pin|LED_COMM_Pin, GPIO_PIN_RESET);

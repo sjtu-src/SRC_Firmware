@@ -4,6 +4,8 @@
 #include "typedef.h"
 #include "cfg.h"
 
+void motor_hold_startup(void);
+void motor_prepare_pwm(void);
 void init_motor(void);
 void set_motor_dir(u8 m1, u8 m2, u8 m3, u8 m4);
 void set_motor_break(u8 m1, u8 m2, u8 m3, u8 m4);
