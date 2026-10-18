@@ -571,7 +571,7 @@ void MX_TIM11_Init(void)
   htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim11.Init.Period = 6719;
   htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
   {
     Error_Handler();
@@ -588,7 +588,6 @@ void MX_TIM11_Init(void)
   {
     Error_Handler();
   }
-  __HAL_TIM_DISABLE_OCxPRELOAD(&htim11, TIM_CHANNEL_1);
   /* USER CODE BEGIN TIM11_Init 2 */
     /* PWM only; MOTOR5 speed is counted by FG1 EXTI. COEX, Xuanting Liu */
     HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);

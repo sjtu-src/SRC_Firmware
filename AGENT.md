@@ -580,3 +580,178 @@ P3：以每车参数与可复现数据维护能力包络，逐步引入摩擦补
 - Q1 D-S短路及U14熔断仍为用户确认事实；支路MOS损坏可能导致过流并使Q1连带损坏，但损坏顺序和最初诱因尚未确定。不能断言所有BAT/I2C异常或MOS初始击穿均由同一原因引起。
 - 修复建议为检查并更换已损MOS，同时检查该路其余桥管、U13栅极驱动与栅极电阻网络，及总开关U3/Q1网络；随后先在限流条件、输出关闭状态下验证，再恢复电机运行。第23/25节记录的18V TVS与6S电压不匹配、总线R7=0Ω的保护边界仍需处理，不因找到一个损坏器件便视为这些问题已解决。
 - 本轮只更新故障记录，未改固件、构建或烧录。尚无更换该MOS后恢复正常的实机反馈。
+
+## 27. 2026-10-18 用户反馈修改后自检不吸球，PWM5测不到波形（定位中）
+
+- 基线仍为d76a6f1039b75f0ee411c926c02863b951d67668工作树。用户用示波器报告PWM5没有PWM、自检不吸球；尚未取得持续高/低电平、BAT读数、其它四轮自检状态及运行时寄存器。不能把无波形直接等同于TIM11未启动或确认板级故障。
+- 逐项核对当前差异：第24节修改TIM1、PE9/11/13/14及四轮BRK，未修改TIM11、PB9或吸球代码；action.c/misc.c/dribbler_control.c相对当前HEAD无工作区差异。MX_TIM11_Init仍完成Base/PWM初始化、CH1 PWM1低有效、ARR6719/CCR0及HAL_TIM_PWM_Start，随后配置PB9 AF3。TIM11时钟由HAL_TIM_Base_MspInit开启，init_dribbler释放BRK5并启计数器。HAL_PWM_Start返回值当前未检查；尚无其实际失败证据，不添加无依据的重复启动补丁。
+- 当前HAL的Base_Init/PWM_Init均初始化ChannelState为READY，故不能以“先Base_Init再PWM_Init”直接认定通道状态异常。项目内未发现其它PB9重新配置或TIM11 Stop调用。
+- MODE3的do_robot_run仍在LED延时2秒后do_dribbler(1)，2秒后do_dribbler(0)。命令本身只设目标并先输出0，实际非零CCR由独立BoardUpdate任务每100ms的dribbler_update产生；该任务在启动期也运行。无线超时停吸球只在NORMAL/CRAY执行，不应覆盖SELFTEST_MODE。
+- 两类明确的软件归零路径：battery无效/低于6S阈值19.8V持续约5秒后power_quiet锁存，board_actuators_disabled使自检返回并清负载；另一类是非零吸球命令下连续约1秒没有FG边沿，stalled锁存、吸球CCR清零，必须显式停命令才解除。后者可能让示波器只在自检最初不到1秒看到PWM，不能由测量较晚的静态高电平排除此前有输出。
+- 区分办法：在吸球自检窗口观察TIM11->CCR1、CR1.CEN、CCER.CC1E、PB9的MODER/AFRH，并结合g_battery_diag.quiet、BAT有效性。计数与通道均启用且CCR0，优先查命令/保护；CCR在0与ARR之间但MCU脚无波形，再查复用、时钟/计数及引脚电气状态。低有效零占空比正常为持续高，不应为证明有输出强制给非零PWM或取消保护。
+- 已询问用户当前BAT电压、自检四轮是否仍转、PWM5持续高还是低。等待实测以确定修复点，本轮未修改固件行为。
+- 复跑tests/test_board_migration.py，4S/6S全部通过，包含吸球PI产生非零CCR、FG缺失停机及全局禁用；tests/test_motor_startup.py通过。宿主模拟不覆盖实机PB9电压、TIM11寄存器及任务执行现场，不能宣称已修复。
+
+## 28. 2026-10-18 BAT正常、四轮会转、PWM5持续高：增加吸球历史诊断
+
+- 用户补充实测：BAT=22.8V，自检四个行走轮仍会转，PWM5一直高电平。这降低当次全局quiet/关机锁存的可能性；持续高符合当前低有效PWM的零占空比，但不单独证明TIM11计数/通道/复用正常，也不证明从未短暂输出。
+- 本轮复核实际HEAD已为afe2c7720c11c6d2a9a62aed45d02643eef60c53（fix the bug of suddent move of motor），已包含前述启动修改；第27节沿用d76a6f1描述不再作为当前提交基线。保留用户已有AGENT.md工作区记录及全部提交内容。
+- Core/Inc/dribbler_control.h新增公开诊断类型dribbler_diag_t及volatile全局g_dribbler_diag，实现在dribbler_control.c。只记录现有控制路径，不新增PWM强制输出、重复初始化、自动重启、保护豁免或参数修改。
+- requests/run_requests/rejected_requests记录合法命令调用及因执行器禁用被拒绝的非零请求；updates记录实际100ms速度环更新次数。command/target_rpm/rpm/duty/stalled/disabled发布当前控制状态，fg_edges为累计FG边沿。
+- nonzero_outputs表示速度环写入非零比较值的累计次数，不代表已经用示波器测到PWM。last_nonzero_ccr/cr1/ccer及last_nonzero_ms保存最近一次非零比较值对应的寄存器快照；普通停止命令不会擦除历史。pwm_ccr/arr/cr1/ccer为最近一次命令/速度环执行时的当前快照，不是连续硬件采样。
+- no_fg_stops在FG缺失首次使stalled置位时递增，该命令持续停机期间不反复计数；正常do_dribbler(0)仍按原实现清stalled，但历史计数保留，便于在2秒自检结束后判断是否已触发过反馈保护。诊断随MCU复位清零，不支持写诊断变量改变控制。
+- Watch判读：run_requests=0先查MODE3命令路径；run_requests>0而updates不增长查BoardUpdate调度；rejected_requests>0结合disabled/g_battery_diag查全局禁用；nonzero_outputs>0表明软件曾写非零比较值，结合last_nonzero_cr1 bit0及last_nonzero_ccer bit0判断当时计数和通道是否启用；no_fg_stops>0表明至少一次缺反馈停机。若这些正常却PB9仍持续高，再查PB9 AF3/MODER、计数器实际变化、探测点及电气状态。
+- tests/test_board_migration.py新增drib_diag用例，覆盖命令与更新、非零比较值/使能快照、无FG停机、停止后历史保留及全局禁用拒绝请求。4S/6S全部通过；test_motor_startup.py、test_startup_music.py通过。尚无本轮诊断固件实测，不宣称根因已确认或吸球已修复。
+- 第28节构建验证：Keil编译/链接及HEX生成成功，0 Error(s)、0 Warning(s)，日志MDK-ARM/tmp/dribbler_diag_build.log；git diff --check通过。尚未烧录。
+
+## 29. 2026-10-18 PWM5诊断截图：已写非零CCR，无FG后停机
+
+- 当前源码基线afe2c7720c11c6d2a9a62aed45d02643eef60c53及第28节诊断工作树，保留现有改动。本轮用户提供Keil Watch的g_dribbler_diag截图，以下为实际读数：requests=2，run_requests=1，rejected_requests=0，updates=0x78(120)，no_fg_stops=1，nonzero_outputs=0xA(10)，fg_edges=0；command/target_rpm/rpm/duty均0，stalled=0，disabled=0。
+- 当前pwm_ccr=0，pwm_arr=0x1A3F(6719)，pwm_cr1=1，pwm_ccer=3。历史last_nonzero_ccr=0xBE2(3042)，last_nonzero_cr1=1，last_nonzero_ccer=3；last_nonzero_ms=0x184B(6219ms)，last_request_ms=0x1C8A(7306ms)。3042/(6719+1)约45.27%逻辑驱动占空比，低有效意味着对应低电平时间比例，并非45%高电平。
+- 这些记录支持：启动请求到达，速度环执行并至少10次写入非零CCR；最近一次非零时CR1.CEN=1、CCER.CC1E=1且CC1P=1。没有FG边沿并发生一次无反馈停机；当前stalled=0不能否定历史故障，因为随后正常停止命令会清stalled但不清no_fg_stops。当前CCR0与自检结束的停止状态一致，不能据此断言从未下发PWM。
+- 尚不能由寄存器快照证明PB9实际曾输出波形，也不能把无FG反馈本身视为最初原因；电机未被驱动或未转同样会无FG。候选范围移至PB9实际复用、TIM11输出模式/时钟计数、测量窗口/测点、连接与引脚电气状态，暂不取消无反馈保护或强行延长输出。
+- 核对当前源码，PB9仍配置为GPIO_MODE_AF_PP、GPIO_AF3_TIM11。后续I2C2使用PB10/PB11、SPI2使用PB13/14/15；软件I2C宏也只操作PB10/PB11，未发现该路径覆盖PB9。源码配置不替代实机MODER/AFR读数。
+- 已请求读取(GPIOB->MODER >> 18) & 3（期望2）、(GPIOB->AFR[1] >> 4) & 15（期望3）、TIM11->CCMR1（CH1应CC1S=0、OC1M=6），并说明测点为MCU PB9还是功率板PWM5。这些复用配置自检结束后仍可读取，暂不要求再次烧录。示波器需覆盖启动后约1秒的实际驱动窗口，静态停止后的高电平不能否定该窗口内波形。
+- 本轮只更新分析记录，未修改控制代码、构建或烧录；PWM5引脚无波形的最终原因仍待上述实机证据。
+
+## 30. 2026-10-18 PB9模式/复用与TIM11 PWM模式实测正常，测点在功率板
+
+- 用户实测：(GPIOB->MODER >> 18) & 3 = 2；(GPIOB->AFR[1] >> 4) & 15 = 3；TIM11->CCMR1 = 0x60。符合PB9复用模式、AF3/TIM11及CH1输出PWM1（CC1S=0、OC1M=6）。测量位置明确为功率板标注PWM5处，尚未直接测MCU PB9。
+- 结合第29节last_nonzero_ccr=3042、ARR6719、CR1=1、CCER=3，已取得命令、非零比较值、输出使能及引脚复用的支持证据。尚缺实际计数时钟/变化及PB9波形证据，因此不宣称MCU引脚已输出，更不能由功率板测点高电平认定软件没有写PWM。
+- 重新视觉核对powerboard_schematic.pdf第2页：Control-Board Connector CN1第28脚为PWM5，直接连接Dribbler Driver U9的ENABLE第27脚，RN4提供5.1kΩ至3V3上拉；CN1第24脚为BRK5，26脚为DIR5。没有在图中看到PWM5路径上的逻辑反相或隔离器。主控板的PB9至板间连接器实际走线图尚未找到，不凭同名网络替代端到端连通性核实。
+- 推断：若主控到功率板该路开路/接触不良，功率板侧仍可被RN4拉高，与用户持续高的现象相符；这是待测假设，不是已确认断线。过去功率器件故障可能涉及信号端，但尚无PB9或U9损伤证据。
+- 后续对照：用示波器同一启动周期同时测MCU PB9与功率板CN1-28/U9-27，公共地，覆盖音乐后实际吸球启动约1秒窗口；可用下降沿单次触发避免仅看停止后高电平。PB9有而功率板无，查板间连接/焊点/端子/实际映射；两端都有则继续查BRK5、驱动供电、桥管及FG回路；PB9也无则查TIM11->CNT在运行中是否变化、APB2时钟和调试冻结及引脚负载/损伤。断电放电后检查PB9到CN1-28/U9-27连通性，避免带电用电阻档。
+- 本轮只补充定位记录，未改固件、未重新构建/烧录；此前测试结果不作为端到端线路或引脚完好证明。
+
+## 31. 2026-10-18 用户明确：四轮防突动修改前、已有FG闭环时吸球正常
+
+- 用户补充：修改代码前吸球能够正常转动；已更换吸球电机驱动芯片但仍不转。进一步明确正常阶段是“本次四轮开机防突动修改之前（已有FG速度闭环）”。此证据要求优先核对软件回归，不能把问题归为新增FG闭环，亦不能由驱动芯片替换推定所有硬件必然完好。
+- 当前基线afe2c7720c11c6d2a9a62aed45d02643eef60c53及吸球诊断工作树。以相邻提交d76a6f1与afe2c77做实际源码比较：Core/Src/action.c、misc.c、dribbler_control.c、Core/Inc/cfg.h完全一致；TIM11初始化及PB9复用配置也一致。d76a6f1是选用的相邻源码比较点，不等于已取得用户最后正常烧录的AXF/HEX或确认其精确提交号。
+- 此间真正启动变化为TIM1的GPIO高暂存/延后AF、零CCR/UPDATE及四通道启动顺序、PRIMASK保持、GPIOE四轮BRK默认高，以及robot初始化调用名替换；freertos的差异为音乐末音间隔处理，BoardUpdate/吸球调度未变。motor_hold_startup当前对四轮的控制操作与原init_motor相同，均为BRAKEZ高、DIR0、CCR0、is_motor_run0。
+- 回溯更早84c6b4f迁移前确有固定约50/55%占空比改为PI爬升的历史差异；但用户确认本次正常版本已含FG闭环，故不把这项更早历史当作本轮根因，不据此调高占空比、取消无反馈停机或恢复开环。
+- 搜查应用时钟/计数操作：未发现新增关闭/复位TIM11、修改PB9或写整个APB2寄存器的调用。HAL时基使用TIM14，并非TIM11。未找到四轮修改直接破坏TIM11的源码路径；这只是源码审查结果，不能据此排除实机时序、电源或其它间接软件影响。
+- 现有快照只能证明非零CCR与CEN/CC1E配置，不能证明TIM11实际计数或PB9波形。优先补足运行状态下TIM11->CNT是否变化的证据；已请求用户保持CPU运行连续刷新CNT，暂停下的固定值不作判断。此前功率板测点与MCU PB9直接波形对照仍未取得。
+- 本轮保持四轮防突动修复及现有吸球保护，不做无依据的重复初始化、调参数或恢复可能产生启动轮动的旧启动路径；仅更新调查记录，未修改固件行为、构建或烧录。尚未确认吸球回归根因。
+- 第31节后续实测：用户确认CPU运行时TIM11->CNT会变化，补足定时器实际在计数的证据。结合已有CCR/CCER/CCMR1/MODER/AFR，当前内部输出配置与计数均符合预期；仍不能用这些值替代PB9物理波形。下一项直接测MCU PB9，在通讯灯由亮转灭、do_dribbler(1)开始时捕获；若PB9有PWM而板侧没有则定位连接段，若PB9无则继续查MCU输出/负载。此更新不宣称软件回归已排除或硬件根因已确认。
+
+## 32. 2026-10-18 用户直接测PB9：一次拉低后回高，未见连续PWM
+
+- 用户新增物理观测：MCU PB9只有一个周期的拉低，随后拉高，没有观察到持续PWM。此前仅功率板测点的证据边界据此更新；MCU输出端也需定位。但PB9仍连接外部负载，尚不能单独由此认定MCU损坏或完全排除外部钳位。
+- 当前源码基线仍afe2c7720c11c6d2a9a62aed45d02643eef60c53及诊断工作树；复查TIM11初始化/使用和所有OPM调用，未找到给TIM11设置单脉冲或周期重启的源码。TIM6/7/9的OnePulse调用不是TIM11。原截图非零输出时CR1=1；本地stm32f407xx.h定义OPM=0x8，因此该快照单脉冲位为0。不能仅凭一次低电平就宣称TIM11进入单脉冲模式，也不能用重启定时器作为根因修复。
+- 配置为168MHz定时器时钟、PSC0、ARR6719时，期望周期40μs。此前最后一次非零CCR3042对应低电平约18.1μs；该计算来自配置，不是实测频率。当前证据未包含PSC/APB2运行值与实测脉宽。
+- 已请求用户提供那次低电平的μs/ms持续时间，以及示波器捕获时MCU是否始终运行、没有断点/暂停。还需带时基/电压刻度的波形区分真正孤立的微秒脉冲，与毫秒/秒级驱动窗口在长时基/采样不足下显示的包络。后者为待验证测量假设，不据此否定用户观测。
+- 尚无新的控制行为改动或构建/烧录。保留无FG保护，不将无反馈停机当作PB9无连续波形的已确认最初原因。
+
+## 33. 2026-10-18 PB9一次下陷约22ms、约2V，CPU始终运行
+
+- 用户补充：此前所称PB9的单次拉低持续22ms，电平约2V而非0V，测量时MCU始终运行，无断点/暂停。22ms不是预期25kHz/40μs的单个周期；调试暂停假设缺少本次支持。尚未取得示波器时基、采样率、耦合/平均设置和带刻度截图。
+- 2V可能是实际异常电平，也可能是未解析的PWM平均/显示包络，不能仅凭该描述认定MCU GPIO已损坏。此前历史CCR3042/6720约45.27%低电平驱动，若高3.3V/低0V，则周期平均约3.3*(1-3042/6720)=1.806V；接近2V是值得排除的测量假设，不证明该22ms现象就是平均值或完整驱动窗口。
+- 当前PB9源码仍AF_PP推挽、NOPULL，尚未取得运行时OTYPER位。已请求读(GPIOB->OTYPER >> 9) & 1，期望0；与此前MODER=2、AF=3组合判断实际输出类型。未通过提高GPIO速度、强制占空比或重启定时器试错。
+- 再核对官方A4931 Rev9第5页：控制输入VIN(1)最低2V，VIN(0)最高0.8V，输入电流在所列条件下约±1μA。因此若微秒尺度实际低电平也停在2V，它不是保证有效的低电平，能导致无法正常使能；应优先查推挽输出能力、负载/短接/地参考，而不是仅换A4931或改PID。资料：https://www.allegromicro.com/-/media/files/datasheets/a4931-datasheet.pdf 。
+- 已请求将示波器改为DC耦合、20μs/div、至少10MSa/s、关闭平均/高分辨率，在吸球启动窗口看PB9是否有0～3.3V、约40μs周期的波形；探头倍率与通道倍率需一致、地接MCU GND。如果此设置仍确认低仅2V，再断电隔离PWM5信号线并测MCU侧，保留其它供电/电池监测连接与公共地，避免拔整块功率板使BAT无效从而触发quiet、污染比较条件。
+- 本轮只更新诊断记录，未改变固件行为或重新构建；PB9异常的最终原因仍待有效波形与输出类型实测。
+
+## 34. 2026-10-18 确认PB9有40μs周期方波，但幅度仅2～3.3V
+
+- 用户按DC耦合、20μs/div复测，明确看到周期40μs、低约2V/高约3.3V的连续方波。更新第32/33节的“未见连续PWM”观察：已取得MCU PB9存在25kHz PWM的直接证据，频率与当前配置吻合；剩余关键异常是电平幅度。不能继续将现象称为仅一个PWM周期，也不能将2V直接作为已证实的正常PWM平均值。
+- 结合官方A4931输入低电平上限0.8V（第33节来源），若以正确公共地参考测得的实际低电平为2V，则不能保证ENABLE低有效，足以解释电机未使能及FG=0后软件超时停机；原始电平异常的原因仍未确证。
+- 本轮不改PID、PWM频率、FG保护或增加外部强下拉。需要确认运行时(GPIOB->OTYPER >> 9) & 1为0（该值此前尚未回复），及探头地与MCU GND一致。源码AF_PP与实际输出类型不可混为同一实测证据。
+- 优先隔离试验：断电后只断开PB9至功率板的PWM5信号，保留公共地和其它供电/电池监测连接，再运行相同自检并测MCU侧。功率板PWM5应由原RN4上拉保持禁用，不能把它短接到地。MCU侧恢复0～3.3V，则定位外部PWM5线路/负载/错接或反向驱动；空载仍2～3.3V且推挽及测量确认正常，再查MCU PB9输出级、主控板本地负载/焊接问题。空载异常本身也不能未经隔离检查便断言整颗MCU损坏。
+- 图纸RN4为5.1kΩ上拉至3.3V，其静态拉低负载约0.65mA；正常上拉不是把健康推挽低电平钳在2V的充分解释。需要检查额外负载或驱动冲突，而非仅更换已经换过的A4931。
+- 当前源码基线afe2c7720c11c6d2a9a62aed45d02643eef60c53及既有诊断工作树。本轮只记录实测与定位步骤，未修改固件、构建或烧录，未声称根因已最终确认。
+
+## 35. 2026-10-18 RN4上拉疑问与整束排线的USB隔离测试
+
+- 用户确认运行时(GPIOB->OTYPER >> 9) & 1=0，PB9为推挽；说明PWM5与其它信号为整束排线，单独断开一根不便操作。此前要求保留其余线路并单断PWM5的建议未考虑实际连接便利性，本节改为整束拔下、主控独立测试，不要求剪线或挑针。
+- 用户确认主控可USB独立供电。正常固件在功率板断开后因BAT无效会quiet，故不要求用正常自检固件做整束断开的比较，避免测不到输出却误判PB9。
+- 用户询问RN4是否把低电平抬高。正常5.1kΩ至3.3V的拉低电流约0.65mA，不足以解释健康推挽输出低电平2V；若RN4装错为小阻值、焊桥或连线错误，则仍可能是异常负载源，不能直接排除RN4。断电在板比较PWM5到3.3V电阻与其它正常通道，需考虑并联器件影响。
+- ST官方STM32F405xx/407xx数据手册I/O输出特性：2.7V<VDD<3.6V、8mA吸收电流条件下VOL最高0.4V，支持上述正常轻载不应有2V低电平的判断；不是对当前受损引脚的实测保证。来源：https://www.st.com/resource/en/datasheet/stm32f407ve.pdf 。RN4阻值源于用户原理图第2页，实装阻值尚未实测。
+- 新增tests/build_pb9_usb_test.py：读取当前main.c，只在tmp/pb9_usb_test生成独立主入口，调用HAL_Init/SystemClock_Config/MX_TIM11_Init，设CCR1=(ARR+1)/2后WFI等待；不进入机器人初始化、RTOS、四轮、踢球或FG控制。保留原PB9 AF3/PWM1/低极性配置，预期持续25kHz/50%。正常源码、正常.uvprojx与正常HEX不修改。
+- 独立Keil工程转换源码/包含路径为绝对路径，输出单独位于MDK-ARM/output/pb9_usb_test/PB9_USB_Test.hex。操作说明为MDK-ARM/PB9_USB_TEST.md。该镜像仅用于整束功率板线已断开、USB供电的主控；接回功率板前恢复正常固件并断电接线。
+- 空载恢复0～3.3V支持排线/功率板负载问题，仍2～3.3V则继续查主控本地负载、PB9输出级及测量，不直接认定整颗MCU损坏。测试未实机执行，不声称RN4或MCU已被最终定责。
+- 第35节构建结果：独立PB9_USB_Test工程Keil构建成功，0 Error(s)、0 Warning(s)，HEX已生成；日志MDK-ARM/tmp/pb9_usb_test/pb9_usb_test_build.log。正常main.c与正常SRC_Firmware.uvprojx无差异，正常输出目录未被测试工程使用；git diff --check通过。未烧录。
+
+## 36. 2026-10-18 R39与吸球PWM5关系核对
+
+- 用户询问R39是否导致当前吸球PWM5异常。重新放大核对powerboard_schematic.pdf第3页：R39=0Ω，属于Motor2/U16，连接U16第25脚CLD至GND；不是PWM2输入上的电阻，更不是PWM5通路器件。第2页吸球U9的同功能电阻为R25=0Ω，同样将第25脚CLD接地；PWM5连接第27脚ENABLE、RN4上拉。
+- A4931官方Rev9第10页Lock Detect Function明确：CLD接GND可禁用硬件堵转检测；R39/R25的0Ω接地是该手册支持的禁用接法，不应误判为把PWM输入短路。来源：https://www.allegromicro.com/-/media/files/datasheets/a4931-datasheet.pdf 。这也意味着该硬件堵转保护不能被假定有效，原软件FG超时保护是另一条独立路径。
+- 在实物与该图一致且无焊桥/错接的前提下，R39正常连接不能解释吸球PB9的2～3.3V电平；即使讨论吸球R25，其CLD功能也不是PWM输入电平整形。异常焊接或不同版本实物需要单独核对，不据原理图宣称器件实物必然完好。
+- 独立PB9 USB测试仍为当前区分主控输出与功率板负载的有效下一步。本轮只更新记录，未改固件、硬件或重建；尚未取得用户执行独立测试后的结果。
+
+## 37. 2026-10-18 独立PB9测试工程打开时请求缺失CMSIS 4.5.0
+
+- 用户截图确认Pack Installer报错：Install By Pack ID，ARM:CMSIS:4.5.0，Pack not found。前次仅CLI编译成功未覆盖GUI打开时的RTE包选择检查，不能以构建通过声称工程打开无问题。
+- 检查独立与正常.uvprojx，正常工程原有RTE组件CMSIS/CORE/Cversion4.3.0，package指定ARM.CMSIS4.5.0，targetInfo仍为SRC_Firmware；生成器照搬此条导致测试工程打开后请求旧包。本机E:/Keil_v5/ARM/PACK/ARM/CMSIS仅有4.2.0，设备包Keil.STM32F4xx_DFP1.0.8已安装。
+- 测试实际源码与IncludePath使用仓库Drivers/CMSIS的核心/设备头文件，不依赖该RTE自动加入的文件；RTE/files为空。已修改tests/build_pb9_usb_test.py，仅从测试工程删除多余CMSIS/CORE的RTE选择及空::CMSIS组，处理剩余targetInfo名，保留已安装的设备包及全部源文件。正常main.c、正常.uvprojx及固件行为不修改，也不修改本机全局包安装。
+- 重新生成并静态验证：测试XML中无4.5.0选择，无CMSIS RTE组件，设备包仍为Keil.STM32F4xx_DFP.1.0.8，全部源文件路径存在。随后执行独立工程全量重建；GUI打开尚未实测，建议关闭旧测试工程时不保存旧配置，再重开生成的同一路径工程，避免内存中的旧工程覆盖修复。
+- PB9_USB_TEST.md同步增加此错误处理说明。台架测试条件仍为整束功率板排线拔下、USB独立供电、恢复正常固件后才能断电接回功率板。
+- 第37节全量重建完成：PB9_USB_Test为0 Error(s)、0 Warning(s)，AXF/HEX已生成，代码6974字节；日志MDK-ARM/tmp/pb9_usb_test/pb9_usb_test_packfix_build.log。git diff --check通过，正常main.c/.uvprojx仍无改动。尚未验证用户重新打开GUI或烧录实机。
+
+## 38. 2026-10-18 用户确认USB独立测试控制板正常
+
+- 用户反馈“独立测试，控制板没问题”，表明用户已执行第35/37节测试并认为主控空载输出正常。用户未提供本轮电平数值/截图；据此支持PB9具有正常输出能力，将排查优先级转向排线、功率板输入及接入负载，不扩展为整块主控所有功能或正常固件全部行为已验证。
+- 与接入功率板时40μs、2～3.3V方波对照，异常负载/输出冲突是当前重点。正常RN4 5.1kΩ上拉不是足以抬高健康推挽低电平的理由，但RN4装错、焊桥或错误阵列连接仍待核实。
+- 优先断电、拔排线检查U9输入邻脚：ENABLE27是否与DIR26或BRAKEZ28近零阻短接/焊桥；后两路由主控输出高时，若与PWM5短接可能形成两个推挽输出对抗，导致低电平抬高。该机制与现象相符但未经实物确认，不能宣布已找到焊桥。用户已换U9并不能排除更换后的焊接或邻脚连通异常。
+- 随后核对RN4实装阻值/方向及PWM5到3.3V阻值，与正常PWM通道比较，并考虑在板并联路径。检查CN1第28脚至U9第27脚及板间排线映射，确认没有与电源、DIR5、BRK5等错接，也核查公共地连通。
+- 接回功率板前先恢复正常SRC_Firmware固件，再断电接线；独立测试镜像持续50% PWM且不运行FG/电池保护，不能用于整车运行。保持现有正常固件保护，不新增开环或强输出补丁。
+- 基线仍afe2c7720c11c6d2a9a62aed45d02643eef60c53及诊断工作树。本轮只记录实测和下一步板级检查，未改代码、构建或烧录；具体功率板/线束故障点仍待用户测量。
+
+## 39. 2026-10-18 用户确认R14/R17由470Ω换成0Ω
+
+- 用户提出是否因3V3/5V模块470Ω改0Ω导致PWM5异常；询问R14或R17后回答“都换了”，记录为两颗均已更换。尚未取得5V_BAT与功率板3V3实测值、纹波或更换前后对照，不推定其电源轨正常，也不直接认定此改动就是根因。
+- 重新放大powerboard_schematic.pdf第1页：R14在母线VCC至U6 LMR23630ADDA的VIN（第7脚）/EN（第5脚）输入支路，后有C16/C17；R17在5V_BAT至U7 LT3080EST输入第3脚支路，后有C23/C25。两者串在主输入供电路径，不是VCC内部偏置输出上的电阻，也不是反馈设定电阻。
+- 5V设定由R15=88.7kΩ/R16=22.1kΩ反馈分压决定；3V3设定由LT3080 SET脚R21=330kΩ及其10μA基准决定。TI LMR23630数据手册§9.2.2.2、ADI LT3080 Output Voltage节支持此语义：https://www.ti.com/lit/ds/symlink/lmr23630.pdf ；https://www.analog.com/media/en/technical-documentation/data-sheets/lt3080.pdf 。仅把串联输入电阻改0Ω不等于短接稳压芯片输入输出，也不直接改变输出电压设定。
+- 图纸470Ω标注本身需要核对：普通470Ω在10mA时压降4.7V，在5V到3.3V LDO输入路径甚至忽略LDO压差也仅有约3.6mA压差预算，与标注800mA供电能力不符。不能直接建议换回普通470Ω；可能存在图纸单位/器件性质差异（例如磁珠高频阻抗标注），但尚无BOM/实物证据，不将此可能当成设计事实。
+- 0Ω会改变原有输入阻抗和滤波/瞬态条件，焊接也可能引入桥接；如果因此出现电源异常，可能间接影响负载/PWM，但尚不能由该更换动作单独解释健康推挽PB9接入后低电平2V。正常5.1kΩ上拉即使电源略升也不能自动解释此幅度，应结合实际负载、错接和共地检查。
+- 下一项先测功率板5V_BAT与3V3相对本板GND，确认接入主控后仍稳定，并核对两板GND连通/压差；若3V3意外接近5V，应停止连接主控，查LT3080引脚与输入输出桥接/器件损伤。用户尚未回复电压数值，本轮只更新记录，不修改固件、硬件或重新构建。
+
+## 40. 2026-10-18 用户确认电源/焊接/器件检查正常，补查PB9带载能力
+
+- 用户反馈：功率板5V_BAT/3V3测量均正常；仔细检查无连锡；MOSFET/A4931检查均无损坏。记录为用户检查结果，未提供具体电压、纹波、芯片检测方法/阻值，不直接扩展为所有外部网络、电源瞬态或器件功能均已排除。
+- 此反馈降低明显电源电压异常、已知功率器件击穿和可见焊桥的优先级；R14/R17改0Ω本身仍无直接导致PWM低电平2V的证据，不建议无依据恢复普通470Ω或改控制参数。
+- 已进一步询问独立测试PB9的实际低/高电平，以及断电拔整束排线后的PWM5至3V3/GND/DIR5/BRK5阻值，与正常通道比较。当前尚未收到读数。
+- 修正此前结论边界：第38节“空载正常支持主控输出能力”不能当作PB9具有正常带载能力的确证。损伤后弱下拉也可能空载正常、接正常5.1k上拉后低电平升高。因此不能只因空载测试正常就把MCU输出级排除。此前用户也仅说控制板没问题，未给空载电平数值。
+- 提出优先受控负载试验：保留USB独立测试固件、整束功率板排线拔下，在PB9与主控自身3.3V间接一颗已知4.7kΩ～5.1kΩ电阻，模拟正常RN4上拉（约0.65～0.70mA拉低负载），测PB9相对主控GND低电平。不要直接短接至3.3V，也不接5V。接线时断电。
+- 加上述已知轻载后仍接近0V，才进一步支持PB9在该条件下带载正常，后续重点回到功率板/排线额外负载或错接；若因此升到约2V，说明异常可在主控侧复现，重点查PB9弱驱动/本地连接及测量，不立即认定具体损坏器件。低电平预期参考ST数据手册I/O特性，既有来源：https://www.st.com/resource/en/datasheet/stm32f407ve.pdf 。
+- 该试验不需改变固件行为或再次构建。尚未实际实施，不宣称PB9损坏已确认；正常固件与无FG保护保持现状。源码基线仍afe2c7720c11c6d2a9a62aed45d02643eef60c53及诊断工作树。本轮仅更新记录。
+
+## 41. 2026-10-18 按用户要求只对比PWM配置，提供CubeMX修改指引
+
+- 用户表示外接电阻/阻值实验不便，要求先比较PB9通道与其它电机PWM配置，若不同提供CubeMX改法，由用户自己修改，明确禁止直接修改配置。本轮只读Core/Src/tim.c、SRC_Firmware.ioc、HAL实现及官方手册；只更新本记录，不改.ioc、tim.c、GPIO或其它固件配置，不构建/烧录。
+- 当前基线afe2c7720c11c6d2a9a62aed45d02643eef60c53及既有诊断工作树。四轮为TIM1_CH1–4/PE9/11/13/14，吸球为TIM11_CH1/PB9。两者APB2定时器时钟168MHz、PSC0、向上计数、ARR6719、DIV1，预期25kHz；PWM1、低有效、初始Pulse0、Fast Disable一致。
+- 运行时GPIO两者均AF_PP推挽、NOPULL、GPIO_SPEED_FREQ_LOW。TIM1为AF1，PB9/TIM11为AF3是外设映射要求，不能为了相同而将PB9改成AF1。
+- 差异1：TIM1 AutoReloadPreload ENABLE；TIM11 DISABLE；.ioc的TIM1.AutoReloadPreload/TIM11.AutoReloadPreload一致证实。
+- 差异2：HAL_TIM_PWM_ConfigChannel默认置对应OCxPE，TIM1未清除，故四路CCR预装载启用；TIM11初始化后显式__HAL_TIM_DISABLE_OCxPRELOAD(&htim11,TIM_CHANNEL_1)，.ioc亦为TIM11.OC1Preload_PWM=DISABLE。用户读到CCMR1=0x60与PWM1/OC1PE0一致。
+- CubeMX指引：Timers→TIM11→Parameter Settings→Counter Settings，将auto-reload preload设Enable；PWM Generation Channel1的Output compare preload/Preload设Enable。保持PSC0、CounterModeUp、ARR6719、ClockDivisionDIV1、PWMMode1、Pulse0、PolarityLow、FastDisable。GPIO Settings保持PB9 AF Push Pull、NoPull、Low。菜单英文大小写随CubeMX版本可能不同。
+- 若用户选择统一配置，生成后应确认TIM11 AutoReloadPreload=ENABLE，且不再生成清CCR预装载的__HAL_TIM_DISABLE_OCxPRELOAD。开启后正常运行中CCMR1应约0x68，CR1至少ARPE位0x80置位（计数运行时通常0x81）；这是校验建议，不是在本轮代改寄存器。预装载使CCR/ARR更改在更新事件生效，主要影响更新同步，不能据此宣称已解释或修复2V低电平。官方RM0090：https://www.st.com/resource/zh/reference_manual/DM00031020.pdf 。
+- 其它差异：TIM11初始化时启动PWM，TIM1在音乐/IMU后建立零输出并由GPIO高转AF；TIM1为高级定时器，存在互补/死区/主输出等额外配置，TIM11没有对应设置。保持这些硬件/启动差异，不把它们当成必须复制的TIM11参数。
+- CubeMX重新生成风险：会在MX_TIM1_Init末尾恢复自动HAL_TIM_MspPostInit(&htim1)，这会覆盖第24节延迟AF接管策略。生成后烧录前需保留GPIO高暂存并确认AF仍只在motor_prepare_pwm零输出建立后接管；同时确认TIM11 USER CODE内原HAL_TIM_PWM_Start仍保留。用户本次只授权其自行改CubeMX，不在当前工作树自动处理该潜在生成结果。
+
+## 42. 2026-10-18 区分推挽PWM上拉与开漏FG反馈
+
+- 用户询问MCU可推挽输出时为何仍需“上拉+开漏”。复核当前TIM11 PB9仍为GPIO_MODE_AF_PP、NOPULL；用户此前运行时OTYPER9=0也证明该时刻推挽。因此不能把RN4存在等同于PWM5配置为开漏。
+- PWM5方向为MCU→A4931 ENABLE输入；推挽负责正常运行时主动高/低驱动，功率板RN4上拉用于主控复位、未初始化或排线断开时给出默认高电平。结合A4931 ENABLE低驱动、高禁用/待机语义，此上拉有利于默认关闭，是本电路用途分析，不声称已取得设计者的原始意图说明。
+- A4931 FG1/FG2方向为驱动芯片→MCU；官方Rev9第10页Hall State Reporting明确两脚为开漏输出，需通过上拉获得确定高电平。MCU通常配置为输入/EXTI，不是把MCU端也设为开漏PWM输出。资料：https://www.allegromicro.com/-/media/files/datasheets/a4931-datasheet.pdf 。
+- 一般原理：推挽主动拉高/拉低；开漏只主动拉低，释放时由上拉拉高，适用于多器件共享低有效线和满足管脚耐压/供电条件的电平接口。开漏上升沿取决于上拉与线路电容，推挽通常更适合单向PWM。外部上拉与推挽可以并存，不要求为了使用上拉改开漏。参考ST AN4899 GPIO说明。
+- 对当前故障：正常5.1k上拉只增加轻微拉低负载，不应使健康推挽低电平为2V；改开漏也不会自动修复弱下拉、输出冲突或异常负载。保持用户“配置由其在CubeMX修改”的要求，本轮只解释和记录，不修改配置或构建。
+
+## 43. 2026-10-18 不应将整颗RN4当作单一PWM上拉直接拆除
+
+- 用户询问是否可取下RN4。重新完整放大powerboard_schematic.pdf第2页RN4/R24/U9接线，确认RN4不是仅PWM/BRK上拉：它包含四个5.1kΩ独立电阻，图上左起依次为DIR5下拉、霍尔负端参考下拉、PWM5上拉、BRK5上拉。实际封装脚号/朝向必须核对实物，不能以图上左右位置当焊盘序号。
+- 新确认的重要支路：U9 HA-/HB-/HC-（2/4/6脚）共接R24=10kΩ下端节点；R24另一端接U9 HBIAS，RN4第二支路将该参考节点以5.1kΩ接地。按HBIAS约7.5V，参考电压约7.5*5.1/(10+5.1)=2.53V。
+- 若整颗RN4拆除且其它网络未补回，霍尔参考失去5.1kΩ下拉，可能经R24趋向HBIAS约7.5V，破坏霍尔比较条件；官方A4931 Hall输入共模范围0.2～3.5V、Hall脚绝对额定最高7V，不能将此状态当作正常可上电运行配置。实际节点取决于芯片输入/保护和状态，因此不声称一定恰好7.5V。资料：https://www.allegromicro.com/-/media/files/datasheets/a4931-datasheet.pdf 。
+- 同时整颗拆除会丢失PWM5/BRK5默认高电平和DIR5默认低电平，不能用“MCU推挽”作为删除全部启动/参考偏置的理由。这是对前文只讨论PWM5上拉作用的补充，不改变此前单一正常5.1kΩ负载不足以解释2V低电平的判断。
+- 如仅为诊断PWM5上拉，理论上只可隔离其对应单支路并保留另外三路；若整颗拆，则必须先补回其它所需电阻，尤其霍尔参考下拉，并确认启动默认电平。若怀疑排阻异常，可替换同规格、同脚位的4×5.1kΩ独立排阻进行验证，而不是空缺整颗后运行。未取得PCB封装/BOM，不提供未经核实的具体引脚操作。
+- 本轮只记录分析，不修改固件配置、硬件或构建。当前仍无实际拆除/替换RN4后的测量，不能认定RN4已损坏。
+
+## 44. 2026-10-18 用户CubeMX重新生成后检查与恢复生成回归
+
+- 用户表示已在CubeMX修改并重新生成。当前HEAD仍afe2c7720c11c6d2a9a62aed45d02643eef60c53，保留既有诊断工作树及本次用户生成改动。按此前约定不代改用户的CubeMX外设参数。
+- 实际确认：TIM11 ARR预装载已ENABLE，.ioc的OC1Preload_PWM已ENABLE，tim.c不再清OC1PE；原TIM11 USER CODE中的HAL_TIM_PWM_Start保留。PWM1、Low极性、PSC0、ARR6719、PB9 AF3推挽/NOPULL仍一致。PB9最大输出速度仍LOW，用户此次未设置High；不自动替其更改。
+- 生成回归1：MX_TIM1_Init末尾恢复了HAL_TIM_MspPostInit(&htim1)，导致GPIO高暂存随后立刻被AF覆盖，破坏第24节已授权的延迟接管保护。先运行tests/test_motor_startup.py复现失败（断言该调用不在初始化中）；仅移除此多余调用，保留motor_prepare_pwm中零CCR/UPDATE/四通道启动完成后的AF接管。未改.ioc或用户TIM11参数。
+- 恢复后启动测试、tests/test_board_migration.py（4S/6S全部，包括吸球诊断）、tests/test_startup_music.py均通过。宿主模拟不验证物理电平；当前没有预装载改动后吸球恢复/低电平恢复的实测。
+- 生成回归2：Keil初次构建出现8个L6200E重复符号错误，原因是system_stm32f4xx.c被Application/User与Drivers/CMSIS同时列入。初步以集合比较文件列表未显示重复，但实际链接暴露重复；随后以规范化路径计数确认。移除新加的Drivers/CMSIS重复条目，保留原Application/User条目及其编译选项，不删除源文件。清理工程尾部多余空行使git diff --check通过。
+- 用户生成的其它工程变化保留，包括Device显示由STM32F407VE改为STM32F407VETx及原编译器选择；源码文件集合没有丢失，去重后所有路径唯一。没有在本轮调整器件型号或全局包安装，正常工程原有CMSIS4.5.0 RTE选择仍保留；本轮没有验证GUI重新打开是否触发包提示。
+- 修复后正常工程构建成功，Code54266，0 Error(s)、0 Warning(s)，AXF/HEX已生成，日志MDK-ARM/tmp/cubemx_regen_review_fixed_build.log。初次失败日志tmp/cubemx_regen_review_build.log保留作为回归证据。
+- 使用tests/build_pb9_usb_test.py重新生成独立测试工程，同步用户当前TIM11参数，同时继续去除其旧CMSIS RTE冗余依赖并输出至独立目录。台架测试条件仍为整束功率板线拔下、USB独立供电；不得把测试镜像用于整车。正常/独立镜像本轮均未烧录。
+- 第44节独立测试同步构建完成：PB9_USB_Test为0 Error(s)、0 Warning(s)，Code6962，AXF/HEX已生成；日志MDK-ARM/tmp/pb9_usb_test/pb9_usb_test_after_cubemx_build.log。该测试HEX已使用当前TIM11预装载配置，不再是修改前的旧镜像。

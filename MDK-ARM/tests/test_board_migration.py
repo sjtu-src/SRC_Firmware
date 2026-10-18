@@ -44,6 +44,7 @@ extern SPI_HandleTypeDef hspi2;
 #define TIM_CR1_CEN 1U
 #define TIM_EVENTSOURCE_UPDATE 1U
 #define TIM_FLAG_UPDATE 1U
+#define __HAL_TIM_GET_COMPARE(h,c) ((h)->Instance->CCR[c])
 #define __HAL_TIM_GET_AUTORELOAD(h) ((h)->Instance->ARR)
 #define __HAL_TIM_SET_COMPARE(h,c,v) ((h)->Instance->CCR[c] = (v))
 #define __HAL_TIM_CLEAR_FLAG(h,f) ((void)0)
@@ -317,6 +318,30 @@ static void pulse_test(void)
     set_motor_pwm(1,2,3,4);assert(irq_mask==1);
     irq_mask=0;set_motor_pwm(0,0,0,0);assert(irq_mask==0);
 }
+static void drib_diag_test(void)
+{
+    timer11.CR1=1; timer11.CCER=3;
+    dribbler_set_target(1);
+    assert(g_dribbler_diag.run_requests==1 && g_dribbler_diag.command==1);
+    assert(g_dribbler_diag.pwm_ccr==0 && g_dribbler_diag.updates==0);
+    tick=100; dribbler_update();
+    assert(g_dribbler_diag.updates==1 && g_dribbler_diag.nonzero_outputs==1);
+    assert(g_dribbler_diag.last_nonzero_ccr==timer11.CCR[0]);
+    assert(g_dribbler_diag.last_nonzero_cr1==1 && g_dribbler_diag.last_nonzero_ccer==3);
+    assert(g_dribbler_diag.last_nonzero_ms==100 && !g_dribbler_diag.disabled);
+    tick=1000; dribbler_update();
+    assert(g_dribbler_diag.no_fg_stops==1 && g_dribbler_diag.stalled);
+    assert(g_dribbler_diag.pwm_ccr==0 && g_dribbler_diag.fg_edges==0);
+    dribbler_set_target(0);
+    assert(!g_dribbler_diag.stalled && !g_dribbler_diag.command);
+    assert(g_dribbler_diag.no_fg_stops==1 && g_dribbler_diag.nonzero_outputs==1);
+    cap=180; warmup();
+    pins[PDN_Pin]=0; update(10); update(50);
+    unsigned before=g_dribbler_diag.rejected_requests;
+    dribbler_set_target(1);
+    assert(g_dribbler_diag.rejected_requests==before+1);
+    assert(g_dribbler_diag.disabled && !g_dribbler_diag.command && !timer11.CCR[0]);
+}
 static void fg_test(void)
 {
     dribbler_status_t s;
@@ -435,6 +460,7 @@ int main(int argc,char **argv)
     else if(!strcmp(argv[1],"power"))power_test();
     else if(!strcmp(argv[1],"charge"))charge_test();
     else if(!strcmp(argv[1],"pulse"))pulse_test();
+    else if(!strcmp(argv[1],"drib_diag"))drib_diag_test();
     else if(!strcmp(argv[1],"fg"))fg_test();
     else if(!strcmp(argv[1],"shutdown"))shutdown_test();
     else if(!strcmp(argv[1],"discharge"))discharge_test(0);
@@ -474,5 +500,5 @@ for cells in (4,6):
     exe = BUILD / f'test_{cells}s.exe'
     subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', f'-DBATTERY_CELLS={cells}', '-I', str(BUILD), '-I', str(CORE/'Inc'),
                     str(BUILD/'test.c'), str(CORE/'Src/board_monitor.c'), str(CORE/'Src/dribbler_control.c'), '-lm', '-o', str(exe)], check=True)
-    for case in ('diag_read', 'diag_write', 'power', 'charge', 'pulse', 'fg', 'shutdown','discharge','fallback','failure','sensor','output','timeout','quiet','missing'):
+    for case in ('diag_read', 'diag_write', 'drib_diag', 'power', 'charge', 'pulse', 'fg', 'shutdown','discharge','fallback','failure','sensor','output','timeout','quiet','missing'):
         subprocess.run([str(exe), case], check=True)
