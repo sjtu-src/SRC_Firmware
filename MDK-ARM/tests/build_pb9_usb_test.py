@@ -24,6 +24,13 @@ main_body = '''int main(void)
   HAL_Init();
   SystemClock_Config();
   MX_TIM11_Init();
+  __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 0);
+  if (HAL_TIM_GenerateEvent(&htim11, TIM_EVENTSOURCE_UPDATE) != HAL_OK)
+    Error_Handler();
+  __HAL_TIM_CLEAR_FLAG(&htim11, TIM_FLAG_UPDATE);
+  if (HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1) != HAL_OK)
+    Error_Handler();
+  HAL_TIM_MspPostInit(&htim11);
   __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1,
                         (__HAL_TIM_GET_AUTORELOAD(&htim11) + 1U) / 2U);
   for (;;)

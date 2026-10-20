@@ -14,6 +14,6 @@
 
 生成工程：`python tests/build_pb9_usb_test.py`。生成的独立工程为 tmp/pb9_usb_test/PB9_USB_Test.uvprojx，Keil目标 PB9_USB_Test。它从当前主程序复制生成临时入口，并将源码路径转换为绝对路径；不会改正常 main.c、正常工程或正常固件输出。
 
-测试入口保留原HAL时基和系统时钟，仅调用MX_TIM11_Init并设CCR1为(ARR+1)/2；不启动RTOS或电池/FG保护任务。该镜像是脱离功率板的台架测试镜像，不用于机器人运行。
+测试入口保留原HAL时基和系统时钟，调用MX_TIM11_Init后先建立零比较值、更新预装载并启动TIM11，再切PB9为AF3，最后设CCR1为(ARR+1)/2；不启动RTOS或电池/FG保护任务。该镜像是脱离功率板的台架测试镜像，不用于机器人运行。
 
 若打开工程出现“ARM:CMSIS:4.5.0 / Pack not found”：新版生成器已去除独立测试工程中多余的旧CMSIS RTE选择，使用仓库自带CMSIS头文件，无需为此安装4.5.0。关闭旧测试工程时不要保存旧配置，再打开tmp/pb9_usb_test/PB9_USB_Test.uvprojx。正常工程的RTE设置保持原样；测试工程保留本机已安装的Keil.STM32F4xx_DFP.1.0.8设备包。

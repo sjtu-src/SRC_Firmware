@@ -324,7 +324,11 @@ void RobotTask(void const * argument)
   do_power_monitor();
 
 	/* start motor */
-	if(!board_actuators_disabled()) start_motor();
+	if(!board_actuators_disabled())
+    {
+        start_motor();
+        start_dribbler();
+    }
   HAL_TIM_Base_Start_IT(&htim12);  // 启动TIM12中断
   startup_complete = 1U;
   /* Infinite loop */

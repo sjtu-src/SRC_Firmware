@@ -22,8 +22,8 @@
 #define NEUMANN_OPTICAL 3
 #define TT_0 4
 
-#define OLD_DIRB_MOTOR 0
-#define NEW_DIRB_MOTOR 1
+#define OLD_DRIBBLE_MOTOR 0
+#define NEW_DRIBBLE_MOTOR 1
 
 #define OLD_DIR 0
 #define NEW_DIR 1
@@ -31,42 +31,42 @@
 //机器人型号
 #define ROBOT_VERSION TT_0
 // 吸球电机型号
-// #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
+// #define DIRB_MOTOR_VERSION OLD_DRIBBLE_MOTOR
 
 #if (ROBOT_VERSION == LEBO_ROBOT)
     #define INFRA_TYPE OLD_INFRA 
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE OPTICAL_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
-    #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
+    #define DIRB_MOTOR_VERSION OLD_DRIBBLE_MOTOR
     #define DRIB_DIR  OLD_DIR
 #elif (ROBOT_VERSION == NEUMANN_S01)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 500    //电机一圈编码器线数
-    #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
+    #define DIRB_MOTOR_VERSION OLD_DRIBBLE_MOTOR
     #define DRIB_DIR  OLD_DIR
 #elif (ROBOT_VERSION == NEUMANN_S02)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE NEW_MOTOR
     #define ENCODER_TYPE MAGNETIC_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 500    //电机一圈编码器线数
-    #define DIRB_MOTOR_VERSION NEW_DIRB_MOTOR
+    #define DIRB_MOTOR_VERSION NEW_DRIBBLE_MOTOR
     #define DRIB_DIR  OLD_DIR
 #elif (ROBOT_VERSION == NEUMANN_OPTICAL)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE OPTICAL_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
-    #define DIRB_MOTOR_VERSION OLD_DIRB_MOTOR
+    #define DIRB_MOTOR_VERSION OLD_DRIBBLE_MOTOR
     #define DRIB_DIR  OLD_DIR
 #elif (ROBOT_VERSION == TT_0)
     #define INFRA_TYPE NEW_INFRA
     #define MOTOR_TYPE OLD_MOTOR
     #define ENCODER_TYPE OPTICAL_ENCODER
     #define ENCODER_COUNTS_PER_TURN_SET 1000    //电机一圈编码器线数
-    #define DIRB_MOTOR_VERSION NEW_DRIB_MOTOR
+    #define DIRB_MOTOR_VERSION NEW_DRIBBLE_MOTOR
     #define DRIB_DIR  NEW_DIR
 #else
     #error "Please select robot version"
@@ -250,14 +250,16 @@
 #define KICKER_CALIBRATION_CONFIRMED 1
 #define INA226_SHUNT_MOHM 2.0f
 #define DRIBBLER_POLE_PAIRS 1U
-#define DRIBBLER_TARGET_RPM 5000.0f
-#define DRIBBLER_SAMPLE_MS 100U
-#define DRIBBLER_FG_TIMEOUT_MS 1000U
-/* Initial PI gains in duty/RPM and duty/(RPM*s); tune on the actual motor. */
-#define DRIBBLER_SPEED_KP 0.00003f
-#define DRIBBLER_SPEED_KI 0.00006f
-#define DRIBBLER_MAX_DUTY 0.55f
-#define DRIBBLER_DUTY_RAMP_PER_S 0.5f
+#define DRIBBLER_SAMPLE_MS 100U /* FG telemetry only. */
+/* SRC-tsak do_dribbler(): all legal nonzero gears use the motor-type gain. */
+#if (DIRB_MOTOR_VERSION == OLD_DRIBBLE_MOTOR)
+#define DRIBBLER_FIXED_DUTY 0.50f
+#elif (DIRB_MOTOR_VERSION == NEW_DRIBBLE_MOTOR)
+#define DRIBBLER_FIXED_DUTY 0.55f
+#else
+#error "Invalid dribbler motor type"
+#endif
+#define DRIBBLER_MAX_DUTY 0.15f
 
 /* Legacy radio voltage encoding only; no longer MCU ADC calibration. */
 #define BAT_V_ADC_GAIN			(3.3f / 256.0f / (3300.0f / (22000.0f + 3300.0f)))  //电池电压电阻分压系数

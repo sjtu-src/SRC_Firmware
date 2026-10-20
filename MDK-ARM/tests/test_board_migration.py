@@ -89,8 +89,9 @@ void chip_on(u32);
 int discharge_on(uint8_t,uint32_t);
 void set_buzzer(uint8_t);
 #define BEEP_OFF() set_buzzer(0)
-#define MOTOR_BALL_DIR_HI() ((void)0)
-#define MOTOR_BALL_DIR_LOW() ((void)0)
+extern int dribbler_dir;
+#define MOTOR_BALL_DIR_HI() (dribbler_dir=1)
+#define MOTOR_BALL_DIR_LOW() (dribbler_dir=0)
 typedef struct {float cap_v_f, bat_v_f; int dribbler, is_cap_low; uint8_t bat_v;} robot_t;
 extern robot_t g_robot;
 typedef struct {int strength, count_down;} shooter_t;
@@ -111,6 +112,19 @@ HARNESS = r'''
 #include <stdio.h>
 #include <string.h>
 
+/* Golden outputs from SRC-tsak do_dribbler(), with MOTOR_PWM_PERIOD=6720. */
+#if (DIRB_MOTOR_VERSION == NEW_DRIBBLE_MOTOR)
+#define EXPECTED_DRIB_CCR 3696U
+#define EXPECTED_DRIB_DUTY 0.55f
+#define EXPECTED_DRIB_FORWARD 1
+#elif (DIRB_MOTOR_VERSION == OLD_DRIBBLE_MOTOR)
+#define EXPECTED_DRIB_CCR 3360U
+#define EXPECTED_DRIB_DUTY 0.50f
+#define EXPECTED_DRIB_FORWARD 0
+#else
+#error "Unexpected motor type in reference migration test"
+#endif
+
 TIM_TypeDef timer1, timer8 = {.ARR=499}, timer9 = {.ARR=635}, timer11 = {.ARR=6719};
 TIM_HandleTypeDef htim1={&timer1}, htim8={&timer8}, htim9={&timer9}, htim11={&timer11};
 I2C_HandleTypeDef hi2c3;
@@ -119,6 +133,7 @@ robot_t g_robot;
 shooter_t g_shooter[2];
 char shooter;
 int critical_depth;
+int dribbler_dir;
 uint32_t irq_mask;
 static uint32_t tick;
 static int pins[8] = {1,0,1,1,1,1,1,1};
@@ -321,51 +336,69 @@ static void pulse_test(void)
 static void drib_diag_test(void)
 {
     timer11.CR1=1; timer11.CCER=3;
-    dribbler_set_target(1);
+    tick=7;dribbler_set_target(1);
     assert(g_dribbler_diag.run_requests==1 && g_dribbler_diag.command==1);
-    assert(g_dribbler_diag.pwm_ccr==0 && g_dribbler_diag.updates==0);
-    tick=100; dribbler_update();
-    assert(g_dribbler_diag.updates==1 && g_dribbler_diag.nonzero_outputs==1);
-    assert(g_dribbler_diag.last_nonzero_ccr==timer11.CCR[0]);
+    assert(g_dribbler_diag.pwm_ccr==EXPECTED_DRIB_CCR && g_dribbler_diag.updates==0);
+    assert(g_dribbler_diag.nonzero_outputs==1);
+    assert(g_dribbler_diag.last_nonzero_ccr==EXPECTED_DRIB_CCR);
     assert(g_dribbler_diag.last_nonzero_cr1==1 && g_dribbler_diag.last_nonzero_ccer==3);
-    assert(g_dribbler_diag.last_nonzero_ms==100 && !g_dribbler_diag.disabled);
-    tick=1000; dribbler_update();
-    assert(g_dribbler_diag.no_fg_stops==1 && g_dribbler_diag.stalled);
-    assert(g_dribbler_diag.pwm_ccr==0 && g_dribbler_diag.fg_edges==0);
+    assert(g_dribbler_diag.last_nonzero_ms==7 && !g_dribbler_diag.disabled);
+    tick=100;dribbler_update();
+    tick=2000;dribbler_update();
+    assert(g_dribbler_diag.no_fg_stops==0 && !g_dribbler_diag.stalled);
+    assert(g_dribbler_diag.pwm_ccr==EXPECTED_DRIB_CCR && g_dribbler_diag.fg_edges==0);
     dribbler_set_target(0);
-    assert(!g_dribbler_diag.stalled && !g_dribbler_diag.command);
-    assert(g_dribbler_diag.no_fg_stops==1 && g_dribbler_diag.nonzero_outputs==1);
-    cap=180; warmup();
-    pins[PDN_Pin]=0; update(10); update(50);
+    assert(!g_dribbler_diag.command && !g_dribbler_diag.pwm_ccr);
+    assert(g_dribbler_diag.nonzero_outputs==1);
+    cap=180;warmup();
+    pins[PDN_Pin]=0;update(10);update(50);
     unsigned before=g_dribbler_diag.rejected_requests;
     dribbler_set_target(1);
     assert(g_dribbler_diag.rejected_requests==before+1);
     assert(g_dribbler_diag.disabled && !g_dribbler_diag.command && !timer11.CCR[0]);
 }
+static void drib_fixed_test(void)
+{
+    dribbler_status_t s;
+    dribbler_set_target(1);
+    int forward=dribbler_dir;
+    assert(forward==EXPECTED_DRIB_FORWARD);
+    /* Commands take effect immediately, before any monitor update. */
+    for(int command=1;command<=3;command++) {
+        dribbler_set_target(command);dribbler_get(&s);
+        assert(timer11.CCR[0]==EXPECTED_DRIB_CCR && dribbler_dir==forward);
+        assert(fabsf(s.duty-EXPECTED_DRIB_DUTY)<0.00001f && s.target_rpm==0 && !s.stalled);
+        assert(s.duty<=DRIBBLER_MAX_DUTY);
+    }
+    for(int command=-1;command>=-3;command--) {
+        dribbler_set_target(command);
+        assert(timer11.CCR[0]==EXPECTED_DRIB_CCR && dribbler_dir!=forward);
+    }
+    for(int command=-4;command<=4;command+=8) {
+        dribbler_set_target(command);dribbler_get(&s);
+        assert(timer11.CCR[0]==0 && s.duty==0);
+    }
+    dribbler_set_target(1);
+    dribbler_set_target(0);dribbler_get(&s);
+    assert(timer11.CCR[0]==0 && s.duty==0 && !g_robot.dribbler);
+    assert(dribbler_dir==EXPECTED_DRIB_FORWARD); /* Reference DIR on stop. */
+}
 static void fg_test(void)
 {
     dribbler_status_t s;
     dribbler_set_target(1);
-    tick=100;dribbler_update();dribbler_get(&s);
-    assert(s.target_rpm==5000 && s.duty>0 && s.duty<=0.05001f);
-    for(unsigned i=0;i<50;i++) {
-        pulses(25);tick+=100;dribbler_update();dribbler_get(&s);
-        assert(fabsf(s.rpm-5000)<0.01f && !s.stalled && s.duty<=DRIBBLER_MAX_DUTY);
-    }
-    float duty=s.duty;
-    dribbler_set_target(2);dribbler_get(&s);assert(s.target_rpm==5000 && s.duty==duty);
-    for(unsigned i=0;i<10;i++) {
-        pulses(10);tick+=100;dribbler_update();dribbler_get(&s);
-        assert(s.duty<=DRIBBLER_MAX_DUTY);
-    }
-    assert(s.duty>duty); /* Added load must increase drive. */
-    for(unsigned i=0;i<10;i++) {tick+=100;dribbler_update();}
-    dribbler_get(&s);assert(s.stalled && s.duty==0 && timer11.CCR[0]==0);
-    dribbler_set_target(3);tick+=100;dribbler_update();dribbler_get(&s);assert(s.stalled);
-    dribbler_set_target(0);dribbler_get(&s);assert(!s.stalled && s.target_rpm==0);
-    dribbler_set_target(-1);pulses(25);tick+=100;dribbler_update();dribbler_get(&s);
-    assert(!s.stalled && s.target_rpm==5000);
-    dribbler_set_target(7);assert(timer11.CCR[0]==0);
+    pulses(25);tick=100;dribbler_update();dribbler_get(&s);
+    assert(fabsf(s.rpm-5000)<0.01f && timer11.CCR[0]==EXPECTED_DRIB_CCR);
+    pulses(120);tick+=100;dribbler_update();dribbler_get(&s);
+    assert(fabsf(s.rpm-24000)<0.01f && timer11.CCR[0]==EXPECTED_DRIB_CCR);
+    /* Neither overspeed telemetry nor absent FG alters open-loop output. */
+    for(unsigned i=0;i<30;i++) {tick+=100;dribbler_update();}
+    dribbler_get(&s);
+    assert(s.rpm==0 && !s.stalled && s.target_rpm==0);
+    assert(fabsf(s.duty-EXPECTED_DRIB_DUTY)<0.00001f && timer11.CCR[0]==EXPECTED_DRIB_CCR);
+    assert(g_dribbler_diag.no_fg_stops==0);
+    dribbler_set_target(0);
+    tick+=100;dribbler_update();assert(timer11.CCR[0]==0);
 }
 static void shutdown_test(void)
 {
@@ -461,6 +494,7 @@ int main(int argc,char **argv)
     else if(!strcmp(argv[1],"charge"))charge_test();
     else if(!strcmp(argv[1],"pulse"))pulse_test();
     else if(!strcmp(argv[1],"drib_diag"))drib_diag_test();
+    else if(!strcmp(argv[1],"drib_fixed"))drib_fixed_test();
     else if(!strcmp(argv[1],"fg"))fg_test();
     else if(!strcmp(argv[1],"shutdown"))shutdown_test();
     else if(!strcmp(argv[1],"discharge"))discharge_test(0);
@@ -496,9 +530,19 @@ for filename, names in {
         assert match, name
         functions.append(match.group(0))
 (BUILD / 'test.c').write_text(HARNESS.replace('@FUNCTIONS@', '\n\n'.join(functions)), encoding='utf-8')
-for cells in (4,6):
-    exe = BUILD / f'test_{cells}s.exe'
-    subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', f'-DBATTERY_CELLS={cells}', '-I', str(BUILD), '-I', str(CORE/'Inc'),
-                    str(BUILD/'test.c'), str(CORE/'Src/board_monitor.c'), str(CORE/'Src/dribbler_control.c'), '-lm', '-o', str(exe)], check=True)
-    for case in ('diag_read', 'diag_write', 'drib_diag', 'power', 'charge', 'pulse', 'fg', 'shutdown','discharge','fallback','failure','sensor','output','timeout','quiet','missing'):
-        subprocess.run([str(exe), case], check=True)
+# Exercise both reference motor-type branches without changing production cfg.h.
+production_cfg = (CORE / 'Inc/cfg.h').read_text(encoding='utf-8')
+for motor in ('current', 'old'):
+    test_cfg = production_cfg
+    if motor == 'old':
+        test_cfg, count = re.subn(
+            r'(#elif \(ROBOT_VERSION == TT_0\).*?#define DIRB_MOTOR_VERSION )NEW_DRIBBLE_MOTOR',
+            r'\1OLD_DRIBBLE_MOTOR', test_cfg, count=1, flags=re.S)
+        assert count == 1
+    (BUILD / 'cfg.h').write_text(test_cfg, encoding='utf-8')
+    for cells in (4,6):
+        exe = BUILD / f'test_{motor}_{cells}s.exe'
+        subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', f'-DBATTERY_CELLS={cells}', '-I', str(BUILD), '-I', str(CORE/'Inc'),
+                        str(BUILD/'test.c'), str(CORE/'Src/board_monitor.c'), str(CORE/'Src/dribbler_control.c'), '-lm', '-o', str(exe)], check=True)
+        for case in ('diag_read', 'diag_write', 'drib_diag', 'drib_fixed', 'power', 'charge', 'pulse', 'fg', 'shutdown','discharge','fallback','failure','sensor','output','timeout','quiet','missing'):
+            subprocess.run([str(exe), case], check=True)

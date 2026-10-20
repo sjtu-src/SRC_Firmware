@@ -589,10 +589,21 @@ void MX_TIM11_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM11_Init 2 */
-    /* PWM only; MOTOR5 speed is counted by FG1 EXTI. COEX, Xuanting Liu */
-    HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
+  /* Like TIM1, keep active-low ENABLE high until zero PWM is running.
+   * start_dribbler() performs the deferred AF handover after boot.
+   * Remove CubeMX's unconditional HAL_TIM_MspPostInit here after regeneration.
+   */
+  {
+    GPIO_InitTypeDef gpio = {0};
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    gpio.Pin = MOTOR_PWM5_Pin;
+    HAL_GPIO_WritePin(GPIOB, gpio.Pin, GPIO_PIN_SET);
+    gpio.Mode = GPIO_MODE_OUTPUT_PP;
+    gpio.Pull = GPIO_NOPULL;
+    gpio.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOB, &gpio);
+  }
   /* USER CODE END TIM11_Init 2 */
-  HAL_TIM_MspPostInit(&htim11);
 
 }
 /* TIM12 init function */

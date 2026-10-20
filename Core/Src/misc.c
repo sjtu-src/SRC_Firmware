@@ -162,7 +162,25 @@ void init_dribbler(void)
 {
 	HAL_GPIO_WritePin(MOTOR_BRK5_GPIO_Port, MOTOR_BRK5_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(MOTOR_DIR5_GPIO_Port, MOTOR_DIR5_Pin, GPIO_PIN_RESET);
-	__HAL_TIM_ENABLE(&htim11);
+    __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 0);
+}
+
+/* Match wheel startup: release BRAKEZ, load zero, start PWM, then connect AF. */
+void start_dribbler(void)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    if(!board_actuators_disabled())
+    {
+        init_dribbler();
+        if(HAL_TIM_GenerateEvent(&htim11, TIM_EVENTSOURCE_UPDATE) != HAL_OK)
+            Error_Handler();
+        __HAL_TIM_CLEAR_FLAG(&htim11, TIM_FLAG_UPDATE);
+        if(HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1) != HAL_OK)
+            Error_Handler();
+        HAL_TIM_MspPostInit(&htim11);
+    }
+    __set_PRIMASK(primask);
 }
 
 /*******************************************************************************

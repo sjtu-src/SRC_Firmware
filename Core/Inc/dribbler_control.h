@@ -12,7 +12,8 @@ typedef struct
 	uint8_t stalled;
 } dribbler_status_t;
 
-/* Watch this object after self-test; history survives the normal stop command.
+/* Open-loop mode: target_rpm, stalled and no_fg_stops stay zero.
+ * Watch this object after self-test; history survives the normal stop command.
  * Counters describe software activity, not a measurement of the PB9 waveform.
  */
 typedef struct
