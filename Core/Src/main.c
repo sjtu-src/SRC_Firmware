@@ -85,6 +85,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  /* v13b DIS is low-active: drive HIGH before clock/peripheral setup. */
+  kicker_hold_outputs();
 
   /* USER CODE END Init */
 
@@ -93,6 +95,9 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
   DIS_INT();
+  /* CHG low before peripherals; board bias identification runs in its task. */
+  board_charge_gpio_init();
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -117,6 +122,8 @@ int main(void)
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
+  /* v13b DIS is low-active: establish high before peripheral init. */
+  kicker_hold_outputs();
   SRC_Robot_Init();
   /* USER CODE END 2 */
 

@@ -29,6 +29,29 @@ extern TIM_TypeDef timer1, timer8, timer9, timer11;
 extern TIM_HandleTypeDef htim1, htim8, htim9, htim11;
 extern I2C_HandleTypeDef hi2c3;
 extern SPI_HandleTypeDef hspi2;
+typedef struct {uint32_t Pin,Mode,Pull,Speed,Alternate;} GPIO_InitTypeDef;
+#define GPIOA 9
+#define SHOOT_Pin 1U
+#define CHIP_Pin 2U
+#define GPIO_MODE_OUTPUT_PP 1U
+#define GPIO_MODE_AF_PP 2U
+#define GPIO_PULLUP 1U
+#define GPIO_NOPULL 0U
+#define GPIO_PULLDOWN 2U
+#define pdMS_TO_TICKS(ms) (ms)
+void vTaskDelay(uint32_t);
+#define GPIO_MODE_INPUT 0U
+#define GPIO_SPEED_FREQ_HIGH 2U
+#define __HAL_RCC_GPIOC_CLK_ENABLE() ((void)0)
+#define GPIO_SPEED_FREQ_LOW 0U
+#define GPIO_AF3_TIM9 3U
+#define __HAL_RCC_GPIOA_CLK_ENABLE() ((void)0)
+#define __HAL_TIM_DISABLE(h) do { if((h)!=&htim9 || !enabled_channels) (h)->Instance->CR1 &= ~TIM_CR1_CEN; } while(0)
+#define CLEAR_BIT(reg,bits) ((reg) &= ~(bits))
+#define __HAL_TIM_ENABLE(h) ((h)->Instance->CR1 |= TIM_CR1_CEN)
+void HAL_GPIO_Init(int,GPIO_InitTypeDef*);
+void shoot_off(void);
+void chip_off(void);
 #define TIM9 (&timer9)
 #define HAL_OK 0
 #define HAL_ERROR 1
@@ -125,7 +148,10 @@ HARNESS = r'''
 #error "Unexpected motor type in reference migration test"
 #endif
 
-TIM_TypeDef timer1, timer8 = {.ARR=499}, timer9 = {.ARR=635}, timer11 = {.ARR=6719};
+#define EXPECTED_KICK_CCER (KICK_POLARITY ? 0U : (TIM_CCER_CC1P|TIM_CCER_CC2P))
+#define EXPECTED_KICK_IDLE (1U-KICK_POLARITY)
+#define EXPECTED_KICK_PULL (KICK_POLARITY ? GPIO_PULLDOWN : GPIO_PULLUP)
+TIM_TypeDef timer1, timer8 = {.ARR=499}, timer9 = {.ARR=635,.CCER=EXPECTED_KICK_CCER}, timer11 = {.ARR=6719};
 TIM_HandleTypeDef htim1={&timer1}, htim8={&timer8}, htim9={&timer9}, htim11={&timer11};
 I2C_HandleTypeDef hi2c3;
 SPI_HandleTypeDef hspi2;
@@ -136,6 +162,8 @@ int critical_depth;
 int dribbler_dir;
 uint32_t irq_mask;
 static uint32_t tick;
+static unsigned charge_mode=GPIO_MODE_OUTPUT_PP, charge_pull, charge_bias=1, bias_reads, delay_ms;
+static unsigned dis_mode[2], dis_latch[2] = {EXPECTED_KICK_IDLE,EXPECTED_KICK_IDLE};
 static int pins[8] = {1,0,1,1,1,1,1,1};
 static uint32_t mock_i2c_error=0x220;
 static int write_error_reg=-1;
@@ -151,9 +179,43 @@ static float coil_drop[2];
 static int pwm_error;
 
 uint32_t HAL_GetTick(void) {return tick;}
+void vTaskDelay(uint32_t ms) {assert(critical_depth==0);tick+=ms;delay_ms+=ms;}
 uint32_t HAL_I2C_GetError(I2C_HandleTypeDef *h) {assert(h==&hi2c3);return mock_i2c_error;}
-void HAL_GPIO_WritePin(int port,uint16_t pin,GPIO_PinState value) {(void)port;pins[pin]=value;}
-GPIO_PinState HAL_GPIO_ReadPin(int port,uint16_t pin) {(void)port;return pins[pin];}
+void HAL_GPIO_WritePin(int port,uint16_t pin,GPIO_PinState value) {
+    if(port==GPIOA) {for(unsigned i=0;i<2;i++) if(pin&(1U<<i)) dis_latch[i]=value;}
+    else pins[pin]=value;
+}
+void HAL_GPIO_Init(int port,GPIO_InitTypeDef *c) {
+    if(port!=GPIOA) {
+        assert(port==CHG_EN_GPIO_Port);
+        if(c->Pin==CHG_EN_Pin) {
+            charge_mode=c->Mode;charge_pull=c->Pull;
+            if(c->Mode==GPIO_MODE_OUTPUT_PP) assert(!pins[CHG_EN_Pin] && c->Pull==GPIO_NOPULL);
+            else assert(c->Mode==GPIO_MODE_INPUT && (c->Pull==GPIO_PULLDOWN || c->Pull==GPIO_PULLUP));
+        }
+        else assert(c->Pin==KICK_ERR_Pin && c->Mode==GPIO_MODE_INPUT && c->Pull==GPIO_PULLUP && !pins[CHG_EN_Pin]);
+        return;
+    }
+    assert(c->Pull==EXPECTED_KICK_PULL);
+    for(unsigned i=0;i<2;i++) if(c->Pin&(1U<<i)) {
+        if(c->Mode==GPIO_MODE_OUTPUT_PP) assert(dis_latch[i]==EXPECTED_KICK_IDLE);
+        else {
+            assert(c->Mode==GPIO_MODE_AF_PP && c->Alternate==GPIO_AF3_TIM9);
+            assert(!(timer9.CR1&TIM_CR1_CEN) && timer9.CNT==0);
+            assert(enabled_channels==(1U<<i) && timer9.CCR[i]>0);
+            assert((timer9.CCER&(TIM_CCER_CC1P|TIM_CCER_CC2P))==EXPECTED_KICK_CCER);
+        }
+        dis_mode[i]=c->Mode;
+    }
+}
+GPIO_PinState HAL_GPIO_ReadPin(int port,uint16_t pin) {
+    (void)port;
+    if(pin==CHG_EN_Pin && charge_mode==GPIO_MODE_INPUT) {
+        bias_reads++;
+        return charge_bias==1 ? 0 : charge_bias==2 ? 1 : charge_pull==GPIO_PULLUP;
+    }
+    return pins[pin];
+}
 HAL_StatusTypeDef HAL_SPI_TransmitReceive(SPI_HandleTypeDef *h,uint8_t *tx,uint8_t *rx,uint16_t n,uint32_t timeout)
 {
     assert(h==&hspi2 && n==64 && timeout<=3 && !pins[KICK_CS_Pin]);
@@ -195,6 +257,9 @@ HAL_StatusTypeDef HAL_I2C_Mem_Write(I2C_HandleTypeDef *h,uint16_t addr,uint16_t 
 HAL_StatusTypeDef HAL_TIM_PWM_Start(TIM_HandleTypeDef *h,uint32_t channel)
 {
     if(h==&htim9) {
+        assert(dis_mode[0]==GPIO_MODE_OUTPUT_PP && dis_mode[1]==GPIO_MODE_OUTPUT_PP);
+        assert(dis_latch[0]==EXPECTED_KICK_IDLE && dis_latch[1]==EXPECTED_KICK_IDLE);
+        assert(!pins[CHG_EN_Pin]); /* Boost must be disabled before arming a pulse. */
         if(pwm_error) return HAL_ERROR;
         enabled_channels|=1U<<channel;
         pulse_end=tick+13;
@@ -214,21 +279,22 @@ HAL_StatusTypeDef HAL_TIM_PWM_Stop(TIM_HandleTypeDef *h,uint32_t channel)
 }
 HAL_StatusTypeDef HAL_TIM_GenerateEvent(TIM_HandleTypeDef *h,uint32_t event)
 {
-    assert(h==&htim9 && event==TIM_EVENTSOURCE_UPDATE && enabled_channels==0);
+    assert(h==&htim9 && event==TIM_EVENTSOURCE_UPDATE);
+    assert(dis_mode[0]==GPIO_MODE_OUTPUT_PP && dis_mode[1]==GPIO_MODE_OUTPUT_PP);
     h->Instance->CNT=0;
     h->Instance->CR1&=~TIM_CR1_CEN;
-    event_count++;
+    if(!enabled_channels) event_count++;
     return HAL_OK;
 }
 void init_motor(void) {init_motor_calls++;}
-int shooter_off(void) {stops++;timer9.CR1=0;enabled_channels=0;return 0;}
+int shooter_off(void) {stops++;shoot_off();chip_off();return 0;}
 
 /* These functions are extracted verbatim from production files below. */
 @FUNCTIONS@
 
 static void update(unsigned elapsed) {
     tick+=elapsed;
-    if(enabled_channels && (int32_t)(tick-pulse_end)>=0) timer9.CR1=0; /* OPM rollover: output idle low. */
+    if(enabled_channels && (int32_t)(tick-pulse_end)>=0) timer9.CR1=0; /* OPM rollover: PWM2/LOW output idle high. */
     board_monitor_update();assert(critical_depth==0);
 }
 static board_status_t status(void) {board_status_t s;board_monitor_get(&s);return s;}
@@ -288,10 +354,9 @@ static void charge_test(void)
     for(unsigned i=0;i<301;i++) update(10);
     assert(status().charge_fault && !pins[CHG_EN_Pin]);
     update(30000);assert(!status().charge_fault && pins[CHG_EN_Pin]);
-    pins[KICK_ERR_Pin]=0;update(10);assert(status().charge_fault && !pins[CHG_EN_Pin]);
-    update(30000); /* DONE may remain latched while CHARGE was low. Retry must be possible. */
-    assert(!status().charge_fault && pins[CHG_EN_Pin]);
-    pins[KICK_ERR_Pin]=1;update(10);assert(!status().charge_fault);
+    pins[KICK_ERR_Pin]=0;update(10);
+    assert(!status().charge_fault && pins[CHG_EN_Pin]); /* DONE is unused, as in TIGERs. */
+    update(10);assert(!status().charge_fault && pins[CHG_EN_Pin]);
     /* A kick can stop CHARGE between two monitor iterations. A latched DONE
      * must not be mistaken for a new charging fault when CHARGE is already low. */
     pins[CHG_EN_Pin]=0; pins[KICK_ERR_Pin]=0; timer9.CR1=TIM_CR1_CEN;
@@ -308,17 +373,17 @@ static void pulse_test(void)
     timer9.CR1=0;timer9.CNT=0;
     chip_on(127);
     assert(event_count==2 && enabled_channels==2 && timer9.CCR[1]==1);
-    /* Model PWM2/HIGH for all 636 counts: exactly one pulse, then idle low. */
+    /* PWM2: count exactly one active pulse; CNT=0 is inactive. */
     for(unsigned channel=0;channel<2;channel++) {
-        unsigned high=0;
-        for(unsigned count=0;count<=635;count++) high+=(count>=timer9.CCR[channel]);
-        assert(high==(channel==0?5:635));
+        unsigned low=0;
+        for(unsigned count=0;count<=635;count++) low+=(count>=timer9.CCR[channel]);
+        assert(low==(channel==0?5:635));
         assert(0<timer9.CCR[channel]);
     }
     timer9.CR1=0;
     timer9.CCER=TIM_CCER_CC1P;
     shoot_on(50);assert(event_count==2); /* Reject an unsafe regenerated polarity. */
-    timer9.CCER=0;
+    timer9.CCER=EXPECTED_KICK_CCER;
     tick+=101;shoot_on(50);assert(event_count==2); /* Reject stale sensors. */
     update(10);shoot_on(0);assert(event_count==2);
     shoot_on(255);assert(timer9.CCR[0]==1 && event_count==3);
@@ -519,7 +584,7 @@ for name in ('spi', 'i2c', 'tim', 'gpio', 'misc', 'motor', 'action', 'robot', 'F
 
 functions = []
 for filename, names in {
-    'misc.c': ['kick_pulse', 'start_kick', 'discharge_on', 'shoot_on', 'chip_on', 'get_bat_v', 'get_cap_v', 'is_power_low'],
+    'misc.c': ['kicker_hold_outputs', 'kicker_stop', 'shoot_off', 'chip_off', 'kick_pulse', 'start_kick', 'discharge_on', 'shoot_on', 'chip_on', 'get_bat_v', 'get_cap_v', 'is_power_low'],
     'action.c': ['do_dribbler', 'set_dribbler', 'set_shooter'],
     'motor.c': ['set_motor_pwm'],
     'gpio.c': ['set_buzzer'],

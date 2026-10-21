@@ -95,3 +95,29 @@ MX_TIM1_Init 在 USER CODE 2 调用 motor_prepare_pwm，保持BRAKEZ低、装载
 CubeMX重新生成后必须移除其在MX_TIM1_Init末尾重新插入的HAL_TIM_MspPostInit调用，保留USER CODE的GPIO高初始化。tests/test_motor_startup.py会检查这一时序。运行时控制、吸球启动及MODE3自动运动自检未修改。
 
 启动模拟、4S/6S板级回归及音乐测试通过；Keil 0错误0警告，日志tmp/motor_startup_coast_build.log。未烧录或验证实机电流。用户已确认实物SMAJ18A并将其拆下，保险丝熔断时刻未知；Q1/熔断原因仍待硬件验证。详见AGENT.md第24节。
+
+## 2026-10-20 DIS1/DIS2修复完成
+
+按用户确认的Kicking Device v13b改为高关闭、低脉冲。TIM9 PWM2/LOW，原频率、20us计数和力度到低脉宽映射保留；main最早外设前配置PA2/PA3 GPIO高，TIM9初始化不接AF，只有成功装载且明确停表在CNT0高电平时才接选中通道AF并启动。停止/故障/关机路径先回GPIO高；未选中路保持GPIO高。普通射球与关机放电的极性守卫和CubeMX的两路LOW参数已同步。
+
+两路最短/最大低脉冲、OPM结束高、停止高、HAL失败回退、IRQ保持和错误极性拒绝通过；4S/6S共44项充电/冷却/放电相关回归及OLED、音乐、四轮启动回归通过。最终Keil 0错误0警告，tmp/dis_polarity_final_build.log，SRC_Firmware/SRC_Firmware.hex更新，未烧录。
+
+CubeMX重生成时需保留TIM9 MspPostInit中GPIO高的延后AF策略；test_dis_polarity.py检查它。软件接管前的复位窗口仍依赖硬件偏置。未实测不能宣称NO RISE已解决。
+
+## 2026-10-20 DONE/CHG启动时序
+
+新增board_charge_gpio_init，在main的外设初始化前先把PC4/CHG置低并配置推挽输出，再把PC13/DONE配为输入上拉；board_monitor_init重复建立同一安全配置。DONE不会被主控推挽拉高。
+
+KICKER_DONE_SETTLE_MS=20ms为结合内部上拉和图纸100nF电容恢复量级选取的软件初值，不是LT3751规定的精确等待时间。首次板级监控初始化后，至少保持CHG低20ms才允许充电，等待时原因位为STARTUP。每次真实CHG低到高请求（包括30s重试、射球后恢复）重新计时，前20ms暂缓DONE低判断；不要求DONE先高才能启动，避免锁存状态阻止CHG复位。原3s无进度/30s重试及电压、温度、ADC、关机、射球和冷却保护仍运行，不因DONE观察窗口而旁路。
+
+tests/test_done_startup.py新增4S/6S共12项时序场景，验证启动低/输入上拉顺序、DONE瞬态恢复、持续低、重试重置、计时回绕以及窗口内ADC/温度/电压保护；相关44项充电回归、DIS、OLED、音乐、四轮启动回归通过。仍需实板确认DONE恢复时间及CHARGE边沿，软件无法保证电源轨已稳定或GPIO实际边沿满足芯片规格。
+
+## 2026-10-20 按用户要求对齐TIGERs的CHG初始化与DONE处理（替代上节）
+
+撤回SRC自行增加的DONE输入上拉门控、首次20ms低保持和每次升高后20ms观察窗；PC13仍为输入但无内部上下拉，.ioc同步，充电模块不再读取DONE或因其高低阻止充电。旧STARTUP/DONE LOW显示已取消。
+
+初始化先保持CHG推挽低；BoardUpdate首次运行在任务上下文执行与指定TIGERs固件identifyKickerBoard相同的检测：CHG输入弱下拉、等10ms读IDR；输入弱上拉、等10ms读IDR；检测到板载下拉后，先写输出锁存低，再设推挽输出、无内部拉。识别只执行一次，失败显示CHG:NO BOARD，禁止充电和射球/关机线圈脉冲。无板时不能把浮空输入的高电平当作正在充电。
+
+此处10+10ms用于CHG板识别，不是DONE恢复等待。电容ADC、电源/温度/关机/射球冷却、无进度保护继续工作；保留SRC电池保护、180V目标和原有自动充电请求，不盲目移植上位机协议、参考200V默认值或参考BSRR读取缺陷。DIS高关闭/低射球的修复保留。
+
+新tests/test_charge_identify.py替代已撤回的test_done_startup.py，4S/6S共12项通过，覆盖识板正常、无板、错误上拉、DONE不影响、无进度重试、ADC失败；原44项充电相关回归、DIS、OLED、音乐和四轮启动回归通过。无实板/烧录验证。

@@ -23,6 +23,7 @@
 
 /* USER CODE BEGIN 0 */
 #include "cfg.h"
+#include "misc.h"
 #include "typedef.h"
 
 vu64 sys_tick = 0;
@@ -123,6 +124,7 @@ void MX_TIM1_Init(void)
     HAL_GPIO_Init(GPIOE, &gpio);
   }
   /* USER CODE END TIM1_Init 2 */
+  HAL_TIM_MspPostInit(&htim1);
 
 }
 /* TIM2 init function */
@@ -459,6 +461,7 @@ void MX_TIM9_Init(void)
 {
 
   /* USER CODE BEGIN TIM9_Init 0 */
+  kicker_hold_outputs();
 
   /* USER CODE END TIM9_Init 0 */
 
@@ -493,19 +496,31 @@ void MX_TIM9_Init(void)
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM2;
   sConfigOC.Pulse = 1;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim9, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
   }
-  __HAL_TIM_DISABLE_OCxPRELOAD(&htim9, TIM_CHANNEL_1);
   if (HAL_TIM_PWM_ConfigChannel(&htim9, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
-  __HAL_TIM_DISABLE_OCxPRELOAD(&htim9, TIM_CHANNEL_2);
   /* USER CODE BEGIN TIM9_Init 2 */
+  #if KICK_POLARITY == 1
+    sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+    if (HAL_TIM_PWM_ConfigChannel(&htim9, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+    {
+      Error_Handler();
+    }
+    if (HAL_TIM_PWM_ConfigChannel(&htim9, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+    {
+      Error_Handler();
+    }
+  #endif
+  /* ConfigChannel enables preload again: disable after the final config. */
+  __HAL_TIM_DISABLE_OCxPRELOAD(&htim9, TIM_CHANNEL_1);
+  __HAL_TIM_DISABLE_OCxPRELOAD(&htim9, TIM_CHANNEL_2);
   HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_1);
   HAL_TIM_PWM_Stop(&htim9, TIM_CHANNEL_2);
   /* USER CODE END TIM9_Init 2 */
@@ -604,6 +619,7 @@ void MX_TIM11_Init(void)
     HAL_GPIO_Init(GPIOB, &gpio);
   }
   /* USER CODE END TIM11_Init 2 */
+  HAL_TIM_MspPostInit(&htim11);
 
 }
 /* TIM12 init function */
@@ -902,6 +918,12 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
   else if(timHandle->Instance==TIM9)
   {
   /* USER CODE BEGIN TIM9_MspPostInit 0 */
+  /* Keep DIS at its configured inactive level. Skip generated AF setup while
+   * CCxE is disabled: a disabled timer is not a guaranteed idle output.
+   * Only kick_pulse attaches the armed, stopped, idle PWM to a pin.
+   * Keep this guard in USER CODE so CubeMX regeneration preserves it. */
+  kicker_hold_outputs();
+#if 0 /* Generated AF setup is intentionally disabled; see guard above. */
 
   /* USER CODE END TIM9_MspPostInit 0 */
 
@@ -912,12 +934,13 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
     */
     GPIO_InitStruct.Pin = SHOOT_Pin|CHIP_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF3_TIM9;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN TIM9_MspPostInit 1 */
+#endif
 
   /* USER CODE END TIM9_MspPostInit 1 */
   }

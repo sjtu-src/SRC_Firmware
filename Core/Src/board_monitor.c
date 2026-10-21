@@ -20,6 +20,50 @@
 #define INA226_ADDRESS (0x40U << 1)
 
 static board_status_t board_status;
+static uint8_t charge_board_checked, charge_board_installed;
+
+/* Same CHG bias test as TIGERs identifyKickerBoard; task context only. */
+static int identify_kicker_board(void)
+{
+    GPIO_InitTypeDef config = {0};
+    uint8_t has_pull_up, has_pull_down;
+    config.Pin = CHG_EN_Pin;
+    config.Mode = GPIO_MODE_INPUT;
+    config.Pull = GPIO_PULLDOWN;
+    HAL_GPIO_Init(CHG_EN_GPIO_Port, &config);
+    vTaskDelay(pdMS_TO_TICKS(10U));
+    has_pull_up = HAL_GPIO_ReadPin(CHG_EN_GPIO_Port, CHG_EN_Pin) == GPIO_PIN_SET;
+    config.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(CHG_EN_GPIO_Port, &config);
+    vTaskDelay(pdMS_TO_TICKS(10U));
+    has_pull_down = HAL_GPIO_ReadPin(CHG_EN_GPIO_Port, CHG_EN_Pin) == GPIO_PIN_RESET;
+    if(has_pull_up || !has_pull_down) return 0;
+    HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_RESET);
+    config.Mode = GPIO_MODE_OUTPUT_PP;
+    config.Pull = GPIO_NOPULL;
+    config.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(CHG_EN_GPIO_Port, &config);
+    return 1;
+}
+
+int board_kicker_installed(void)
+{
+    return charge_board_checked && charge_board_installed;
+}
+
+/* Initial safe CHG low; the task subsequently performs the TIGERs bias test. */
+void board_charge_gpio_init(void)
+{
+    GPIO_InitTypeDef config = {0};
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_RESET);
+    config.Pin = CHG_EN_Pin;
+    config.Mode = GPIO_MODE_OUTPUT_PP;
+    config.Pull = GPIO_NOPULL;
+    config.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(CHG_EN_GPIO_Port, &config);
+
+}
 volatile board_battery_diag_t g_battery_diag;
 static volatile uint8_t shutdown_requested;
 static volatile uint8_t power_quiet;
@@ -36,6 +80,47 @@ static struct
 	uint8_t low_samples, force_ready, holding;
 } discharge;
 static volatile uint8_t battery_alert;
+static volatile uint8_t charge_kick_pending;
+static uint8_t charge_cooling;
+static uint32_t charge_cooldown_tick;
+
+void board_notify_kick(void)
+{
+    charge_kick_pending = 1;
+    HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_RESET);
+}
+
+/* Called with interrupts masked, including the final output decision. A short
+ * pulse completed between monitor iterations is still remembered. */
+static void charge_pulse_reasons(board_status_t *status, uint32_t now)
+{
+    status->charge_inhibit &= ~(BOARD_CHG_KICK | BOARD_CHG_COOLDOWN);
+    status->charge_cooldown_ms = 0;
+    if(TIM9->CR1 & TIM_CR1_CEN)
+    {
+        charge_kick_pending = 1;
+        status->charge_inhibit |= BOARD_CHG_KICK;
+    }
+    else
+    {
+        if(charge_kick_pending)
+        {
+            charge_kick_pending = 0;
+            charge_cooling = 1;
+            charge_cooldown_tick = now;
+        }
+        if(charge_cooling)
+        {
+            uint32_t elapsed = now - charge_cooldown_tick;
+            if(elapsed < KICKER_CHARGE_COOLDOWN_MS)
+            {
+                status->charge_inhibit |= BOARD_CHG_COOLDOWN;
+                status->charge_cooldown_ms = KICKER_CHARGE_COOLDOWN_MS - elapsed;
+            }
+            else charge_cooling = 0;
+        }
+    }
+}
 static uint8_t kicker_tx[KICKER_SAMPLES * 4U];
 static uint8_t kicker_rx[KICKER_SAMPLES * 4U];
 
@@ -152,7 +237,11 @@ static int kicker_read(board_status_t *status)
 void board_monitor_init(void)
 {
 	uint32_t i;
+    board_charge_gpio_init();
+    charge_board_checked = charge_board_installed = 0;
 	memset(&board_status, 0, sizeof(board_status));
+    charge_kick_pending = charge_cooling = 0;
+    board_status.charge_inhibit = BOARD_CHG_ADC | BOARD_CHG_BAT_DATA;
     memset((void *)&g_battery_diag, 0, sizeof(g_battery_diag));
 	memset(kicker_tx, 0, sizeof(kicker_tx));
 	for(i = KICKER_SAMPLES; i < 2 * KICKER_SAMPLES; i++) kicker_tx[i * 2] = 1U << 3;
@@ -372,17 +461,27 @@ void board_monitor_update(void)
 	uint16_t shunt, bus, mask;
 	uint8_t charging;
 	uint32_t now;
+	status.charge_inhibit = 0;
+    status.charge_retry_ms = 0;
+    status.charge_cooldown_ms = 0;
 	update_shutdown();
 	status.shutdown = shutdown_requested;
 	if(status.shutdown)
 	{
 		status.charge_enabled = 0;
+        status.charge_inhibit = BOARD_CHG_SHUTDOWN;
 		HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin, GPIO_PIN_RESET);
 		if(shutdown_state == BOARD_SHUTDOWN_DISCHARGING) status.kicker_valid = kicker_read(&status);
 		update_discharge(&status);
 	}
 	else
 	{
+        if(!charge_board_checked)
+        {
+            charge_board_installed = identify_kicker_board();
+            charge_board_checked = 1;
+        }
+        status.kicker_installed = charge_board_installed;
 		status.kicker_valid = kicker_read(&status);
 		now = HAL_GetTick();
 		if(!status.ina226_ready)
@@ -421,33 +520,51 @@ void board_monitor_update(void)
 		update_power_protection(&status);
 		if(status.temperature >= KICKER_MAX_TEMP_C) hot = 1;
 		else if(status.temperature <= KICKER_MAX_TEMP_C - 5.0f) hot = 0;
-		status.kick_done = HAL_GPIO_ReadPin(KICK_ERR_GPIO_Port, KICK_ERR_Pin) == GPIO_PIN_RESET;
-		charging = HAL_GPIO_ReadPin(CHG_EN_GPIO_Port, CHG_EN_Pin) == GPIO_PIN_SET;
+        charging = status.kicker_installed &&
+            HAL_GPIO_ReadPin(CHG_EN_GPIO_Port, CHG_EN_Pin) == GPIO_PIN_SET;
 		status.charge_enabled = charging;
 		if(!charging || status.cap_v >= charge_start_v + 5.0f)
 		{
 			charge_tick = now;
 			charge_start_v = status.cap_v;
 		}
-		/* DONE is latched by the LT3751. Only interpret it while charging;
-		 * allow a later CHARGE rising edge to clear the latch after cooldown. */
-		if(charging && status.kicker_valid &&
-			((status.kick_done && status.cap_v < TARGET_V_CAP - 5.0f) || now - charge_tick >= 3000U))
-		{
-			status.charge_fault = 1;
-			inhibit_tick = now;
-		}
-		if(charging && status.kick_done) status.charge_enabled = 0;
-		if(status.charge_fault && now - inhibit_tick >= 30000U) status.charge_fault = 0;
+        /* TIGERs uses ADC voltage progress, not the LT3751 DONE signal. */
+        if(charging && status.kicker_valid && now - charge_tick >= 3000U)
+        {
+            status.charge_fault = 1;
+            status.charge_fault_reason = BOARD_CHG_PROGRESS;
+            inhibit_tick = now;
+        }
+		if(status.charge_fault && now - inhibit_tick >= 30000U)
+        {
+            status.charge_fault = 0;
+            status.charge_fault_reason = 0;
+        }
 		if(!KICKER_CALIBRATION_CONFIRMED || !status.kicker_valid || !status.battery_valid ||
 			hot || status.charge_fault || (TIM9->CR1 & TIM_CR1_CEN) ||
 			status.bat_v <= FORCESTOP_POWER_A || status.cap_v >= TARGET_V_CAP)
 			status.charge_enabled = 0;
 		else if(status.cap_v < TARGET_V_CAP - 5.0f)
 			status.charge_enabled = 1;
-		/* A command task can start a kick between sampling and publishing. */
+        if(!status.kicker_installed) status.charge_inhibit |= BOARD_CHG_NO_BOARD;
+        if(!KICKER_CALIBRATION_CONFIRMED) status.charge_inhibit |= BOARD_CHG_CAL;
+        if(!status.kicker_valid) status.charge_inhibit |= BOARD_CHG_ADC;
+        if(!status.battery_valid) status.charge_inhibit |= BOARD_CHG_BAT_DATA;
+        else if(status.bat_v <= FORCESTOP_POWER_A) status.charge_inhibit |= BOARD_CHG_BAT_LOW;
+        if(hot) status.charge_inhibit |= BOARD_CHG_HOT;
+        if(status.charge_fault)
+        {
+            status.charge_inhibit |= status.charge_fault_reason;
+            status.charge_retry_ms = 30000U - (now - inhibit_tick);
+        }
+        if(!status.charge_enabled && status.kicker_valid && status.cap_v >= TARGET_V_CAP - 5.0f)
+            status.charge_inhibit |= BOARD_CHG_FULL;
+        /* A command task can start a kick between sampling and publishing. */
 		taskENTER_CRITICAL();
-		if(board_actuators_disabled() || (TIM9->CR1 & TIM_CR1_CEN)) status.charge_enabled = 0;
+		charge_pulse_reasons(&status, HAL_GetTick());
+        if(power_quiet) status.charge_inhibit |= BOARD_CHG_QUIET;
+        if(shutdown_requested) status.charge_inhibit |= BOARD_CHG_SHUTDOWN;
+        if(status.charge_inhibit) status.charge_enabled = 0;
 		HAL_GPIO_WritePin(CHG_EN_GPIO_Port, CHG_EN_Pin,
 			status.charge_enabled ? GPIO_PIN_SET : GPIO_PIN_RESET);
 		taskEXIT_CRITICAL();
@@ -534,9 +651,10 @@ int board_kicker_ready(void)
 {
 	board_status_t status;
 	board_monitor_get(&status);
-	return !board_actuators_disabled() && KICKER_CALIBRATION_CONFIRMED &&
+	return board_kicker_installed() && !board_actuators_disabled() && KICKER_CALIBRATION_CONFIRMED &&
 		status.kicker_valid && status.battery_valid && status.bat_v > FORCESTOP_POWER_A &&
 		!status.charge_fault && status.temperature < KICKER_MAX_TEMP_C &&
 		status.cap_v >= TARGET_V_CAP - 10.0f &&
-		(TIM9->CCER & (TIM_CCER_CC1P | TIM_CCER_CC2P)) == 0;
+		(TIM9->CCER & (TIM_CCER_CC1P | TIM_CCER_CC2P)) ==
+			(KICK_POLARITY ? 0U : (TIM_CCER_CC1P | TIM_CCER_CC2P));
 }

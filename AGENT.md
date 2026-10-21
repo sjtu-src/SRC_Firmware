@@ -1,6 +1,12 @@
 # SRC RoboCup SSL 下位机：项目背景、TIGERs 对比与持续工作记录
 
-更新日期：2026-10-19（Asia/Shanghai）。本文件是项目长期知识入口；自动化协作入口见同目录 AGENTS.md。
+## 固定源码路径（用户于2026-10-20再次确认）
+
+- **TIGERs嵌入式固件目录：`E:\SRC\Tigers\Firmware-master\Firmware-master`。** 后续用户提及“TIGERs固件”时，默认直接读取该目录的实际源码，不再询问源码位置。
+- 本次会话此前的固件对比实际读取的就是此目录；“本地参考固件”指该目录，不是另一个未知位置。应以具体文件、函数和实际代码说明结论。
+- 路径确认不等于确认该解压源码的Git提交号或现役比赛版本；这些证据边界与固定路径分别记录。
+
+更新日期：2026-10-20（Asia/Shanghai）。本文件是项目长期知识入口；自动化协作入口见同目录 AGENTS.md。
 
 ## 1. 项目背景与证据范围
 
@@ -1088,3 +1094,237 @@ P3：以每车参数与可复现数据维护能力包络，逐步引入摩擦补
 - 1A锁断可在电机尚未产生可见转动前终止供电，单凭该现象既不能确认正常启动，也不能确认短路/换相错误；之前冒烟与熔断仍需定位。暂不建议提高限流、关闭保护或接回电池。
 - 建议下一项区分性证据为同一次受控启动的PWM5/ENB与R27上端对板GND的单次波形，保持22V/1A保护，两探头地均只接板GND。核对驱动前后的低脉宽及采样电流随时间变化，不以掉电后HBIAS/VCP=0判U9坏，不把SENSE窄尖峰超过200mV直接判限流损坏（手册消隐1.5us）。R27电压仅对应其实际电流路径，需结合后续桥臂波形才能区分真实负载/错误换相/交叠导通。
 - 无固件或CubeMX改动，无构建/烧录；基线d17910f及当前未提交工作树。A4931官方Rev9第9页Current Regulation/Enable Logic/PWM Blank Timer已重新核对。
+## 68. 2026-10-20 暂停吸球排查，复核升压与TIGERs差异
+
+- 基线d80b9f3501492870f11270f9beb8e1cf79a3d6bb，开始工作区干净。读取本文件历史及BOARD_MIGRATION.md，重新逐项读取当前SRC板级监控/初始化/调度/射球、TIGERs本地kicker/adc_kicker/power_control和上层模式调用；参考仍为本地v2020目录，无可靠提交号，不代表现役固件。
+- 用户更新实测：BAT22.5V、CAP0.01V、PC4一直低；仪器/时间分辨率和状态快照未确认。替代第16节旧读数，不直接指定根因。
+- 新增MDK-ARM/BOOST_COMPARISON.md，记录对照、修改优先级与证据限制。确认SRC本已有自动充电，无须额外AUTO_CHARGE命令；22.5V高于6S的19.8V门限。应先补禁充原因/热锁存/重试/原始ADC诊断，核实PC13信号语义，再修明确的射球后冷却门控缺口。滤波/独立过压检查需按本板额定与10ms周期适配，不能照搬200/220/260V或TIGERs引脚。
+- 临时tmp/boost_review.py使用生产board_monitor.c复现：22.5V/约25°C/近零CAP正常CHG高；DONE持续低时30s重试且约10ms高脉冲；启动I2C失效5s后恢复22.5V有效数据，quiet仍锁存并CHG低。模拟CAP0.01V量化为0，不冒称硬件精确复现。若同次上电吸球/四轮仍能运行，quiet作为唯一原因嫌疑下降；若示波器覆盖完整周期无高脉冲，单独DONE低不足解释。
+- 4S/6S各12项相关既有回归通过，共24项；完整板级脚本在drib_diag失败，预期55%与用户现行15%上限不一致，未改参数迎合测试。临时复现最初漏调board_monitor_init导致桩断言失败，补齐初始化后通过；不是固件SPI初始化故障。
+- 仅新增分析文档与本记录、生成tmp工件；未改生产固件/CubeMX/协议/用户15%上限，未Keil构建、烧录或实车测试。需完整门控快照确定本次PC4低的具体触发源，不删保护或强行使能。
+
+## 69. 2026-10-20 实现禁充原因OLED及射球后冷却门控
+
+- 用户确认PC13接DONE，并明确要求禁充原因上OLED、补射球后冷却禁充。基线仍d80b9f3及第68节文档工作树，尊重用户15%吸球上限。
+- 修改Core/Inc/board_monitor.h、cfg.h、Core/Src/board_monitor.c、misc.c。新增多原因位图和故障来源/重试/冷却剩余时间快照；DONE低电容异常与无进度分开诊断，保留原保护和30s重试。PC13不再作为未经确认的独立FAULT解释。
+- OLED y43..50显示CHG状态，多个原因1.5s轮换，DONE/NO RISE显示重试秒数；四轮行移至10/18/26/34，无覆盖底部模式栏。关机时继续既有专页。标签说明和操作见MDK-ARM/BOOST_COMPARISON.md新增实现节。
+- KICKER_CHARGE_COOLDOWN_MS=80，取本地TIGERs默认值，非本板最佳值实测。每次成功kick_pulse调用board_notify_kick记事件；监控确认TIM9停止后开始80ms冷却，捕获短于10ms监控周期的脉冲。最终输出临界区重查射球/冷却/quiet/shutdown，冷却期间CHG低；不新增普通射球频率限制，不改目标180V、引脚、CubeMX或吸球控制。
+- 新tests/test_charge_inhibit.py：4S/6S各10项新场景+12项相关原有回归，共44项通过；含DONE重试、无进度、热回差、并发原因、quiet恢复、回差带、长/短脉冲冷却与32位计时回绕。test_charge_oled.py提取实际显示块验证标签/轮换/倒计时和128像素宽度约束，启动音乐和四轮启动回归通过。完整旧板级套件仍有与15%上限不匹配的吸球55%断言，未改参数迎合。
+- Keil完整构建0Error/0Warning，Code54622、RO-data5118、RW-data500、ZI-data29932；MDK-ARM/tmp/charge_inhibit_build.log，正常SRC_Firmware.axf/hex更新，未烧录。git diff --check通过。宿主桩不等于实屏/实板验证，需烧录后读取CHG行定位实机未升压原因。
+## 70. 2026-10-20 实机OLED显示CHG:NO RISE
+
+- 用户反馈CHG:NO RISE。复核当前board_monitor_update：PC4读高、kicker_valid为真且进度计时达到3s会记录该原因，低电容DONE有效时优先记DONE LOW。因此本次反馈属于无电压进度分类，不能当作DONE低触发。
+- 故障后主动拉低PC4并等30s，故障等待期测低与早期反馈相容；未独立测量实际高压电容，不能凭ADC有效性判定测压链准确。本轮只记录，不改固件。
+
+## 71. 2026-10-20 逐引脚复核v13b：发现射球极性冲突及参考源码状态读取缺陷
+
+- 用户新确认CHG确实高约3s，实物升压/射球板为TIGERs Kicking Device v13b。覆盖第68节“PC4一直低”的早期不完整观测；不再以完全无充电请求解释NO RISE。
+- 基线d80b9f3加第69节未提交工作树。读取本地TIGERs main2019的main/system/SPI2/TIM13/TIM14/I2C2/设备绑定、shared的GPIO/SPI/DMA/timer_opm/adc_kicker/kicker/power_control与SRC对应源码；详细对比见MDK-ARM/BOOST_PIN_AUDIT.md（引脚配置、完整X1接口、上电/ADC/充电/射球/冷却、LT3751硬件引脚）。
+- 使用PDF技能渲染并逐页查看electronics-master/v2020/PDF/Kicking Device v13b.pdf两页和SRC Mainboard_2026-10-10.pdf，再用EAGLE同名.sch网表确认：KICK-DIS1/2经SI8620非反相隔离后接FAN3229负输入，正输入12V。v13b实际控制端高关闭、低射球。
+- 关键修订：TIGERs timer_opm OCM_DISABLED=101为强制有效高（CC1P0），PWM模式110/PWM1产生低脉冲，OPM回零高。SRC当前TIM9 PWM2/High、CCR=period-ticks则低等待/高脉冲/结束回零低，和v13b反相链冲突。第69节“只补80ms冷却即适配完善”的含义不能成立，冷却只控制CHG，未保证DIS关闭。此前board_kicker_ready的CC1P/2P检查和pulse宿主测试也以高有效为假设，通过不能证明实板极性正确。
+- 若实际DIS低到达驱动，IGBT门极可能被拉高，放电支路可能阻止电容充电，是NO RISE的优先候选；未测DIS/门极，且初始通道禁用时真实脚电平不能由PWM公式保证，不宣称已经证明根因。建议下一实现统一两路启动/停止/脉冲/故障/关机放电为高关闭、受控低脉冲，并同步安全守卫和测试；本轮按用户详细比较要求不擅自改变固件。旧镜像不宜继续用于v13b带高压射球自检。
+- CHG均高有效静态允许，TIGERs先输入弱下拉10ms/弱上拉10ms用板上R2=10k识别，再先写低后切推挽；不是特殊激活脉冲。SPI仅读ADC，未发现另一根MCU升压使能或须下发的LT3751寄存器命令；HVGATE由LT3751自己产生。X1.11的12V与X1.12主电源是硬件供电条件，不由CHG产生。
+- SCK实际TIGERs72MHz/16=4.5MHz，SRC42MHz/8=5.25MHz，mode3/64字节CS低、通道选择、弃前两帧和字节序语义一致。TI ADC122S051手册3.2–8MHz覆盖两者，不应盲将SRC分频改16（会成2.625MHz）。温度/电容分压换算相同，滤波/采样周期不同。
+- 本地参考自身问题：GPIOPinIsSet宏读BSRR而非ODR/IDR，kicker chargeControl用它读取isCharging。若BSRR读零会持续重置进度基准，设计中的3s/5V保护不一定实际生效；不把本地包视作完美参考或现役行为，不移植该宏。SRC HAL_GPIO_ReadPin读IDR不应改成它。
+- 原理图区分：Version3.0/powerboard_schematic.pdf仅电源/电机页；POWBRD_Flyback/SRC_PowerBrd_Flyback.pdf是旧16V/VFB方案，均不代替此次确认的v13b。器件行为核对ADI LT3751、onsemi FAN3229及TI ADC122S051官方手册，链接见详细报告。RM0433在线PDF因大小限制未完整读取，BSRR结论以本地代码和寄存器用途为主，不声称实测TIGERs。
+- tmp/compare_kick_polarity.py按实际模式字段推演电平，确认OPM回零后TIGERs高/SRC低；非实物波形。只更新报告/记录，不改控制源码、CubeMX、参数，不构建/烧录；本节同时修复第70节上次写入时产生的中文乱码（内容依据当时工具读取与对话恢复）。
+
+## 72. 2026-10-20 修复v13b DIS1/DIS2低有效极性
+
+- 用户明确要求先修DIS1/DIS2。基线d80b9f3及第69/71节未提交工作树，保留OLED禁充原因、80ms冷却和用户15%吸球上限。未更改CHG保护、SPI、电容目标或其它电机配置。
+- 实际修改Core/Src/main.c、tim.c、misc.c、board_monitor.c、Core/Inc/misc.h及SRC_Firmware.ioc。TIM9仍PWM2/原PSC3359/ARR635，只将两路极性改LOW；普通射球及专用关机放电安全守卫同步要求CC1P/CC2P均为1。
+- main的SysInit在MX_GPIO/其它外设前建立PA2/PA3推挽高+上拉；TIM9初始化再次保持高，MspPostInit保持GPIO高，不自动接AF。复位到该函数执行前仍依赖硬件偏置，软件不能保证未运行阶段的电平。
+- kicker_stop先把两路切到GPIO高，再停两通道/共享计数器，保存恢复PRIMASK。shoot_off/chip_off均走该路径，故普通停止、故障、quiet及关机停止不依赖禁用定时器后的隐含脚电平。
+- kick_pulse先保持两路GPIO高、停止旧输出、CHG低，装载原CCR=period-ticks并UPDATE；HAL启动成功后显式清CEN、再次UPDATE复位计数和预分频相位，在已使能但停止的PWM2/LOW高电平状态接入选中通道AF，再开CEN。未选通道一直GPIO高；HAL启动失败经shooter_off回退两路高。特意不用__HAL_TIM_DISABLE完成此中间停表：真实F4 HAL在CCxE仍使能时该宏不会清CEN。
+- 脉冲持续时间/原力度映射不变：20us/tick，1档100us低，127档12.7ms低，仍位于636计数周期末尾；结束OPM回零高。没有顺便改变发射延迟、协议力度映射或普通射球频率策略。80ms冷却仍从监控观察到结束后计算。
+- 更新tests/test_board_migration.py的GPIO/真实HAL停表限制模型、生产函数提取与极性断言；新tests/test_dis_polarity.py在4S/6S下共8个运行场景及启动/CubeMX静态检查通过，覆盖两路最短/最长低脉冲、回零高、stop高、HAL失败、IRQ状态保持、错误极性拒绝。tests/test_charge_inhibit.py的44项相关回归、OLED标签/轮换测试、音乐及四轮启动测试通过，git diff --check通过。旧完整板级套件的55%吸球预期与当前15%不一致仍未扩大修复。
+- 最终Keil构建0Error/0Warning，Code54754、RO-data5114、RW-data500、ZI-data29932；日志MDK-ARM/tmp/dis_polarity_final_build.log，正常SRC_Firmware.axf/hex更新，未烧录/实板测波形。不将代码修复当成已经证实NO RISE消除。
+- CubeMX再生成会把TIM9 MspPostInit恢复成AF，必须保留本轮延后AF策略；新增测试检查该风险。ioc已同步LOW极性，避免普通重生成恢复高有效。后续受控验证应先确认PA2/PA3静态高及低脉冲、结束高，再观察CAP与CHG，不能以宿主通过代替实测。
+
+## 73. 2026-10-20 DONE方向与用户此前同时拉高的实验
+
+- 用户新增历史实测：此前实验DONE要和CHG一起拉高才升压。保留该现象，不据此将DONE改为第二路使能。尚不知当时是GPIO推挽高、输入上拉还是电阻上拉，以及测试固件是否读取DONE后禁止CHG。
+- 重新核对ADI LT3751官方手册Pin Functions第8页及DONE/FAULT Pin Design第20页：DONE(7)是开集电极指示输出，需上拉；对主控PC13而言应是输入。CHARGE(8)才是启停输入。DONE会在充满或FAULT有效时拉低，启动时也可能短暂低；其高电平表示输出管释放且上拉有效，不是主控应强制送高的第二个启动命令。手册要求DONE/FAULT电流限制1mA，不能直接推挽高对抗其拉低。
+- 当前gpio.c:95–98实际PC13为GPIO_MODE_INPUT/GPIO_PULLUP，未配置推挽输出。v13b图DONE直接到X1.8并有100nF对地；结合主控上拉讨论，不宣称已测得上拉电阻、RC或实物连线状态。此前同时拉高可能涉及提供缺失上拉，或强制高掩盖当时软件DONE禁充判断；这些只是待区分解释，不能否认用户实际升压结果，也不能认定芯片必须外部驱动DONE才能工作。
+- 本轮仅核对资料与更新记录，不修改DONE方向、保护或固件，不构建烧录。来源：https://www.analog.com/media/en/technical-documentation/data-sheets/lt3751.pdf 。
+
+## 74. 2026-10-20 对照DONE内部上拉配置
+
+- 用户明确硬件没有DONE外部上拉。当前SRC gpio.c:95–98将PC13/KICK_ERR设为GPIO_MODE_INPUT/GPIO_PULLUP；SRC_Firmware.ioc亦保存PC13-ANTI_TAMP.GPIO_PuPd=GPIO_PULLUP及GPIO_Input。故当前软件已开启MCU内部弱上拉，并非只依赖不存在的外部电阻，也不是推挽高输出。
+- 对照本地TIGERs主板网表，KICK-ERR/DONE接PG10；检索main2019及对应GPIO初始化/充电模块，未找到PG10/DONE配置上拉或读取路径。不能把对PG11/CHG的弱上下拉板检测误当作对DONE的处理。该参考依赖ADC电容反馈控制，并未用DONE作为充电门控；不声称TIGERs在软件中把DONE和CHG一同驱动高。
+- 当前SRC与参考的区别是SRC内部上拉并读取DONE，低CAP充电时DONE低会进入DONE LOW保护。仅凭硬件无外部上拉不能判当前内部上拉失效；用户此前同时拉高的实际配置和测量仍待区分。本轮只说明并更新记录，不改固件、不构建烧录。
+
+## 75. 2026-10-20 DONE内部上拉强度与RC判断
+
+- 用户引用手册询问proper pull-up是否表示MCU内部上拉不足。核对ST STM32F405/407官方数据手册RPU：普通引脚弱上拉等效30/40/50kΩ（规定条件下）；ADI LT3751 DONE/FAULT设计章节对多数应用推荐100kΩ，并要求引脚电流不超过1mA。因此不能仅凭内部弱上拉断言静态强度不足：其等效阻值通常比100kΩ更低，在3.3V下低电平时电流约66–110uA。
+- 若实板保留v13b图上C19=100nF，以线性电阻近似，内部上拉RC约3–5ms；节点从低电平释放恢复到最终值95%约9–15ms。这是量级估算而非实测，弱上拉并非精密线性电阻；可能影响10ms任务对DONE恢复的判定，需考虑实际电容、漏电和节点电压，不能将静态够用等同于完整时序已经验证。
+- 当前用户实测NO RISE/CHG高3s，并非DONE LOW，不支持直接指定DONE上拉不足为本次根因。本轮不改上拉、RC、保护或固件，只更新认识；不建议用推挽高对抗DONE输出。
+- 官方来源：https://www.st.com/resource/en/datasheet/stm32f407ig.pdf ，https://www.analog.com/media/en/technical-documentation/data-sheets/lt3751.pdf 。
+
+## 76. 2026-10-20 DONE与CHG时序要求
+
+- 再次核对LT3751官方手册第8及20页：CHARGE高于1.5V启动，低于0.3V停止，开启边沿上升时间10ns–10ms，不应直接随VCC缓升；DONE为开集电极状态输出，没有由MCU主动与CHG同步拉高的要求。
+- 软件顺序建议：CHG先保持低、DONE先配置输入上拉，在电源有效且条件满足后CHG高，再判读DONE。DONE/FAULT的低锁存由CHARGE切换复位，不能要求锁存DONE必须先高才允许CHG升高，否则可能无法启动。CHG上升时DONE可正常低数微秒，须将启动瞬态及外部RC恢复与持续故障区分。
+- 手册推荐用于抑制启动指示的RC时间常数5–20us；第75节按实板若保留100nF及30–50k内部上拉估算为3–5ms，明显更慢。软件是否需启动观察窗口应由实际DONE恢复/波形确定，不把该估算当实测或自动屏蔽所有启动故障。本轮只记录时序知识，不修改代码/硬件、不构建烧录。
+- 来源：https://www.analog.com/media/en/technical-documentation/data-sheets/lt3751.pdf 。
+
+## 77. 2026-10-20 按DONE/CHG时序修正初始化与启动判定
+
+- 用户明确授权按第76节时序修正。源码基线仍d80b9f3及既有DIS极性/禁充显示等未提交工作树，保留用户15%吸球上限。
+- 修改Core/Src/main.c、board_monitor.c、misc.c及Core/Inc/board_monitor.h、cfg.h。新增board_charge_gpio_init，在main SysInit阶段、MX_GPIO和其它外设前先PC4写低并设推挽输出，再PC13设输入上拉；board_monitor_init重复建立配置，DONE始终不作输出。
+- KICKER_DONE_SETTLE_MS=20ms是结合内部上拉+图纸100nF恢复估算选取的软件初值，非芯片规定值。首次board_monitor_init后至少低20ms才允许CHG启动，等待原因显示STARTUP；每次真实CHG低转高请求记录新时间戳，前20ms暂缓DONE故障判断。包括30s重试与射球后恢复；不要求锁存DONE先变高才允许CHG边沿。DONE持续低到窗口结束仍报DONE LOW并30s后重试。
+- 原ADC有效性、电池门限、温度、目标电压、quiet/shutdown、射球/80ms冷却及3s无进度保护保持有效；并非统一延迟所有保护。记录实际控制边沿请求，未宣称测得控制器CHARGE的上升时间或已建立12V供电有效检测。
+- 新tests/test_done_startup.py在4S/6S共12项运行用例及初始化顺序检查通过，含初始低DONE可启动、瞬态恢复、持续低/重试、计时回绕及窗口内ADC/温度/电压保护。回绕测试显式注入INA转换就绪事件以避免初始battery_tick=0跨回绕的轮询等待混入DONE验证。test_charge_inhibit.py既有44项、DIS极性测试、OLED全13标签/轮换、音乐和四轮启动回归通过；既有DONE测试改为观察窗口后断言，非删除故障断言。旧完整吸球55%预期与15%上限不匹配未扩改。
+- 最终Keil全工程构建0Error/0Warning，Code54934、RO-data5126、RW-data516、ZI-data29932，日志MDK-ARM/tmp/done_startup_build.log，正常SRC_Firmware.axf/hex更新。git diff --check通过，未烧录/实屏或实车测波形，不宣称NO RISE已解决。
+- BOARD_MIGRATION.md补充本次时序与软件参数边界。启动GPIO接管前仍依赖硬件状态，20ms参数后续应以实板DONE恢复波形复核。
+
+## 78. 2026-10-20 明确TIGERs实际时序与SRC新增等待的区别
+
+- 用户再次要求详细对照TIGERs实际代码。重新直接读取固定目录E:/SRC/Tigers/Firmware-master/Firmware-master的shared/module/kicker.c（KickerInit/kickerTask/identifyKickerBoard/chargeControl/adcKickerUpdate）、main2019/main.c、tiger_bot.c、robot_impl.c及shared/drv/adc_kicker.c。
+- 明确纠正表述：第77节新增首次保持CHG低20ms及每次CHG升高后DONE观察20ms，均为SRC自行增加的策略，TIGERs中没有这两项。不能说这是从TIGERs移植的时序，也不能把TIGERs识板时输入弱下拉10ms+弱上拉10ms合计20ms当作DONE稳定等待。
+- TIGERs时序：main先初始化TIM13/14并建立DIS高关闭，再启动ADC任务；TigerBotInit绑定PG11为chargePin，KickerInit创建任务。kickerTask先在PG11上执行输入弱下拉10ms读IDR、输入弱上拉10ms读IDR，利用v13b的CHG外部10k下拉识板。成功后先写PG11输出锁存低，再设推挽输出/无拉。随后约1ms处理事件/检查充电条件；没有再等待20ms。
+- TIGERs的DONE硬件对应PG10/KICK-ERR，但所查模块没有DONE输入配置、读取、启动屏蔽或DONE低禁充路径。名称EVENT_MASK_TIMER_PULSE_DONE及COOLDOWN_DONE指软件/定时器事件，不是LT3751 DONE输入，不能混淆。TIGERs不等待DONE先高，也不同时驱动DONE与CHG。
+- TIGERs由RobotImplKickerAutoCharge(1)/测试/shell设置AUTO_CHARGE，主循环按ADC新鲜度、温度、快/慢滤波电容电压及KICKING/COOLDOWN等决策CHG；SRC为有效测量后自动充电，额外有电池有效/quiet门控和DONE故障门控。ADC采样TIGERs约1ms，SRC约10ms；参考默认200V、5V回差、80ms冷却，SRC180V/5V/80ms。3s/5V/30s为参考代码意图，BSRR状态读取缺陷仍沿用第71节边界。
+- 当前SRC初始化helper先CHG低再DONE输入上拉，与TIGERs不使用DONE的路线不同；其20ms策略是为SRC额外读取DONE提供恢复裕量，不能作为解释TIGERs为何升压的依据。本轮只补对照与记录，未继续修改固件/参数，不构建烧录。
+
+## 79. 2026-10-20 按用户要求撤回DONE策略并对齐CHG识板
+
+- 用户明确质疑为何未直接采用TIGERs路线，实际按指定目录identifyKickerBoard迁移CHG输入弱下拉10ms读、弱上拉10ms读，通过后写低再切推挽输出/无拉。任务中首次执行一次；识板失败显示NO BOARD，禁止充电/普通射球及关机线圈脉冲。未识别时输入高不被误当作正在充电。
+- 删除DONE输入上拉/读取/故障门控及两个额外20ms等待与相关配置宏；PC13保留未使用输入、无内部上下拉，.ioc同步。原DONE启动测试替换为test_charge_identify.py。SRC电池保护、180V目标/自动充电请求、3s进度保护、80ms冷却和DIS极性修复保留，不复制参考BSRR读取缺陷或上位机协议。
+- 4S/6S识板12项（正常、无板、错误偏置、DONE切换不影响、进度重试、ADC故障）及充电相关44项、DIS极性、OLED、音乐、四轮启动回归通过；最终Keil日志MDK-ARM/tmp/tiger_charge_final_build.log，0Error/0Warning，Code55006、RO-data5118、RW-data508、ZI-data29932，正常AXF/HEX更新，未烧录/实测。旧55%吸球测试与用户15%不匹配未扩改。第77节的20ms等待已撤回，不再描述为现行实现。
+
+## 80. 2026-10-20 应用户要求扩大DONE全目录追查
+
+- 用户要求不能仅以充电模块搜不到断言没有DONE配置。扩大到固定目录的隐藏/忽略文件、主程序/bootloader、CMake源清单、公共GPIO初始化、直接MODER/PUPDR/OTYPER写入、端口基地址/别名、C/C++/汇编和启动钩子。目录统计2623个文件、1187个源码/配置文件；统计不代表逐行人工通读所有文件。审查脚本MDK-ARM/tmp/audit_done_source.py。
+- 再查EAGLE Mainboard v13.sch：IC1为STM32H743Z，KICK-ERR网络接gate G/P10，对应封装125脚，即PG10，连接器PWR -38；不存在此次对照把DONE错认成PG11的情况。CHG是PG11，ADC CS是PG12。
+- 对整个目录GPIOG引用穷举：main2019中PG0触摸、1显示复位、2/5/6/7/8图案识别、3/4软I2C、9/14USART6、11CHG、12ADC片选、13扩展器中断、15USB供电；没有PG10配置/读取/输出调用。公共init_hal.c只配置传入的端口和pin掩码，GPIODeInit和GPIOPinStInit无实际调用；无全端口通用循环配置PG10的证据。未发现PG10别名或固定GPIOG寄存器地址操作。
+- main_bootloader.c仅配置PG15输入上拉；system.c处理时钟/MPU/SysTick，无GPIOG MODER/PUPDR设置；crt1.c的__early_init和__late_init均为空弱函数，全目录无其它覆盖。构建CMake定义main2019使用STM32H743xx；已有CMakeCache源路径确为用户指定目录，但build/main2019_Release/src/main2019仅见CMakeFiles，不能声称核验了现成ELF反汇编。
+- 正向功能证据：shared/module/kicker.h:41/55的KickerData/Kicker只有chargePin，无donePin；tiger_bot.c:140只注入PG11；kicker.c:190的KickerIsCharged直接以capAvgFast >= maxVoltage-chgHysteresis判断充满，chargeControl:322也用ADC/温度/状态决策。TIMER_PULSE_DONE/COOLDOWN_DONE是定时器事件，不是LT3751 DONE。
+- 扩大核查结果仍为：所给目录的main2019应用没有使用LT3751 DONE(PG10)的初始化与逻辑路径。这比“只搜kicker.c没看到”范围更完整，但不据此宣称其它未提供固件版本或用户实板测得的现象不可能。硬件预留状态线并不强制固件使用；该版充满反馈明确由ADC实现。
+- 本轮扩大追查未再改固件；更新证据边界与记录，未构建TIGERs或烧录实物。
+
+## 81. 2026-10-20 对照手册Start-Up与Start-Up Protection
+
+- 用户提供LT3751 Start-Up原文。核对官方手册第10–12页：正常条件下CHARGE升高后约2us由芯片内部启动单稳态发起首次开关，之后维持开关允许直到目标或故障，不需要MCU驱动DONE或生成升压PWM。2us描述芯片内部响应，不是软件应延时2us再改另一引脚。
+- 低输出电压（包括短路）可能不足以触发DCM比较器；内部启动保护以26kHz时钟和辅助电流比较器控制后续周期，并可增加周期间隔；失去DCM事件约500us可重新启动。因此启动阶段不必呈固定连续频率，不把稀疏脉冲直接当作MCU时序错误。
+- 用户此前CHG高3s/NO RISE只能证明使能窗口内ADC未见足够增长，不能区分未开关、能量未积累或测压链未反映。后续如测量应以控制器CHARGE实际上升沿和升压MOS栅源脉冲为起点，不再为解决该现象增加DONE驱动或无依据的MCU启动等待。
+- 本轮只核对手册并记录，不改固件/参数，不构建烧录。来源：https://www.analog.com/media/en/technical-documentation/data-sheets/lt3751.pdf 。
+
+## 82. 2026-10-20 用户恢复DONE上拉后观察3.3V衰减至0V
+
+- 用户反馈DONE配置默认上拉，上电后由3.3V衰减到0。重新读当前gpio.c:95–98及.ioc，二者现均为PC13输入/GPIO_PULLUP，替代第79节的无拉配置；尊重用户现有改动，不恢复NOPULL。本轮开头沿用旧无拉配置的假设已在读取后立即纠正。
+- 当前board_monitor.c仍未读取或输出DONE；应用中未见初始化之后重新配置PC13/直接覆盖其上拉的明确路径。源码配置不替代运行时GPIOC.MODER/PUPDR或实际烧录镜像核验，未据此排除运行差异。
+- 上拉不是强驱动高：LT3751的DONE开集输出可在充满、FAULT或启动短暂状态下拉低，内部弱上拉会被正常压低。因此电压下降不能单独证明上拉不足；若3.3V电源稳定且运行PUPDR确为上拉，单独100nF电容不能让已释放的节点长期保持0V，需要有下拉电流路径或上拉实际未生效。
+- 若CAP仍近零且DONE持续低，需优先区分故障锁存/外部拉低与配置失效，不能称为正常充满。关键信息为下降时间尺度、与CHG上升沿的相对时刻、是否恢复以及FAULT实际状态。本轮不指定损坏元件、不改配置，不构建烧录。器件依据仍ADI LT3751第8/20页，https://www.analog.com/media/en/technical-documentation/data-sheets/lt3751.pdf 。
+
+## 83. 2026-10-20 DONE在CHG之前约720ms指数衰减
+
+- 用户补充并重复确认：DONE的3.3V至0衰减发生在CHG拉高之前，指数衰减持续约720ms。该事件不能用CHG上升沿触发、持续数微秒的LT3751启动低指示解释；不能据此直接认定充满或故障锁存。
+- 当前再读源码仍PC13输入上拉，早期board_charge_gpio_init只处理CHG；MX_GPIO_Init在SRC_Robot_Init的50000000次忙等待前已配置DONE上拉。因此不能把该忙等待期间默认说成GPIO尚未初始化。运行时PUPDR、供电、镜像及实物连通性仍未核验。
+- 720ms与图纸100nF+内部30–50kΩ的3–5ms量级不同。若实际节点高阻，100nF经1MΩ测量输入放电，时间常数约100ms，数百毫秒衰减到近零可能出现；只是条件性模型，不声称已证明探头导致，更不能将720ms全衰减时间直接等同于RC时间常数。
+- 同时需排除示波器AC耦合：高通输入会将稳定DC上电阶跃显示成指数回零，屏幕回零不等于节点DC电压真归零。优先确认通道DC耦合、探头倍率，并用稳态直流读数/运行PUPDR区分真实放电与显示效应。若3.3V稳定、上拉实际有效且连通，单独100nF不能使DONE长期归零。
+- 本轮不改代码、不构建烧录。资料：Keysight AC coupling说明 https://www.keysight.com/blogs/en/tech/bench/2018/10/18/when-to-use-ac-coupling-on-your-oscilloscope ，Tek探头输入阻抗 https://download.tek.com/datasheet/P2220-P2221-Passive-1x-10x-Voltage-Probe-Datasheet-51W179843.pdf ，LT3751手册同前。
+
+## 84. 2026-10-20 用户确认供电正常且OVLO/UVLO未触发
+
+- 用户确认FAULT无上拉，当前无法直接判读，并确认供电正常、OVLO/UVLO未触发。按该实测前提继续，不重复要求同一组供电/门限检查；尚无FAULT有效电平，不能把DONE低单独当作FAULT已证实。
+- 修正上次答复过于倾向FAULT的推断：手册DONE还可由VOUT目标比较器置位；若供电门限已排除，误判充满/开关驱动与能量传递链需要区分。但此前DONE在CHG前720ms衰减本身并不能证明VOUT比较器已触发，不把两事件强行归为同一原因。
+- 下一项区分性证据应是以CHARGE上升沿触发的升压MOS栅源VGS：从未开关、短暂开关后停止、持续开关但电容无增长对应不同支路。FAULT若后续要判读需有效上拉，不能用悬空电压作证。芯片手册明确FAULT还含内部UVLO，但本轮没有证据认定该情况发生，不据此否认用户供电实测。
+- 本轮只记录和核对ADI LT3751 Pin Functions及Secondary Energy Transfer说明，不改固件/参数、不构建烧录。来源同前官方手册。
+
+## 85. 2026-10-20 用户提供v13b相似案例及确认当前电池供电
+
+- 用户截图：提问者采用TIGERs kickerboard线路/布局，在12V偏置及VTRANS条件下，CHARGE高后仅少数开关脉冲、电容仅升几V、DONE立即低。截图中Andre回复称设计按约24V电池供电调校，启动峰值约13A，建议将采样电阻增倍以减小初始电流，并提示门极电阻可能影响热失控。这是用户提供的案例/建议，不当作本机根因实测或已验证修复。
+- 用户随后明确当前升压由100C-1550-6S1P电池供电。此前22V/1A台式源属于吸球测试，不得继续套用为本轮升压条件。电池标称倍率不能单独证明实际供能及所有连接，但在用户此前已确认供电/UVLO/OVLO正常的前提下，不优先重述“台式电源限流不足”。
+- v13b图R18=8mΩ，LT3751充电模式名义峰值阈值106mV/RSENSE=>13.25A；16mΩ则6.625A。该值是初级/MOS开关电流峰值，不是电池平均电流、ADC监测电流或保险丝电流；启动保护还有辅助比较器，不能保证实际无过冲。增倍R仅是受控降低峰值的诊断/适配方案，用户未要求改硬件，本轮不操作。
+- 该R18属于升压板，不是电机板吸球R27=39mΩ。截图所说gate resistor未指定具体位置；v13b原图升压Q1门极R14=0，而R21/R22=10Ω属于IGBT射球驱动，不应混淆后盲改。截图的24V供电指主功率母线条件，v13b图LT3751脚13仍接+12V，不据截图把偏置电源改成24V。
+- 相似性边界：对方DONE在CHARGE高时变低且已观察少数门极脉冲，本机已明确DONE在CHG之前约720ms衰减，未取得对应升压Q1脉冲；两者不能仅凭DONE低合并为同一故障。后续优先核对CHARGE上升沿对应VGS及CSP-CSN波形，区分未启动、快速停机和持续开关无能量积累；不再改DONE驱动/无依据延时。
+- 本轮核对ADI LT3751 Pin Functions/Current Sense Resistor/Start-Up Protection，来源https://www.analog.com/media/en/technical-documentation/data-sheets/lt3751.pdf ，只更新记录，不改固件/参数/硬件、不构建烧录。
+
+## 86. 2026-10-20 用户实测上电IGBT门极约10V，修复TIM9后初始化覆盖
+
+- 用户反馈一开机IGBT导通、G约10V。未确认该读数参考E还是地，不将其当成已测VGE；若G-E约10V，不能称为安全关闭。先停止高压充电并确认电容放电，不能在导通未排除时继续尝试升压。
+- 本次基线仍d80b9f3501492870f11270f9beb8e1cf79a3d6bb及已有未提交工作树，保留用户PC13上拉、15%吸球及其它改动。重新读实际源码发现：TIM9极性仍PWM2/LOW，早期kicker_hold_outputs仍在，但HAL_TIM_MspPostInit的TIM9分支已恢复CubeMX形式GPIO_MODE_AF_PP/GPIO_NOPULL，覆盖GPIO高。CC1E/CC2E未开启时不能保证该AF输出高，存在使低有效DIS保持错误电平的明确初始化缺陷。该缺陷符合用户现象，但尚未用实板波形证明其为全部根因。
+- 先运行原test_dis_polarity.py：8个运行场景通过，但MspPostInit静态保护断言失败，复现此前第72节已记录的再生成风险。此前保护依赖修改生成区不够稳健，不能继续声称当前源码初始状态已经正确。
+- 实际修改Core/Src/tim.c：在TIM9_MspPostInit 0的USER CODE保留区调用kicker_hold_outputs，以#if 0屏蔽下方生成AF配置，并在TIM9_MspPostInit 1保留区以#endif闭合。初版return引起ARMCC不可达代码告警，因此最终使用预处理屏蔽。保持PA2/PA3先置输出锁存高再配置推挽输出/上拉；只允许kick_pulse在准备好PWM输出后连接选中通道AF。未改射球力度、时长、充电条件或DONE。
+- 再次直接读取本地TIGERs src/shared/hal/h7xx/hal/timer_opm.c：TimerOpmInit先CCMR1=OCM_DISABLED(101强制有效)、CCER=CC1E、EGR=UG，再GPIO AF/上拉/推挽，因此接入AF前已建立高输出。SRC原问题路径并不具备该前提；本轮用GPIO高保持实现关闭，不声称寄存器实现与TIGERs完全相同。
+- tests/test_dis_polarity.py增加提取并执行实际TIM9 MspPostInit分支的msp_startup用例，检查保留区guard以及#if 0/#endif包围AF。在4S/6S共10个DIS运行场景通过，充电联锁44项及CHG识板12项通过。宿主模型不能替代实际PA2/PA3及IGBT G-E波形。
+- 边界：MCU复位到软件接管前的引脚状态依赖硬件，软件本轮保护不能保证该窗口；本轮未烧录、未取得新实板测量，也不能据此宣称NO RISE已解决。Keil最终构建结果另补。
+- 最终构建另发现当前uvprojx在Application/User/Core和Drivers/CMSIS两组重复包含同一Core/Src/system_stm32f4xx.c，首次链接报8个重复符号错误。仅删除前者无独立选项的重复File条目，保留后者及用户其它工程设置；未改SystemInit实现。最终Keil日志MDK-ARM/tmp/dis_msp_guard_final_build.log：0 Error/0 Warning，Code54982、RO-data5118、RW-data504、ZI-data29936，2026-10-20 19:20生成SRC_Firmware/SRC_Firmware.hex。未烧录。
+- 本轮tim.c及DIS测试git diff --check通过；uvprojx原有文件尾额外空行仍有格式提示，未为此重写用户工程其它内容。最终预处理保护版DIS共10场景重新通过。
+
+## 87. 2026-10-20 复核初始化、射门和关机放电的极性一致性
+
+- 用户追问初始状态改变是否同步射门、放电等操作。重新核对action.c、misc.c、board_monitor.c、tim.c和.ioc全部SHOOT/CHIP/TIM9引用：set_shooter经shoot_on/chip_on到start_kick，再到kick_pulse；关机放电discharge_on也调用同一kick_pulse；shooter_off经shoot_off/chip_off到kicker_stop，保持两路GPIO高。未找到绕过该底层直接输出DIS的其它应用路径。
+- 发现本轮读取时tim.c时间19:28:51、.ioc时间19:28:47，TIM9极性均已为HIGH，与上一轮19:20构建时LOW不一致；不推断具体修改来源。MspPostInit USER CODE高保持保护仍保留。运行test_dis_polarity：10个模拟运行场景可通过，但.ioc LOW静态断言失败，说明不能仅凭此前验证声称当前配置一致。
+- 按现有低有效修复目标，将MX_TIM9_Init的共享通道配置恢复TIM_OCPOLARITY_LOW，并同步.ioc中TIM9.OCPolarity_1/2为LOW。TIM_OCMODE_PWM2保留，两通道使用同一配置。board_kicker_ready和discharge_on原有CC1P/CC2P均置位检查保持有效，错误极性时拒绝启动。
+- 实际时序：闲置/停止两路高；普通射门或挑射只给选中一路低脉冲，另一路保持高；关机线圈放电同样选中一路低脉冲；单脉冲计数回零后恢复高。CHG在开始脉冲前低，发射/80ms冷却期间禁止充电。原协议力度、脉宽映射及关机放电算法不变。
+- 增强test_dis_polarity静态检查实际MX_TIM9_Init必须PWM2/LOW，不只查.ioc和模拟CCER。最终10个DIS运行场景及源码/.ioc一致性检查通过；test_charge_inhibit既有44项通过。源码和.ioc的git diff --check通过。等待本轮Keil构建结束后补结果；未烧录或取得新实板测量。
+- 本轮完整Keil构建完成：MDK-ARM/tmp/dis_operations_build.log，0 Error/0 Warning，Code54982、RO-data5118、RW-data504、ZI-data29936，正常SRC_Firmware.axf/hex已更新。此结果对应恢复LOW后的当前源码，未烧录。
+
+## 88. 2026-10-20 核对踢球前关闭升压及并发联锁
+
+- 用户询问踢球是否保证先禁用升压。直接核对当前kick_pulse：kicker_stop保持两路DIS高之后，先HAL_GPIO_WritePin(CHG_EN, RESET)，再装载CCR/更新定时器、使能通道并接入AF，最后启动计数；平射、挑射及关机放电共用此函数。可以确认软件命令顺序为先CHG低再发射低脉冲。
+- start_kick和discharge_on调用kick_pulse均处于FreeRTOS临界区；board_monitor最终写CHG也在临界区内，且在写前重新执行charge_pulse_reasons检查TIM9运行状态、pending射球记录和80ms冷却，避免旧采样决策在射球后重开升压。pending使短于监控周期的脉冲也不会漏掉冷却。
+- 保证范围是MCU控制输出顺序和软件联锁。当前没有独立确认LT3751功率级已停开关的反馈，也没有固定且经实板验证的关断等待参数；不能将先写CHG低等同于已实测最后一周期能量传递结束。本轮仅源码核查与记录，不改固件、不重新构建或烧录。
+
+## 89. 2026-10-20 修复SystemInit及系统时钟符号缺失链接错误
+
+- 用户报告L6218E缺少SystemInit、AHBPrescTable、APBPrescTable、SystemCoreClock。直接核对当前Core/Src/system_stm32f4xx.c：文件存在且定义上述符号；当前uvprojx无任何system_stm32f4xx.c条目，Drivers/CMSIS组为空，19:37:50生成的链接输入列表也没有系统源码对象。与第86/87节构建时保留一个条目的状态不同，不推断当前缺失的修改来源。
+- 仅修改MDK-ARM/SRC_Firmware.uvprojx，在Drivers/CMSIS组恢复../Core/Src/system_stm32f4xx.c的C源文件条目。保持工程字节换行风格，不重写其它配置、不改系统源码或射球/充电行为。XML解析校验系统文件恰好一个条目、路径存在，避免重复符号和缺少符号两个相反问题。
+- 启动实际Keil构建，日志MDK-ARM/tmp/restore_system_build.log，最终结果补于下文。未烧录。
+- 最终完整Keil构建已通过：0 Error/0 Warning，Code54982、RO-data5118、RW-data504、ZI-data29936，编译日志明确包含compiling system_stm32f4xx.c，2026-10-20 19:40:58更新SRC_Firmware.axf/hex。实际验证不再有用户报告的四个未定义符号；未烧录。
+
+## 90. 2026-10-20 用户确认主控侧DIS仍LOW，缩小软件接管空窗并要求运行时证据
+
+- 用户确认在CubeMX将SHOOT/CHIP设为上拉，但DIS仍默认LOW；后续确认测点为主控PA2/PA3或连接器。当前.ioc两脚PULLUP且TIM9两通道LOW，TIM9 MspPostInit保留区屏蔽AF保护仍在；生成AF块里的PULLUP因#if 0不执行。实际闲置配置由kicker_hold_outputs主动写PA2/3高、OUTPUT_PP/PULLUP，不是仅靠弱上拉。
+- 当前main早期SysInit中已无kicker_hold_outputs，调用移至USER CODE 2（所有外设初始化之后）；与第87/89节验证时序不同，不推断修改来源。将高保持调用补入USER CODE Init，即HAL_Init之后、SystemClock_Config及所有MX外设之前，保留已有后续调用。该变更只缩小软件启动接管前空窗，不能据此解释正常运行后的持续LOW。
+- 对Core源码GPIOA、GPIO_PIN_2/3、SHOOT/CHIP、MODER/ODR/BSRR及反初始化路径重新检索：主控宏仍SHOOT=PA2、CHIP=PA3，LED和编码器对应其它脚/端口；未发现新的闲置主动拉低两脚路径。uvprojx的main/misc/tim路径指向当前Core/Src。未以此排除实际烧录/运行配置或外部电气问题。
+- 加强DIS测试：msp_startup先将模拟两脚锁存与模式清零，再执行实际MspPostInit分支；检查早期高保持必须位于USER CODE Init且在SystemClock_Config前。4S/6S共10个运行场景及相关静态检查通过；准备实际Keil构建及机器码核查。
+- 已向用户请求在OLED正常运行且无射球时暂停读取GPIOA MODER/ODR/IDR/PUPDR。预期闲置MODER&0xF0=0x50，PUPDR&0xF0=0x50，ODR&0x0C=0x0C，IDR&0x0C=0x0C；必须用运行时值区分配置/锁存与引脚采样，不再仅以源码和宿主测试宣称实板已修复。未烧录，无新运行时寄存器或波形证据。
+- 最终Keil构建：MDK-ARM/tmp/dis_early_takeover_build.log，0 Error/0 Warning，Code54986、RO-data5114、RW-data504、ZI-data29936，19:57:49更新HEX。使用实际ARMCC fromelf反汇编当前AXF（tmp/dis_early_takeover_disasm.txt），main明确依次调用HAL_Init、kicker_hold_outputs、SystemClock_Config；kicker_hold_outputs中RCC GPIOA时钟使能、GPIOA基址0x40020000、引脚掩码0x0C/SET=1传给HAL_GPIO_WritePin，再以模式1/上拉1配置两脚，证明实际镜像含所述逻辑。main及DIS测试git diff --check通过。仍待用户运行时寄存器，未确认持续LOW根因，也未宣称此次前移已解决实板问题。
+
+## 91. 2026-10-20 用户提供PA2/PA3运行时GPIO证据
+
+- 用户Keil Watch截图：GPIOA->MODER & 0xF0=0x50，PUPDR & 0xF0=0x50，ODR & 0x0C=0x0C，IDR & 0x0C=0x0C。该暂停时刻两脚均普通输出、上拉，输出锁存与引脚数字输入采样均高；实际不是此前怀疑的GPIO复用覆盖或锁存低状态。OTYPER未在截图中直接测量，当前源码设OUTPUT_PP，不将截图单独称作OTYPER实测。
+- 该证据仅覆盖截图时刻，不能排除上电短暂低、其它运行时刻变化，也不能将IDR数字高直接当作精确3.3V模拟测量。与此前用户主控PA2/PA3或连接器测LOW需用同一时刻的MCU焊盘/连接器对主控GND电压及物理连通性区分；不能继续仅为解释该截图而修改PWM极性。
+- 本轮不改固件，不构建或烧录。后续优先对应测点/时刻；若主控侧确为高而IGBT仍导通，继续沿连接器、隔离器输入/输出及驱动级定位，不据此宣称高压板已安全关闭。
+
+## 92. 2026-10-21 KICK_POLARITY可配置极性审查（待用户保存实际修改）
+
+- 用户说明实际栅极驱动芯片不同，新增KICK_POLARITY表示DIS1/2开启踢球的电平，已修改TIM9和初始化，要求检查遗漏，尤其关机放电。以此为新硬件前提：历史第72至91节的固定低有效结论只适用于当时v13b驱动链，不再可直接套用于所有实物。
+- 当前磁盘仍d80b9f3加既有未提交树。读取Core/Inc/cfg.h、Core/Src/tim.c、misc.c未找到KICK_POLARITY；全工程搜索也未找到宏定义或使用。cfg/misc文件时间仍2026-10-20 15:08:42，tim为2026-10-20 19:53:06。已请求用户保存到本工程或提供另一份路径，不能把旧文件审查称为已检查用户新实现。
+- 旧文件明确的兼容遗漏：board_monitor.c:658 board_kicker_ready与misc.c:450 discharge_on均要求CC1P|CC2P全置位（固定PWM2/LOW），若改PWM2/HIGH会拒绝普通射球和关机放电，后者由update_discharge转BOARD_DISCHARGE_OUTPUT并shooter_off停止，不能误称已放空电容。
+- 其它必须在新版本复核的点：kicker_hold_outputs的锁存和上下拉应对应非激活电平，且先写锁存再切输出；kick_pulse:416连接AF仍写死PULLUP，应与空闲策略一致。shoot_off/chip_off、HAL启动失败、discharge_fail、discharge_kill、shutdown初始stop_loads均经kicker_stop/hold_outputs，helper正确适配才能覆盖全部退出路径。
+- 保留PWM2及CCR=period-ticks时，输出极性应对应实际激活电平，CNT=0与OPM结束应为非激活电平；若用户同时改PWM1，必须重新核对CCR和脉宽，不能只翻转CCER判断。CHG和KILL为独立信号，不随DIS极性宏翻转；先CHG低再启脉冲、射球和冷却禁充策略不因DIS高低改变。
+- 既有tests/test_dis_polarity和test_board_migration模拟器写死高空闲/低有效、P位全置位及上拉，不能作为双极性实现已通过的证据。应待实际修改到位后覆盖两种极性、双通道、普通射球/关机放电、停止/失败、OPM结束与错误配置拒绝；本轮仅审查和记录，不改固件行为、不构建或烧录。
+
+## 93. 2026-10-21 重新读取确认cfg.h第31行KICK_POLARITY=1，审查当前实际引用
+
+- 用户指出已保存于cfg.h第31行。本次重读确认Core/Inc/cfg.h:31为#define KICK_POLARITY 1，文件时间2026-10-21 14:01:00；第92节“未找到”仅描述前次读取时刻，不再描述为当前状态。
+- 再次全Core检索KICK_POLARITY只命中此定义，没有任何使用；tim.c仍2026-10-20 19:53:06，misc.c仍2026-10-20 15:08:42。按当前磁盘内容审查，不推断用户编辑器状态，也不声称已看到另一个版本。
+- 按用户定义1=DIS高电平开启：misc.c:355的kicker_hold_outputs固定SET与此冲突，导致初始化、停止、HAL启动失败、关机放电失败/冷却/结束经共同helper发出的实际为激活电平；这是当前审查最严重项。misc.c:358与416固定PULLUP也不随空闲低适配。
+- tim.c:497/499仍PWM2/LOW，配合CCR=period-ticks输出低脉冲并在OPM回零高，与KICK_POLARITY=1目标不符。若保留PWM2及脉宽算法，应由宏选HIGH或LOW，结束电平取反。
+- misc.c:450 discharge_on及board_monitor.c:658 board_kicker_ready仍固定要求两路P位全置位；改TIM9为HIGH后会拒绝射门及关机放电，后者进入BOARD_DISCHARGE_OUTPUT。当前未改TIM9时检查可通过，但仍只会按旧低有效波形执行，不能表述为宏=1本身已使检查失败。
+- 审查结论：定义已保存，但当前应用源码尚未消费该宏，无法称双极性支持完成。先禁CHG、发射/冷却禁充以及关机电压反馈算法本身无需反相；仅按用户本轮检查要求报告并记录，不擅自修改固件、不构建或烧录。
+
+## 94. 2026-10-21 重读确认用户已适配初始化和TIM9，剩余关机放电阻断
+
+- 用户要求再看。当前misc.c时间2026-10-21 14:04:02，tim.c时间14:04:10，已实际读取新增分支。第93节的“只有定义未使用”不再适用于当前版本。
+- 已正确适配：kicker_hold_outputs在KICK_POLARITY=0时SET/PULLUP、其它值时RESET/PULLDOWN，先写锁存后配推挽；TIM9_Init 2在宏=1时将PWM2两通道重新配置为HIGH。宏=0沿用生成区PWM2/LOW。当前0/1两种值的空闲与有效脉冲逻辑方向正确，CCR=period-ticks及OPM回零算法无需因此翻转；相关高空闲/低有效注释已过时。
+- 仍存在的阻断：board_monitor.c:658 board_kicker_ready与misc.c:458 discharge_on均固定要求CC1P|CC2P全部置位。宏=1时实际HIGH将两位清零，普通射门许可为假，关机放电返回0，update_discharge:442进入BOARD_DISCHARGE_OUTPUT。需按宏比较预期P位：0时mask，1时0，不可删除极性检查。尚未按用户仅检查的要求改代码。
+- 已覆盖退出路径：shoot_off/chip_off、HAL启动失败、关机stop_loads、放电完成/冷却/失败/强制关机均经kicker_stop/hold_outputs，因此本次helper修改使宏=1时这些路径返回GPIO低关闭，不再沿用第93节“停止高激活”的当前结论。
+- 配置不一致：kick_pulse接入AF的config.Pull仍固定GPIO_PULLUP，应随空闲电平选择。已使能推挽外设的有效低输出不会仅因内部弱上拉就变高，不能将此列为当前拒绝放电的直接原因。
+- HAL实现核对：HAL_TIM_PWM_ConfigChannel在每次配置通道时重新开启OC1PE/OC2PE；用户宏=1分支二次调用使此前DISABLE_OCxPRELOAD失效。当前kick_pulse写CCR后主动EGR UPDATE，仍能装载正确比较值，未发现由此造成脉宽错误的证据；建议将禁预装载移到最终配置之后保持两极性一致。
+- 既有DIS测试模型和静态断言仍只适用低有效（甚至断言tim.c不得出现HIGH），尚不能验证此次双极性新实现。当前分析仅源码及HAL核对，不修改固件、不运行旧测试冒充双极性验证、不构建/烧录。
+
+## 95. 2026-10-21 按用户授权修复KICK_POLARITY四项遗漏并验证双极性
+
+- 用户明确要求修改第94节四点。基线d80b9f3501492870f11270f9beb8e1cf79a3d6bb加已有用户工作树；保留cfg.h的KICK_POLARITY=1及用户初始化/TIM9分支、180V目标、15%吸球和其它既有改动，不改变参数含义或引脚。用户实际驱动差异已取代历史固定低有效假设。
+- Core/Src/board_monitor.c board_kicker_ready与Core/Src/misc.c discharge_on：保留双通道极性保护，但按宏比较预期P位（0=>CC1P|CC2P，1=>0）。高有效下现在允许匹配配置的普通射门及关机放电，错误配置仍拒绝，不通过删除保护绕过。
+- misc.c kick_pulse接入AF时Pull按宏选择：高有效用PULLDOWN，低有效用PULLUP，与用户hold_outputs空闲电平一致；调整相关只适用高空闲的注释为inactive。保留原PWM2/CCR=period-ticks、先CHG低再启动计数和冷却禁充。
+- tim.c将两条DISABLE_OCxPRELOAD从前面的生成区移至TIM9_Init 2 USER CODE中最终通道重配置之后（#endif后），两种极性最终都禁预装载。保留用户宏=1时二次配置HIGH的做法，以及MspPostInit跳过生成AF的保护。
+- tests/test_board_migration.py的HAL模型改为按当前宏计算空闲电平、上/下拉和预期P位；每次HAL启动射球前检查两路已在非激活GPIO状态且CHG低。保留原电池/ADC/放电故障模型，不扩大修改此前固定55%吸球预期与现行15%不匹配问题。
+- tests/test_dis_polarity.py扩展为0/1极性x4S/6Sx12场景=48项。提取执行真实TIM9_Init 2、MspPostInit分支和生产射球函数；模拟HAL每次ConfigChannel重开预装载副作用，断言最终两路预装载关闭及P位正确。覆盖两通道最短/最长脉冲、OPM回零关闭、HAL失败、IRQ保持、错误极性拒绝、双通道关机放电、正常放空、线圈回退、无进度/传感器/输出/超时失败及其关闭电平。测试临时cfg副本遍历极性，finally恢复测试副本；不修改生产cfg宏值。
+- 双极性48项及test_charge_inhibit的44项共92个运行场景通过；后者还包含原普通射门/关机放电、故障、冷却和短脉冲联锁回归。git diff --check对本轮生产文件与测试通过。宿主测试不是实板验证。
+- 最终实际Keil构建日志MDK-ARM/tmp/kick_polarity_final_build.log：0 Error/0 Warning，Code55022、RO-data5118、RW-data504、ZI-data29936；2026-10-21 14:12:02生成正常SRC_Firmware.axf/hex。Keil构建对应当前宏1，宏0由宿主C编译/运行验证；未烧录、未测新硬件实际DIS/IGBT波形，不宣称实板安全或升压问题已解决。

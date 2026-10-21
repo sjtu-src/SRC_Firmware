@@ -23,8 +23,29 @@ enum
 	BOARD_DISCHARGE_OUTPUT
 };
 
+/* Multiple inhibit reasons may be present simultaneously. */
+enum
+{
+    BOARD_CHG_CAL = 1U << 0,
+    BOARD_CHG_ADC = 1U << 1,
+    BOARD_CHG_BAT_DATA = 1U << 2,
+    BOARD_CHG_BAT_LOW = 1U << 3,
+    BOARD_CHG_HOT = 1U << 4,
+    BOARD_CHG_NO_BOARD = 1U << 5,
+    BOARD_CHG_PROGRESS = 1U << 6,
+    BOARD_CHG_KICK = 1U << 7,
+    BOARD_CHG_COOLDOWN = 1U << 8,
+    BOARD_CHG_QUIET = 1U << 9,
+    BOARD_CHG_SHUTDOWN = 1U << 10,
+    BOARD_CHG_FULL = 1U << 11
+};
+
 typedef struct
 {
+    uint16_t charge_inhibit;
+    uint16_t charge_fault_reason;
+    uint32_t charge_retry_ms;
+    uint32_t charge_cooldown_ms;
 	float cap_v;
 	float temperature;
 	float bat_v;
@@ -36,7 +57,7 @@ typedef struct
 	uint8_t battery_valid;
 	uint8_t current_valid;
 	uint8_t charge_enabled;
-	uint8_t kick_done;
+	uint8_t kicker_installed;
 	uint8_t charge_fault;
 	uint8_t ina226_ready;
 	uint8_t shutdown;
@@ -70,13 +91,17 @@ typedef struct
 } board_battery_diag_t;
 extern volatile board_battery_diag_t g_battery_diag;
 
+void board_charge_gpio_init(void);
 void board_monitor_init(void);
 void board_monitor_update(void);
 void board_monitor_get(board_status_t *status);
 void board_monitor_exti(uint16_t pin);
+/* Called in the kick critical section after a successful timer start. */
+void board_notify_kick(void);
 int board_is_shutdown(void);
 int board_actuators_disabled(void);
 int board_is_discharging(void);
 int board_kicker_ready(void);
+int board_kicker_installed(void);
 
 #endif

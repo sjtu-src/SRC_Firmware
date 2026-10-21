@@ -10,6 +10,7 @@ void start_dribbler(void);
 void read_dip_sw(u8 *dip_freq, u8 *freq, u8 *num, u8 *mode);
 void start_ir_pwm(void);
 u8 nrf_spi_wr_rd(u8 input);
+void kicker_hold_outputs(void);
 void chip_off(void);
 void shoot_off(void);
 long N2RPM(long speed);

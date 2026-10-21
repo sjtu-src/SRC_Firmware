@@ -28,6 +28,8 @@
 #define OLD_DIR 0
 #define NEW_DIR 1
 
+#define KICK_POLARITY 1
+
 //机器人型号
 #define ROBOT_VERSION TT_0
 // 吸球电机型号
@@ -327,6 +329,8 @@
 #define SHUTDOWN_PDN_DEBOUNCE_MS 50U
 #define SHUTDOWN_FORCE_HOLD_MS 3000U
 #define KICKER_TIMER_TICK_US 20U
+/* TIGERs local default; charging only, measured after pulse completion. */
+#define KICKER_CHARGE_COOLDOWN_MS 80U
 #define KICKER_DISCHARGE_TARGET_V 2.0f
 #define KICKER_DISCHARGE_COOLDOWN_MS 80U
 #define KICKER_DISCHARGE_PROGRESS_MS 2000U
